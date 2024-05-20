@@ -1,7 +1,7 @@
 name: OpenView2
 description: BLE companion app for use with ProtoCentral breakout boards and modules
 
-version: 2.0.0+69
+version: 2.0.1+70
 
 environment:
   #sdk: ">=2.12.0 <3.0.0"
@@ -17,6 +17,7 @@ dependencies:
   flutter_reactive_ble: ^5.0.2
   bluetooth_enable_fork: ^0.1.4
   geolocator: ^11.0.0
+  intl: ^0.18.1
 
   connectivity: ^3.0.6
   permission_handler: ^11.3.1
