@@ -1,0 +1,260 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+class hPi4Global {
+  static const String UUID_SERV_DIS = "0000180a-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_BATT = "0000180f-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_HR = "0000180d-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_SPO2 = "00001822-0000-1000-8000-00805f9b34fb";
+
+  static const String UUID_SERV_HRV = "cd5c7491-4448-7db8-ae4c-d1da8cba36d0";
+  static const String UUID_CHAR_HRV = "cd5ca86f-4448-7db8-ae4c-d1da8cba36d0";
+  static const String UUID_CHAR_HIST = "cd5c1525-4448-7db8-ae4c-d1da8cba36d0";
+
+  static const String UUID_SERVICE_CMD = "01bf7492-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_CMD_DATA =
+      "01bf1528-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_ECG_SERVICE = "00001122-0000-1000-8000-00805f9b34fb";
+  static const String UUID_ECG_CHAR = "00001424-0000-1000-8000-00805f9b34fb";
+  static const String UUID_RESP_CHAR = "babe4a4c-7789-11ed-a1eb-0242ac120002";
+
+  static const String UUID_SERV_STREAM_2 =
+      "cd5c7491-4448-7db8-ae4c-d1da8cba36d0";
+  static const String UUID_STREAM_2 = "01bf1525-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_CHAR_HR = "00002a37-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SPO2_CHAR = "00002a5e-0000-1000-8000-00805f9b34fb";
+  //static const String UUID_RR_CHAR      = "00002a6e-0000-1000-8000-00805f9b34fb";
+  static const String UUID_TEMP_CHAR = "00002a6e-0000-1000-8000-00805f9b34fb";
+
+  //static const String UUID_CHAR_HIST = "01bf1525-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_ACT = "000000a2-0000-1000-8000-00805f9b34fb";
+  static const String UUID_CHAR_BATT = "00002a19-0000-1000-8000-00805f9b34fb";
+  static const String UUID_DIS_FW_REVISION =
+      "00002a26-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_HEALTH_THERM =
+      "00001809-0000-1000-8000-00805f9b34fb";
+
+  static const TextStyle eventStyle =
+      TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white);
+  static const TextStyle cardTextStyle =
+      TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
+  static const TextStyle cardValueTextStyle =
+      TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white);
+
+  static const TextStyle cardBlackTextStyle =
+      TextStyle(fontSize: 20, color: Colors.black);
+
+  static const TextStyle eventsWhite =
+      TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white);
+
+  static const Color hpi4Color = Color(0xFF125871);
+
+  static String hpi4AppVersion = "";
+  static String hpi4AppBuildNumber = "";
+
+  static StreamSubscription<ConnectionStateUpdate> connection = DeviceConnectionState.disconnected as StreamSubscription<ConnectionStateUpdate>;
+}
+
+class WiserGlobal {
+  static const String UUID_SERV_DIS = "0000180a-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_BATT = "0000180f-0000-1000-8000-00805f9b34fb";
+
+  static const String UUID_SERV_TDCS = "cd5c1110-4448-7db8-ae4c-d1da8cba36d0";
+  static const String UUID_CHAR_TDCS = "cd5c1111-4448-7db8-ae4c-d1da8cba36d0";
+
+  static const String UUID_CHAR_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_CMD_DATA =
+      "01bf1528-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_SERV_CMD_DATA =
+      "01bf7492-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_ECG_SERVICE = "00001122-0000-1000-8000-00805f9b34fb";
+
+  static const String UUID_ECG_CHAR = "00001424-0000-1000-8000-00805f9b34fb";
+
+  static const String UUID_HRV_SERVICE = "01bf7491-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_SERV_STREAM_2 =
+      "cd5c7491-4448-7db8-ae4c-d1da8cba36d0";
+  static const String UUID_STREAM_2 = "01bf1525-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_CHAR_BATT = "00002a19-0000-1000-8000-00805f9b34fb";
+  static const String UUID_DIS_FW_REVISION =
+      "00002a26-0000-1000-8000-00805f9b34fb";
+  static const String UUID_SERV_HEALTH_THERM =
+      "00001809-0000-1000-8000-00805f9b34fb";
+
+  static const TextStyle eventStyle =
+      TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white);
+  static const TextStyle cardTextStyle =
+      TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
+  static const TextStyle cardValueTextStyle =
+      TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white);
+
+  static const TextStyle cardBlackTextStyle =
+      TextStyle(fontSize: 20, color: Colors.black);
+
+  static const TextStyle eventsWhite =
+      TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white);
+
+  static const Color hpi4Color = Color(0xFF125871);
+
+  static Color appBarColor = Colors.black38;
+  static Color appBackgroundColor = Colors.grey.shade300;
+
+  static const List<int> tdcsStartCommand = [
+    0x01,
+    0x00,
+    0x00,
+    0x00,
+    0x64,
+    0x00,
+    0x00,
+    0x27,
+    0x10,
+    0x00,
+    0x00,
+    0x00,
+    0x64,
+    0x00,
+    0x00,
+    0x03,
+    0xE8,
+  ];
+
+  static const List<int> tdcsSaveSessionCommand = [0x20];
+  static const List<int> tpcsSaveSessionCommand = [0x21];
+
+  static const List<int> tdcsOTACommand = [0x02];
+
+  static const List<int> tdcsStopCommand = [0xF0];
+
+  static const List<int> tdcsPauseCommand = [0x05];
+
+  static const List<int> tdcsResumeCommand = [0x06];
+
+  static String hpi4AppVersion = "";
+  static String hpi4AppBuildNumber = "";
+}
+
+class BatteryLevelPainter extends CustomPainter {
+  final int _batteryLevel;
+  final int _batteryState;
+
+  BatteryLevelPainter(this._batteryLevel, this._batteryState);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint getPaint(
+        {Color color = Colors.black,
+        PaintingStyle style = PaintingStyle.stroke}) {
+      return Paint()
+        ..color = color
+        ..strokeWidth = 1.0
+        ..style = style;
+    }
+
+    final double batteryRight = size.width - 4.0;
+
+    final RRect batteryOutline = RRect.fromLTRBR(
+        0.0, 0.0, batteryRight, size.height, Radius.circular(3.0));
+
+    // Battery body
+    canvas.drawRRect(
+      batteryOutline,
+      getPaint(),
+    );
+
+    // Battery nub
+    canvas.drawRect(
+      Rect.fromLTWH(batteryRight, (size.height / 2.0) - 5.0, 4.0, 10.0),
+      getPaint(style: PaintingStyle.fill),
+    );
+
+    // Fill rect
+    canvas.clipRect(Rect.fromLTWH(
+        0.0, 0.0, batteryRight * _batteryLevel / 100.0, size.height));
+
+    Color indicatorColor;
+    if (_batteryLevel < 15) {
+      indicatorColor = Colors.red;
+    } else if (_batteryLevel < 30) {
+      indicatorColor = Colors.orange;
+    } else {
+      indicatorColor = Colors.green;
+    }
+
+    canvas.drawRRect(
+        RRect.fromLTRBR(0.5, 0.5, batteryRight - 0.5, size.height - 0.5,
+            Radius.circular(3.0)),
+        getPaint(style: PaintingStyle.fill, color: indicatorColor));
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    final BatteryLevelPainter old = oldDelegate as BatteryLevelPainter;
+    return old._batteryLevel != _batteryLevel ||
+        old._batteryState != _batteryState;
+  }
+}
+
+class LoadingIndicator extends StatelessWidget {
+  LoadingIndicator({this.text = ''});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    var displayedText = text;
+
+    return Container(
+        padding: EdgeInsets.all(16),
+        color: Colors.black.withOpacity(0.7),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _getLoadingIndicator(),
+              _getHeading(context),
+              _getText(displayedText)
+            ]));
+  }
+
+  Padding _getLoadingIndicator() {
+    return Padding(
+        child: Container(
+            child: SpinKitCircle(
+              color: Colors.blue,
+              size: 32.0,
+            ),
+            width: 32,
+            height: 32),
+        padding: EdgeInsets.only(bottom: 16));
+  }
+
+  Widget _getHeading(context) {
+    return Padding(
+        child: Text(
+          'Please wait…',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
+        padding: EdgeInsets.only(bottom: 4));
+  }
+
+  Text _getText(String displayedText) {
+    return Text(
+      displayedText,
+      style: TextStyle(color: Colors.white, fontSize: 14),
+      textAlign: TextAlign.center,
+    );
+  }
+}
