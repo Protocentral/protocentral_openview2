@@ -3,11 +3,15 @@
 ![Protocentral Logo](docs/images/protocentral.png)
 
 # OpenView 2
-</div>
+
 
 Openview 2 is designed as a companion application to receive data from various Protocentral boards. It can be used to visualize the data in real-time and also store the data in CSV format. 
 
-![Openview Desktop App](docs/images//desktop3.png)
+![Openview Desktop App](docs/images/openview-screen-desktop.png)
+
+![Openview Mobile App](docs/images/openview-screen-mobile.jpg)
+
+</div>
 
 OpenView 2 will replace the existing [OpenView app](https://github.com/Protocentral/protocentral_openview2) written in Processing and will be the primary supported app for all Protocentral boards. OpenView 2 is based on the more modern [Flutter framework](https://flutter.dev/) and is available for Windows, MacOS, Linux, Android, and iOS.
 
