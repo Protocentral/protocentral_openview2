@@ -40,7 +40,13 @@ OpenView 2 is written on the [Flutter](https://flutter.dev/) and is fully open s
 
 ### Using on Mobile Platforms:
 
-1. Download the openview app from the [Google Play](https://play.google.com/store/apps/details?id=com.protocentral.openview) store for Android and from the [Apple App Store](https://apps.apple.com/fi/app/openview/id1667747246) for iOS.
+Download the openview app from the [Google Play](https://play.google.com/store/apps/details?id=com.protocentral.openview) store for Android and from the [Apple App Store](https://apps.apple.com/fi/app/openview/id1667747246) for iOS.
+
+
+<div align="center">
+
+[![Download from Google Play](docs/images/play_store.png)](https://play.google.com/store/apps/details?id=com.protocentral.openview) [![Download from App Store](docs/images/appstore.png)](https://apps.apple.com/fi/app/openview/id1667747246)
+</div>
 
 ## Packet Format
 
