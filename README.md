@@ -1,4 +1,9 @@
+<div align="center">
+
+![Protocentral Logo](docs/images/protocentral.png)
+
 # Protocentral OpenView 2
+</div>
 
 Openview 2 is designed as a companion application to receive data from various Protocentral boards. It can be used to visualize the data in real-time and also store the data in CSV format. 
 
