@@ -1,6 +1,10 @@
 # Protocentral OpenView 2
 
-Openview 2 is designed as a companion application to receive data from various Protocentral boards. Openview can be used to visualize the data in real-time and also store the data in CSV format. Openview 2 is designed to be compatible with multiple boards and can be easily extended to support new boards. OpenView 2 will replace the existing [OpenView app](https://github.com/Protocentral/protocentral_openview2) written in Processing and will be the primarily supported app for all Protocentral boards. OpenView 2 is based on the more modern [Flutter framework](https://flutter.dev/) and is available for Windows, MacOS, Linux, Android, and iOS.
+Openview 2 is designed as a companion application to receive data from various Protocentral boards. It can be used to visualize the data in real-time and also store the data in CSV format. 
+
+![Openview Desktop App](docs/images//desktop3.png)
+
+OpenView 2 will replace the existing [OpenView app](https://github.com/Protocentral/protocentral_openview2) written in Processing and will be the primary supported app for all Protocentral boards. OpenView 2 is based on the more modern [Flutter framework](https://flutter.dev/) and is available for Windows, MacOS, Linux, Android, and iOS.
 
 The Android and iOS mobile versions use BLE to connect to the boards (when used with a microcontroller with BLE support), while the desktop version uses USB/UART to connect to the boards. 
 
@@ -17,35 +21,21 @@ The Android and iOS mobile versions use BLE to connect to the boards (when used 
 * [HealthyPi 5](https://protocentral.com/product/healthypi-5-vital-signs-monitoring-hat-kit/)
 * [HealthyPi Move](https://www.crowdsupply.com/protocentral/healthypi-move)
 
-
-![Openview Desktop App](assets/desktop3.png)
-
-
-
-
-
-
 ## Installing and using Protocentral OpenView 2
-
-![HealthyPi 4 App](assets/desktop1.png)    ![HealthyPi 4 App](assets/desktop2.png)
-
-Protocentral OpenView 2 is available for Windows, MacOS, Linux, Android and iOS.
 
 You can download the latest version for your operating system from the [Releases](https://github.com/Protocentral/Protocentral_openview_2/releases) page.
 
 OpenView 2 is written on the [Flutter](https://flutter.dev/) and is fully open source. You can compile your own from the source code provide in this GitHub repository.
 
-## Running OpenView 2
-
-### For desktop app:
+### Using on Desktop Platforms:
 
 1. Download the zip file from the [Releases](https://github.com/Protocentral/protocentral_openview_2/releases) page.
 2. Extract the zip file installed
 3. Open the app in the folder extracted and run the application
 
-### For mobile app:
+### Using on Mobile Platforms:
 
-1. Download the openview app from playstore for Android and from appstore for iOS
+1. Download the openview app from the [Google Play](https://play.google.com/store/apps/details?id=com.protocentral.openview) store for Android and from the [Apple App Store](https://apps.apple.com/fi/app/openview/id1667747246) for iOS.
 
 ## Packet Format
 
@@ -62,8 +52,6 @@ Protocentral OpenView 2 is compatible with any device that can send data through
 | ..            |   Payload (...)       |
 |   n           |   Payload n+5         |
 | (PL Len + 5)  |   0x0B                |
-
-
 
 # License
 
