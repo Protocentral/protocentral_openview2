@@ -33,9 +33,11 @@ bool connectedToDevice = false;
 
 String pcCurrentDeviceID = "";
 String pcCurrentDeviceName = "";
-String _selectedBoard = 'Select Board';
 
-String _selectedPort = 'Board';
+String _selectedBoard = 'Healthypi';
+
+String _selectedPort = 'Port';
+String selectedPortBoard = 'Healthypi';
 
 late SerialPort _serialPort;
 
@@ -70,6 +72,9 @@ var CES_Pkt_Data_Counter = new List.filled(1000, 0, growable: false);
 var ces_pkt_ch1_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch2_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch3_buffer = new List.filled(4, 0, growable: false);
+
+int computed_val1 = 0;
+int computed_val2 = 0;
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key, required this.title}) : super(key: key);
@@ -635,6 +640,51 @@ class _HomePageState extends State<HomePage> {
           DropdownButton(
             underline: SizedBox(),
             dropdownColor: hPi4Global.hpi4Color,
+            hint: selectedPortBoard  == null
+                ? Text('Select Board')
+                : Text(selectedPortBoard,
+              style: TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
+            ),
+            //isExpanded: true,
+            iconSize: 50.0,
+            style: TextStyle(color: Colors.white, fontSize: 16.0),
+            items: [
+              'Healthypi',
+              'ADS1292R Breakout/Shield',
+              'ADS1293 Breakout/Shield',
+              'AFE4490 Breakout/Shield',
+              'MAX86150 Breakout',
+              'Pulse Express (MAX30102/MAX32664D)',
+              'tinyGSR Breakout',
+              'MAX30003 ECG Breakout',
+              'MAX30001 ECG & BioZ Breakout'
+            ].map(
+                  (val) {
+                return DropdownMenuItem<String>(
+                  value: val,
+                  child: Text(val),
+                );
+              },
+            ).toList(),
+            onChanged: (value) {
+              setState(
+                    () {
+                  selectedPortBoard = value as String;
+                },
+              );
+            },
+          ),
+          SizedBox(
+            width:50.0,
+          ),
+          Text("Select Port:",style:
+          TextStyle(color: Colors.black, fontSize: 16.0) ),
+          SizedBox(
+            width:20.0,
+          ),
+          DropdownButton(
+            underline: SizedBox(),
+            dropdownColor: hPi4Global.hpi4Color,
             hint: _selectedPort == null
                 ? Text('Select Serial Port')
                 : Text(
@@ -696,6 +746,7 @@ class _HomePageState extends State<HomePage> {
                   => PlotSerialPage(
                     selectedPort:_serialPort,
                       selectedSerialPort: _selectedPort,
+                      selectedPortBoard: selectedPortBoard,
                   )));
 
             },

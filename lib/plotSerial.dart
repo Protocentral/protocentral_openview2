@@ -23,10 +23,12 @@ class PlotSerialPage extends StatefulWidget {
   PlotSerialPage({Key? key,
     required this.selectedPort,
     required this.selectedSerialPort,
+    required this.selectedPortBoard,
   }) : super();
 
   final SerialPort selectedPort;
   final String selectedSerialPort;
+  final String selectedPortBoard;
 
   @override
   _PlotSerialPageState createState() => _PlotSerialPageState();
@@ -48,9 +50,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   double ppgDataCounter = 0;
   double respDataCounter = 0;
 
-  bool ecgCheckBoxValue = true;
-  bool ppgCheckBoxValue = true;
-  bool respCheckBoxValue = true;
   bool startDataLogging = false;
 
   int globalHeartRate = 0;
@@ -67,7 +66,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
 
-    displayWaveforms();
     _startSerialListening();
 
   }
@@ -151,54 +149,343 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             {
           if (rxch == CES_CMDIF_PKT_STOP) {
             //print("data assigned : "+ CES_Pkt_Data_Counter.toString());
-            ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-            ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-            ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-            ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+            if(widget.selectedPortBoard == "Healthypi"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
 
-            ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-            ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-            ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-            ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
 
-            ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
-            ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[10];
-            ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
-            ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[10];
+              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
+              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
 
-            int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 | ces_pkt_ch1_buffer[2] << 16 | ces_pkt_ch1_buffer[3] << 24;
-            int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
-            int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 | ces_pkt_ch1_buffer[2] << 16 | ces_pkt_ch1_buffer[3] << 24;
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
+              int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
 
-            setStateIfMounted(() {
-              ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
-              respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
-              ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
 
-              if(startDataLogging == true){
-                ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
-                ppgDataLog.add(data3.toDouble());
-                respDataLog.add(data2.toDouble());
+                if(startDataLogging == true){
+                  ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
+                  ppgDataLog.add(data3.toDouble());
+                  respDataLog.add(data2.toDouble());
+                }
+
+                globalSpO2 =  (CES_Pkt_Data_Counter[19]).toInt();
+                if(globalSpO2 == 25){
+                  displaySpO2 = "--";
+                }else{
+                  displaySpO2 = globalSpO2.toString() +" %";
+                }
+                globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
+                globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
+                globalTemp = (((CES_Pkt_Data_Counter[17]| CES_Pkt_Data_Counter[18]<<8).toInt())/100.00).toDouble();
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                ppgLineData.removeAt(0);
+              }
+              if (respDataCounter >= 128 * 6) {
+                respLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+            }
+            else if(widget.selectedPortBoard == "ADS1292R Breakout/Shield"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              data1 <<= 16;
+              data1 >>= 16;
+
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              data2 <<= 16;
+              data2 >>= 16;
+
+              computed_val1 = CES_Pkt_Data_Counter[4] | CES_Pkt_Data_Counter[5]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              computed_val1 <<= 16;
+              computed_val1 >>= 16;
+
+              computed_val2 = CES_Pkt_Data_Counter[6] | CES_Pkt_Data_Counter[7]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              computed_val2 <<= 16;
+              computed_val2 >>= 16;
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                  respDataLog.add(data2.toDouble());
+                }
+
+                globalHeartRate = (computed_val1).toInt();
+                globalRespRate = (computed_val2).toInt();
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+              }
+              if (respDataCounter >= 128 * 6) {
+                respLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+
+            }
+            else if(widget.selectedPortBoard == "ADS1293 Breakout/Shield"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[8];
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[9];
+              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[10];
+              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8 | ces_pkt_ch1_buffer[2]<<16 | ces_pkt_ch1_buffer[3] <<24;
+
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
+
+              int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
+                  ppgDataLog.add(data3.toDouble());
+                  respDataLog.add(data2.toDouble());
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                ppgLineData.removeAt(0);
+              }
+              if (respDataCounter >= 128 * 6) {
+                respLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+
+            }
+            else if(widget.selectedPortBoard == "AFE4490 Breakout/Shield"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8 | ces_pkt_ch1_buffer[2]<<16 | ces_pkt_ch1_buffer[3] <<24;
+
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
+
+              computed_val1= CES_Pkt_Data_Counter[8];
+              computed_val2= CES_Pkt_Data_Counter[9];
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                  ppgDataLog.add(data2.toDouble());
+                }
+
+                globalHeartRate = (computed_val2).toInt();
+                globalSpO2 =  (computed_val1).toInt();
+                if(globalSpO2 == 25){
+                  displaySpO2 = "--";
+                }else{
+                  displaySpO2 = globalSpO2.toString() +" %";
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                ppgLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+            }
+            else if(widget.selectedPortBoard == "MAX86150 Breakout"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[5];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              data1 <<= 16;
+              data1 >>= 16;
+
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              data2 <<= 16;
+              data2 >>= 16;
+
+              int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              data3 <<= 16;
+              data3 >>= 16;
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                  ppgDataLog.add(data3.toDouble());
+                  respDataLog.add(data2.toDouble());
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                ppgLineData.removeAt(0);
+                respLineData.removeAt(0);
               }
 
-              globalSpO2 =  (CES_Pkt_Data_Counter[19]).toInt();
-              if(globalSpO2 == 25){
-                displaySpO2 = "--";
-              }else{
-                displaySpO2 = globalSpO2.toString() +" %";
+              pc_rx_state = CESState_Init;
+            }
+            else if(widget.selectedPortBoard == "Pulse Express (MAX30102/MAX32664D)"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                  respDataLog.add(data2.toDouble());
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                respLineData.removeAt(0);
               }
-              globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
-              globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
-              globalTemp = (((CES_Pkt_Data_Counter[17]| CES_Pkt_Data_Counter[18]<<8).toInt())/100.00).toDouble();
-            });
-            if (ppgDataCounter >= 64 * 6) {
-              ecgLineData.removeAt(0);
-              ppgLineData.removeAt(0);
+              pc_rx_state = CESState_Init;
+
             }
-            if (respDataCounter >= 128 * 6) {
-              respLineData.removeAt(0);
+            else if(widget.selectedPortBoard == "tinyGSR Breakout"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+              }
+
+              pc_rx_state = CESState_Init;
             }
-            pc_rx_state = CESState_Init;
+            else if(widget.selectedPortBoard == "MAX30003 ECG Breakout"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[8];
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[9];
+              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[10];
+              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8 | ces_pkt_ch1_buffer[2]<<16 | ces_pkt_ch1_buffer[3] <<24;
+
+              int computed_val1 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
+              int computed_val2 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
+                }
+                globalHeartRate = (computed_val2).toInt();
+                globalRespRate = (computed_val1).toInt();
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+
+            }
+            else if(widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1]<<8 | ces_pkt_ch1_buffer[2]<<16 | ces_pkt_ch1_buffer[3] <<24;
+              int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1]<<8 | ces_pkt_ch2_buffer[2]<<16 | ces_pkt_ch2_buffer[3] <<24;
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toDouble())));
+
+                if(startDataLogging == true){
+                  ecgDataLog.add(data1.toDouble());
+                  ppgDataLog.add(data2.toDouble());
+                }
+
+              });
+              if (ecgDataCounter >= 64 * 6) {
+                ecgLineData.removeAt(0);
+                ppgLineData.removeAt(0);
+              }
+              pc_rx_state = CESState_Init;
+            }
+
           }else{
             pc_rx_state = CESState_Init;
           }
@@ -207,14 +494,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       default:
         break;
     }
-  }
-
-  void displayWaveforms() {
-    setState(() {
-      ecgCheckBoxValue = true;
-      ppgCheckBoxValue = true;
-      respCheckBoxValue = true;
-    });
   }
 
   LineChartBarData currentLine(List<FlSpot> points, Color plotcolor) {
@@ -265,49 +544,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   Widget displayCharts() {
-    if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ecgLineData, Colors.green);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ppgLineData, Colors.yellow);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return buildChart(54, 95, respLineData, Colors.blue);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-      ]);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else {
+    if(widget.selectedPortBoard == "Healthypi"){
       return Column(
         children: [
           Column(
@@ -438,9 +675,291 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ),
               ]
           ),
-
         ],
       );
+    }
+    else if(widget.selectedPortBoard == "ADS1292R Breakout/Shield"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(29, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "RESPIRATION RATE ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalRespRate.toString() + " rpm",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(28, 95, respLineData, Colors.blue),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "ADS1293 Breakout/Shield"){
+      return Column(
+        children: [
+          buildChart(23, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          buildChart(23, 95, ppgLineData, Colors.yellow),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          buildChart(23, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "AFE4490 Breakout/Shield"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(30, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "SPO2 ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child:  Text(displaySpO2,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(30, 95, ppgLineData, Colors.yellow),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "MAX86150 Breakout"){
+      return Column(
+        children: [
+          buildChart(23, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(23, 95, ppgLineData, Colors.yellow),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(23, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "Pulse Express (MAX30102/MAX32664D)"){
+      return Column(
+        children: [
+          buildChart(32, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(32, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "tinyGSR Breakout"){
+      return Column(
+        children: [
+          buildChart(65, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "MAX30003 ECG Breakout"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(54, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "RESPIRATION RATE ",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalRespRate.toString() + " rpm",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout"){
+      return Column(
+        children: [
+          buildChart(32, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          buildChart(32, 95, ppgLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else{
+     return Container();
     }
   }
 
@@ -451,7 +970,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "Connected To:    "+ widget.selectedSerialPort,
+            "Connected To:    "+ widget.selectedSerialPort+"/ "+widget.selectedPortBoard,
             style: TextStyle(
               fontSize: 12,
               color: Colors.white,
@@ -506,66 +1025,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   String debugText = "Console Inited...";
-
-  Widget displayECGCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("ECG: "),
-          Checkbox(
-              value: ecgCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  ecgCheckBoxValue = newValue!;
-                });
-                // print("ecgCheckBoxValue........"+ ecgCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
-
-  Widget displayPPGCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("PPG: "),
-          Checkbox(
-              value: ppgCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  ppgCheckBoxValue = newValue!;
-                });
-                // print("ppgCheckBoxValue........"+ ppgCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
-
-  Widget displayRESPCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("Resp: "),
-          Checkbox(
-              value: respCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  respCheckBoxValue = newValue!;
-                });
-                // print("respCheckBoxValue........"+ respCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
 
   Widget displayDisconnectButton() {
     return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(

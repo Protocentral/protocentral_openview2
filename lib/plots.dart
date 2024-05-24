@@ -104,6 +104,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   double globalTemp = 0;
   int _globalBatteryLevel = 50;
 
+  String displaySpO2 = "--" ;
+
 
   void logConsole(String logString) {
     print("AKW - " + logString);
@@ -331,6 +333,11 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       //print("AKW: Rx SPO2: " + event.toString());
       setStateIfMounted(() {
         globalSpO2 = event[1];
+        if(globalSpO2 == 25){
+          displaySpO2 = "--";
+        }else{
+          displaySpO2 = globalSpO2.toString() +" %";
+        }
         //print("AKW: Rx SPO2: " + event[1].toString());
       });
     });
@@ -373,7 +380,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     streamHRVRespSubscription = _streamHRVResp.listen((event) {
       //print("AKW: Rx Respiration Rate: " + event.toString());
       setStateIfMounted(() {
-        globalRespRate = event[10];
+        globalRespRate = event[0];
         //print("AKW: Rx Respiration Rate: " + event[10].toString());
       });
     });
@@ -719,7 +726,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 width: 15,
               ),
               Text(
-                "SPO2: " + globalSpO2.toString() + " %",
+                "SPO2: " + displaySpO2,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white,
@@ -769,7 +776,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 width: 15,
               ),
               Text(
-                "SPO2: " + globalSpO2.toString() + " %",
+                "SPO2: " + displaySpO2,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white,
@@ -885,7 +892,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
-                    child:  Text(globalSpO2.toString() +" %",
+                    child:  Text(displaySpO2,
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
@@ -951,7 +958,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
-                    child: Text( globalTemp.toString() + " C",
+                    child: Text( globalTemp.toStringAsPrecision(3) + "\u00b0 C",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
