@@ -16,8 +16,7 @@ class hPi4Global {
 
   static const String UUID_SERVICE_CMD = "01bf7492-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
-  static const String UUID_CHAR_CMD_DATA =
-      "01bf1528-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
 
   static const String UUID_ECG_SERVICE = "00001122-0000-1000-8000-00805f9b34fb";
   static const String UUID_ECG_CHAR = "00001424-0000-1000-8000-00805f9b34fb";
@@ -54,95 +53,23 @@ class hPi4Global {
       TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white);
 
   static const Color hpi4Color = Color(0xFF125871);
-
-  static String hpi4AppVersion = "";
-  static String hpi4AppBuildNumber = "";
-
-  static StreamSubscription<ConnectionStateUpdate> connection = DeviceConnectionState.disconnected as StreamSubscription<ConnectionStateUpdate>;
-}
-
-class WiserGlobal {
-  static const String UUID_SERV_DIS = "0000180a-0000-1000-8000-00805f9b34fb";
-  static const String UUID_SERV_BATT = "0000180f-0000-1000-8000-00805f9b34fb";
-
-  static const String UUID_SERV_TDCS = "cd5c1110-4448-7db8-ae4c-d1da8cba36d0";
-  static const String UUID_CHAR_TDCS = "cd5c1111-4448-7db8-ae4c-d1da8cba36d0";
-
-  static const String UUID_CHAR_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
-
-  static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
-  static const String UUID_CHAR_CMD_DATA =
-      "01bf1528-970f-8d96-d44d-9023c47faddc";
-
-  static const String UUID_SERV_CMD_DATA =
-      "01bf7492-970f-8d96-d44d-9023c47faddc";
-
-  static const String UUID_ECG_SERVICE = "00001122-0000-1000-8000-00805f9b34fb";
-
-  static const String UUID_ECG_CHAR = "00001424-0000-1000-8000-00805f9b34fb";
-
-  static const String UUID_HRV_SERVICE = "01bf7491-970f-8d96-d44d-9023c47faddc";
-  static const String UUID_SERV_STREAM_2 =
-      "cd5c7491-4448-7db8-ae4c-d1da8cba36d0";
-  static const String UUID_STREAM_2 = "01bf1525-970f-8d96-d44d-9023c47faddc";
-
-  static const String UUID_CHAR_BATT = "00002a19-0000-1000-8000-00805f9b34fb";
-  static const String UUID_DIS_FW_REVISION =
-      "00002a26-0000-1000-8000-00805f9b34fb";
-  static const String UUID_SERV_HEALTH_THERM =
-      "00001809-0000-1000-8000-00805f9b34fb";
-
-  static const TextStyle eventStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white);
-  static const TextStyle cardTextStyle =
-      TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
-  static const TextStyle cardValueTextStyle =
-      TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white);
-
-  static const TextStyle cardBlackTextStyle =
-      TextStyle(fontSize: 20, color: Colors.black);
-
-  static const TextStyle eventsWhite =
-      TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white);
-
-  static const Color hpi4Color = Color(0xFF125871);
-
-  static Color appBarColor = Colors.black38;
   static Color appBackgroundColor = Colors.grey.shade300;
 
-  static const List<int> tdcsStartCommand = [
-    0x01,
-    0x00,
-    0x00,
-    0x00,
-    0x64,
-    0x00,
-    0x00,
-    0x27,
-    0x10,
-    0x00,
-    0x00,
-    0x00,
-    0x64,
-    0x00,
-    0x00,
-    0x03,
-    0xE8,
-  ];
-
-  static const List<int> tdcsSaveSessionCommand = [0x20];
-  static const List<int> tpcsSaveSessionCommand = [0x21];
-
-  static const List<int> tdcsOTACommand = [0x02];
-
-  static const List<int> tdcsStopCommand = [0xF0];
-
-  static const List<int> tdcsPauseCommand = [0x05];
-
-  static const List<int> tdcsResumeCommand = [0x06];
-
   static String hpi4AppVersion = "";
   static String hpi4AppBuildNumber = "";
+
+  static const List<int> sessionLogIndex = [0x50];
+  static const List<int> sessionFetchLogFile = [0x51];
+  static const List<int> sessionLogDelete = [0x52];
+  static const List<int> sessionLogWipeAll = [0x53];
+  static const List<int> getSessionCount = [0x54];
+  static const List<int> getFWVersion = [0x55];
+
+  static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
+  static const int CES_CMDIF_TYPE_DATA = 0x02;
+  static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;
+
+  static StreamSubscription<ConnectionStateUpdate> connection = DeviceConnectionState.disconnected as StreamSubscription<ConnectionStateUpdate>;
 }
 
 class BatteryLevelPainter extends CustomPainter {

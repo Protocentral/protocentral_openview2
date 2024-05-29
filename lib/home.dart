@@ -826,7 +826,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
-        backgroundColor: WiserGlobal.appBackgroundColor,
+        backgroundColor: hPi4Global.appBackgroundColor,
         drawer: _buildAppDrawer(),
         appBar: AppBar(
           backgroundColor: hPi4Global.hpi4Color,

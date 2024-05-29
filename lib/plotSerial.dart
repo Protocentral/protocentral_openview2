@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'globals.dart';
 import 'home.dart';
 import 'sizeConfig.dart';
+import 'onBoardDataLog.dart';
 
 import 'ble/ble_scanner.dart';
 import 'states/OpenViewBLEProvider.dart';
@@ -170,12 +171,12 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toSigned(32).toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toSigned(32).toDouble())));
 
                 if(startDataLogging == true){
-                  ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
+                  ecgDataLog.add((data1.toSigned(32)).toDouble());
                   ppgDataLog.add(data3.toDouble());
                   respDataLog.add(data2.toDouble());
                 }
@@ -190,11 +191,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
                 globalTemp = (((CES_Pkt_Data_Counter[17]| CES_Pkt_Data_Counter[18]<<8).toInt())/100.00).toDouble();
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
                 ppgLineData.removeAt(0);
               }
-              if (respDataCounter >= 128 * 6) {
+              if (respDataCounter >= 256 * 6) {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
@@ -235,10 +236,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 globalRespRate = (computed_val2).toInt();
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
               }
-              if (respDataCounter >= 128 * 6) {
+              if (respDataCounter >= 256 * 6) {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
@@ -266,7 +267,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
                 respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
                 ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
 
@@ -277,11 +278,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >=  128 * 6) {
                 ecgLineData.removeAt(0);
                 ppgLineData.removeAt(0);
               }
-              if (respDataCounter >= 128 * 6) {
+              if (respDataCounter >= 256 * 6) {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
@@ -323,7 +324,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
                 ppgLineData.removeAt(0);
               }
@@ -363,7 +364,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
                 ppgLineData.removeAt(0);
                 respLineData.removeAt(0);
@@ -391,7 +392,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
                 respLineData.removeAt(0);
               }
@@ -412,7 +413,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
               }
 
@@ -440,7 +441,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               int computed_val2 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1]<<8 | ces_pkt_ch3_buffer[2]<<16 | ces_pkt_ch3_buffer[3] <<24;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)/1000.00).toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
 
                 if(startDataLogging == true){
                   ecgDataLog.add((data1.toSigned(32)/1000.00).toDouble());
@@ -449,7 +450,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 globalRespRate = (computed_val1).toInt();
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
@@ -479,7 +480,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
               });
-              if (ecgDataCounter >= 64 * 6) {
+              if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
                 ppgLineData.removeAt(0);
               }
@@ -506,7 +507,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         colors: [plotcolor, plotcolor],
         //stops: const [0.1, 1.0],
       ),
-      barWidth: 3,
+      barWidth: 4,
       isCurved: false,
     );
   }
@@ -1151,7 +1152,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
-      backgroundColor: WiserGlobal.appBackgroundColor,
+      backgroundColor: hPi4Global.appBackgroundColor,
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
@@ -1186,6 +1187,33 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 },
               ),
             ),
+            /*Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+              child: MaterialButton(
+                minWidth: 80.0,
+                color: startDataLogging ? Colors.grey:Colors.white,
+                child: Row(
+                  children: <Widget>[
+                    Text('Onboard Datalogger',
+                        style: new TextStyle(
+                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                onPressed: () async {
+                  if (widget.selectedPort.isOpen) {
+                    widget.selectedPort.close();
+                  }
+                  Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_)
+                      => FetchLogData(
+                          title: "Openview"
+                      )));
+                },
+              ),
+            ),*/
             displayDeviceName(),
             displayDisconnectButton(),
           ],

@@ -55,10 +55,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   double ppgDataCounter = 0;
   double respDataCounter = 0;
 
-  bool ecgCheckBoxValue = true;
-  bool ppgCheckBoxValue = true;
-  bool respCheckBoxValue = true;
-
   late QualifiedCharacteristic CommandCharacteristic;
   late QualifiedCharacteristic ECGCharacteristic;
   late QualifiedCharacteristic PPGCharacteristic;
@@ -117,8 +113,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-
-    displayWaveforms();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
 
@@ -201,6 +195,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       await _startListeningHRVResp();
     } else if (widget.selectedBoard == 'ADS1293 Breakout/Shield') {
       _startECG32Listening();
+      _startPPG16Listening();
+      _startRESP32Listening();
     } else if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
       _startPPG32Listening();
       await _startListeningHR();
@@ -209,7 +205,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       _startECG16Listening();
       _startPPG16Listening();
     } else if (widget.selectedBoard == 'Pulse Express (MAX30102/MAX32664D)') {
-      _startPPG16Listening();
+      _startECG32Listening();
+      _startRESP32Listening();
     } else if (widget.selectedBoard == 'tinyGSR Breakout') {
       _startECG16Listening();
     } else if (widget.selectedBoard == 'MAX30003 ECG Breakout') {
@@ -230,27 +227,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     }
   }
 
-  void displayWaveforms() {
-    if (widget.selectedDevice.toLowerCase().contains("healthypi")) {
-      setState(() {
-        ecgCheckBoxValue = true;
-        ppgCheckBoxValue = true;
-        respCheckBoxValue = true;
-      });
-    } else if (widget.selectedDevice.contains("OpenOx")) {
-      setState(() {
-        ecgCheckBoxValue = false;
-        ppgCheckBoxValue = true;
-        respCheckBoxValue = false;
-      });
-    } else {
-      setState(() {
-        ecgCheckBoxValue = true;
-        ppgCheckBoxValue = true;
-        respCheckBoxValue = true;
-      });
-    }
-  }
 
   void closeAllStreams() async {
     if (listeningECGStream == true) {
@@ -407,7 +383,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (ecgDataCounter >= 64 * 6) {
+          if (ecgDataCounter >= 128 * 6) {
             ecgLineData.removeAt(0);
           }
         });
@@ -443,7 +419,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (ecgDataCounter >= 64 * 6) {
+          if (ecgDataCounter >= 128 * 6) {
             ecgLineData.removeAt(0);
           }
         });
@@ -478,7 +454,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (ppgDataCounter >= 64 * 6) {
+          if (ppgDataCounter >= 128 * 6) {
             ppgLineData.removeAt(0);
           }
         });
@@ -513,7 +489,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (ppgDataCounter >= 64 * 6) {
+          if (ppgDataCounter >= 128 * 6) {
             ppgLineData.removeAt(0);
           }
         });
@@ -547,7 +523,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (respDataCounter >= 128 * 6) {
+          if (respDataCounter >= 256 * 6) {
             respLineData.removeAt(0);
           }
         });
@@ -585,7 +561,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (respDataCounter >= 128 * 6) {
+          if (respDataCounter >= 256 * 6) {
             respLineData.removeAt(0);
           }
         });
@@ -608,7 +584,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         colors: [plotcolor, plotcolor],
         //stops: const [0.1, 1.0],
       ),
-      barWidth: 4,
+      barWidth: 3,
       isCurved: false,
     );
   }
@@ -640,204 +616,13 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             currentLine(source,plotColor),
           ],
         ),
-        //swapAnimationDuration: Duration.zero,
+        swapAnimationDuration: Duration.zero,
       ),
     );
   }
 
-  Widget displayCharts() {
-    if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ecgLineData, Colors.green);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ppgLineData, Colors.yellow);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return buildChart(54, 95, respLineData, Colors.blue);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-      ]);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else {
-      return Column(
-        children: [
-          buildChart(18, 95, ecgLineData, Colors.green),
-          SizedBox(
-            height: SizeConfig.blockSizeVertical * 1,
-          ),
-          buildChart(18, 95, ppgLineData, Colors.yellow),
-          SizedBox(
-            height: SizeConfig.blockSizeVertical * 1,
-          ),
-          buildChart(18, 95, respLineData, Colors.blue),
-        ],
-      );
-    }
-  }
-
-  Widget displayValues() {
-    if (widget.selectedDevice.toLowerCase().contains("healthypi")) {
-      return Container(
-        height: SizeConfig.blockSizeVertical * 10,
-        width: SizeConfig.blockSizeHorizontal * 95,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Heart Rate: " + globalHeartRate.toString() + " bpm",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                width: 15,
-              ),
-              Text(
-                "SPO2: " + displaySpO2,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                width: 15,
-              ),
-              Text(
-                "Respiration: " + globalRespRate.toString() + " rpm",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                width: 15,
-              ),
-              Text(
-                "Temperature: " + globalTemp.toStringAsPrecision(3) + "\u00b0 C",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else if (widget.selectedDevice.contains("OpenOx")) {
-      return Container(
-        height: SizeConfig.blockSizeVertical * 10,
-        width: SizeConfig.blockSizeHorizontal * 95,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Heart Rate: " + globalHeartRate.toString() + " bpm",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                width: 15,
-              ),
-              Text(
-                "SPO2: " + displaySpO2,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                width: 15,
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      return Container();
-    }
-  }
-
   Widget displayHealthyPiCharts() {
-    if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ecgLineData, Colors.green);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return buildChart(54, 95, ppgLineData, Colors.yellow);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return buildChart(54, 95, respLineData, Colors.blue);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-      ]);
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ppgLineData, Colors.yellow),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-      return Column(children: [
-        buildChart(27, 95, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 1,
-        ),
-        buildChart(27, 95, respLineData, Colors.blue),
-      ]);
-    } else {
+    if(widget.selectedBoard == "Healthypi"){
       return Column(
         children: [
           Column(
@@ -849,7 +634,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     child: Text(
                       "HEART RATE ",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 8,
                         color: Colors.white,
                       ),
                     ),
@@ -861,7 +646,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     color: Colors.transparent,
                     child: Text( globalHeartRate.toString() + " bpm",
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         color: Colors.white,
                       ),
                     ),
@@ -869,9 +654,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(8, 95, ecgLineData, Colors.green),
+          buildChart(10, 95, ecgLineData, Colors.green),
           SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.2,
+            height: SizeConfig.blockSizeVertical * 0.1,
           ),
           Column(
               children: [
@@ -882,7 +667,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     child: Text(
                       "SPO2 ",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 8,
                         color: Colors.white,
                       ),
                     ),
@@ -894,7 +679,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     color: Colors.transparent,
                     child:  Text(displaySpO2,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         color: Colors.white,
                       ),
                     ),
@@ -902,9 +687,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(8, 95, ppgLineData, Colors.yellow),
+          buildChart(10, 95, ppgLineData, Colors.yellow),
           SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.2,
+            height: SizeConfig.blockSizeVertical * 0.1,
           ),
           Column(
               children: [
@@ -915,7 +700,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     child: Text(
                       "RESPIRATION RATE ",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 8,
                         color: Colors.white,
                       ),
                     ),
@@ -927,7 +712,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     color: Colors.transparent,
                     child: Text( globalRespRate.toString() + " rpm",
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         color: Colors.white,
                       ),
                     ),
@@ -935,9 +720,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(8, 95, respLineData, Colors.blue),
+          buildChart(10, 95, respLineData, Colors.blue),
           SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.2,
+            height: SizeConfig.blockSizeVertical * 0.1,
           ),
           Column(
               children: [
@@ -948,7 +733,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     child: Text(
                       "TEMPERATURE ",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 8,
                         color: Colors.white,
                       ),
                     ),
@@ -960,7 +745,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     color: Colors.transparent,
                     child: Text( globalTemp.toStringAsPrecision(3) + "\u00b0 C",
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         color: Colors.white,
                       ),
                     ),
@@ -971,6 +756,288 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
         ],
       );
+    }
+    else if(widget.selectedBoard == "ADS1292R Breakout/Shield"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(25, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "RESPIRATION RATE ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalRespRate.toString() + " rpm",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(25, 95, respLineData, Colors.blue),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "ADS1293 Breakout/Shield"){
+      return Column(
+        children: [
+          buildChart(15, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(15, 95, ppgLineData, Colors.yellow),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(15, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "AFE4490 Breakout/Shield"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(50, 95, ppgLineData, Colors.yellow),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "SPO2 ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child:  Text(displaySpO2,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "MAX86150 Breakout"){
+      return Column(
+        children: [
+          buildChart(15, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(15, 95, ppgLineData, Colors.yellow),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+          buildChart(15, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 2,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "Pulse Express (MAX30102/MAX32664D)"){
+      return Column(
+        children: [
+          buildChart(27, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          buildChart(27, 95, respLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "tinyGSR Breakout"){
+      return Column(
+        children: [
+          buildChart(54, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "MAX30003 ECG Breakout"){
+      return Column(
+        children: [
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "HEART RATE ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalHeartRate.toString() + " bpm",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+          buildChart(50, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "RESPIRATION RATE ",
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text( globalRespRate.toString() + " rpm",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+          ),
+        ],
+      );
+    }
+    else if(widget.selectedBoard == "MAX30001 ECG & BioZ Breakout"){
+      return Column(
+        children: [
+          buildChart(27, 95, ecgLineData, Colors.green),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+          buildChart(27, 95, ppgLineData, Colors.blue),
+          SizedBox(
+            height: SizeConfig.blockSizeVertical * 1,
+          ),
+        ],
+      );
+    }
+    else{
+      return Container();
     }
   }
 
@@ -993,7 +1060,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Widget _buildCharts() {
-    if(widget.selectedDevice.toLowerCase().contains("healthypi")){
       return Expanded(
           child: Container(
               color: Colors.black,
@@ -1008,27 +1074,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   ],
                 ),
               )));
-    }else{
-      return Expanded(
-          child: Container(
-              color: Colors.black,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: <Widget>[
-                    SizedBox(
-                      height: SizeConfig.blockSizeVertical * 1,
-                    ),
-                    displayCharts(),
-                    //displayPlots(),
-                    SizedBox(
-                      height: SizeConfig.blockSizeVertical * 1,
-                    ),
-                    displayValues(),
-                  ],
-                ),
-              )));
-    }
 
   }
 
@@ -1055,65 +1100,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   String debugText = "Console Inited...";
 
-  Widget displayECGCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("ECG: "),
-          Checkbox(
-              value: ecgCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  ecgCheckBoxValue = newValue!;
-                });
-                // print("ecgCheckBoxValue........"+ ecgCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
-
-  Widget displayPPGCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("PPG: "),
-          Checkbox(
-              value: ppgCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  ppgCheckBoxValue = newValue!;
-                });
-                // print("ppgCheckBoxValue........"+ ppgCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
-
-  Widget displayRESPCheckBoxes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text("Resp: "),
-          Checkbox(
-              value: respCheckBoxValue,
-              activeColor: Colors.green,
-              onChanged: (newValue) {
-                setState(() {
-                  respCheckBoxValue = newValue!;
-                });
-                // print("respCheckBoxValue........"+ respCheckBoxValue.toString());
-              }),
-        ],
-      ),
-    );
-  }
 
   Widget displayDisconnectButton() {
     return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
@@ -1150,125 +1136,27 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Future<void> _writeLogDataToFile(List<double> ecgData, List<double> ppgData, List<double> respData) async {
-    logConsole("Log data size: " + ecgData.length.toString());
-    logConsole("Log data size: " + ppgData.length.toString());
-    logConsole("Log data size: " + respData.length.toString());
+    //logConsole("Log data size: " + ecgData.length.toString());
+    //logConsole("Log data size: " + ppgData.length.toString());
+    //logConsole("Log data size: " + respData.length.toString());
 
     List<List<String>> dataList = []; //Outter List which contains the data List
 
     List<String> header = [];
 
-    if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == false) {
+    header.add("ECG");
+    header.add("PPG");
+    header.add("RESPIRATION");
 
-      header.add("ECG");
+    dataList.add(header);
 
-      dataList.add(header);
-
-      for (int i = 0; i < (ecgData.length-50); i++) {
-        List<String> dataRow = [
-          (ecgData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-
-      header.add("PPG");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (ppgData.length-50); i++) {
-        List<String> dataRow = [
-          (ppgData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-
-      header.add("RESPIRATION");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (respData.length-50); i++) {
-        List<String> dataRow = [
-          (respData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == false) {
-
-      header.add("ECG");
-      header.add("PPG");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (ecgData.length-50); i++) {
-        List<String> dataRow = [
-          (ecgData[i]).toString(),
-          (ppgData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else if (ecgCheckBoxValue == false &&
-        ppgCheckBoxValue == true &&
-        respCheckBoxValue == true) {
-
-      header.add("PPG");
-      header.add("RESPIRATION");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (ppgData.length-50); i++) {
-        List<String> dataRow = [
-          (ppgData[i]).toString(),
-          (respData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else if (ecgCheckBoxValue == true &&
-        ppgCheckBoxValue == false &&
-        respCheckBoxValue == true) {
-
-      header.add("ECG");
-      header.add("RESPIRATION");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (ecgData.length-50); i++) {
-        List<String> dataRow = [
-          (ecgData[i]).toString(),
-          (respData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
-
-    } else {
-      header.add("ECG");
-      header.add("PPG");
-      header.add("RESPIRATION");
-
-      dataList.add(header);
-
-      for (int i = 0; i < (ecgData.length-50); i++) {
-        List<String> dataRow = [
-          (ecgData[i]).toString(),
-          (ppgData[i]).toString(),
-          (respData[i]).toString(),
-        ];
-        dataList.add(dataRow);
-      }
+    for (int i = 0; i < (ecgData.length-50); i++) {
+      List<String> dataRow = [
+        (ecgData[i]).toString(),
+        (ppgData[i]).toString(),
+        (respData[i]).toString(),
+      ];
+      dataList.add(dataRow);
     }
 
 
@@ -1366,7 +1254,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
-      backgroundColor: WiserGlobal.appBackgroundColor,
+      backgroundColor: hPi4Global.appBackgroundColor,
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
@@ -1376,9 +1264,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           children: <Widget>[
             Image.asset('assets/proto-online-white.png',
                 fit: BoxFit.fitWidth, height: 30),
-            //displayECGCheckBoxes(),
-            //displayPPGCheckBoxes(),
-            //displayRESPCheckBoxes(),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
               child: MaterialButton(
@@ -1401,6 +1286,26 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 },
               ),
             ),
+            /*Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+              child: MaterialButton(
+                minWidth: 80.0,
+                color: startDataLogging ? Colors.grey:Colors.white,
+                child: Row(
+                  children: <Widget>[
+                    Text('Onboard Datalogger',
+                        style: new TextStyle(
+                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                onPressed: () async {
+
+                },
+              ),
+            ),*/
             displayDeviceName(),
             displayDisconnectButton(),
           ],

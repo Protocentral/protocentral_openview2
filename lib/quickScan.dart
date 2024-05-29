@@ -174,7 +174,7 @@ class _QuickScanPageState extends State<QuickScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: WiserGlobal.appBackgroundColor,
+        backgroundColor: hPi4Global.appBackgroundColor,
         appBar: AppBar(
           backgroundColor: hPi4Global.hpi4Color,
           leading:
