@@ -38,7 +38,7 @@ OpenView 2 is written on the [Flutter](https://flutter.dev/) and is fully open s
 
 ### Using on Desktop Platforms:
 
-1. Download the zip file from the [Releases](https://github.com/Protocentral/protocentral_openview_2/releases) page.
+1. Download the zip file from the [Releases](https://github.com/Protocentral/protocentral_openview2/releases) page.
 2. Extract the zip file installed
 3. Open the app in the folder extracted and run the application
 
