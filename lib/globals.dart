@@ -15,8 +15,12 @@ class hPi4Global {
   static const String UUID_CHAR_HIST = "cd5c1525-4448-7db8-ae4c-d1da8cba36d0";
 
   static const String UUID_SERVICE_CMD = "01bf7492-970f-8d96-d44d-9023c47faddc";
-  static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
-  static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
+  //static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
+  //static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
+
+  static const String UUID_SERV_CMD_DATA = "01bf7492-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_CMD = "01bf1528-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_CHAR_DATA = "01bf1527-970f-8d96-d44d-9023c47faddc";
 
   static const String UUID_ECG_SERVICE = "00001122-0000-1000-8000-00805f9b34fb";
   static const String UUID_ECG_CHAR = "00001424-0000-1000-8000-00805f9b34fb";
@@ -63,13 +67,19 @@ class hPi4Global {
   static const List<int> sessionLogDelete = [0x52];
   static const List<int> sessionLogWipeAll = [0x53];
   static const List<int> getSessionCount = [0x54];
-  static const List<int> getFWVersion = [0x55];
+
+  static const List<int> startSession = [0x55];
+  static const List<int> stopSession = [0x56];
+
+  static const List<int> setSessionOptions = [0x57];
+  static const List<int> getSessionOptions = [0x58];
 
   static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
   static const int CES_CMDIF_TYPE_DATA = 0x02;
   static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;
 
-  static StreamSubscription<ConnectionStateUpdate> connection = DeviceConnectionState.disconnected as StreamSubscription<ConnectionStateUpdate>;
+  static const List<int> WISER_CMD_SET_DEVICE_TIME = [0x41];
+
 }
 
 class BatteryLevelPainter extends CustomPainter {

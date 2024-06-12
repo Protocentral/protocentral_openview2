@@ -29,7 +29,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 late FlutterReactiveBle _fble;
 bool connectedToDevice = false;
 
-//late StreamSubscription<ConnectionStateUpdate> _connection;
+late StreamSubscription<ConnectionStateUpdate> _connection;
 
 String pcCurrentDeviceID = "";
 String pcCurrentDeviceName = "";
@@ -373,7 +373,7 @@ class _HomePageState extends State<HomePage> {
 
     _fble = await Provider.of<OpenViewBLEProvider>(context, listen: false).getBLE();
 
-    hPi4Global.connection = _fble.connectToDevice(id: currentDevice.id).listen(
+    _connection = _fble.connectToDevice(id: currentDevice.id).listen(
         (connectionStateUpdate) async {
       logConsole("Connecting device: " + connectionStateUpdate.toString());
       if (connectionStateUpdate.connectionState ==
@@ -387,14 +387,16 @@ class _HomePageState extends State<HomePage> {
         showLoadingIndicator("Connecting to device...", context);
         await _setMTU(currentDevice.id);
         if(connectedToDevice == true){
-          Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_)
-              => WaveFormsPage(
-                selectedBoard:_selectedBoard,
-                selectedDevice: pcCurrentDeviceName,
-                selectedDeviceID:pcCurrentDeviceID,
-                fble:_fble,
-              )));
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_)
+                => WaveFormsPage(
+                  selectedBoard:_selectedBoard,
+                  selectedDevice: pcCurrentDeviceName,
+                  currentDevice: currentDevice,
+                  fble:_fble,
+                  currConnection: _connection,
+                )));
+
         }
       } else if (connectionStateUpdate.connectionState ==
           DeviceConnectionState.disconnected) {
@@ -456,7 +458,7 @@ class _HomePageState extends State<HomePage> {
           'ADS1293 Breakout/Shield',
           'AFE4490 Breakout/Shield',
           'MAX86150 Breakout',
-          'Pulse Express (MAX30102/MAX32664D)',
+          'Pulse Express',
           'tinyGSR Breakout',
           'MAX30003 ECG Breakout',
           'MAX30001 ECG & BioZ Breakout'
@@ -484,7 +486,8 @@ class _HomePageState extends State<HomePage> {
     if(Platform.isAndroid || Platform.isIOS){
       return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
           builder: (context, bleScannerState, bleScanner, wiserBle, child) {
-            return Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+            return Column(mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                     child: Row(
@@ -555,65 +558,71 @@ class _HomePageState extends State<HomePage> {
                           itemCount: bleScannerState.discoveredDevices.length,
                           itemBuilder: (BuildContext context, int index) {
                             return Card(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
+                              child: Column(
                                   children: [
-                                    Icon(Icons.bluetooth),
-                                    Text(bleScannerState
-                                        .discoveredDevices[index].name),
                                     Padding(
-                                      padding:
-                                      const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                                      child: SignalStrengthIndicator.bars(
-                                        value: bleScannerState
-                                            .discoveredDevices.length >
-                                            0
-                                            ? 2 *
-                                            (bleScannerState
-                                                .discoveredDevices[index]
-                                                .rssi +
-                                                100) /
-                                            100
-                                            : 0, //patchBLE.patchRSSI / 100,
-                                        size: 25,
-                                        barCount: 4,
-                                        spacing: 0.2,
+                                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.bluetooth),
+                                          Text(bleScannerState
+                                              .discoveredDevices[index].name),
+                                          Padding(
+                                            padding:
+                                            const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                                            child: SignalStrengthIndicator.bars(
+                                              value: bleScannerState
+                                                  .discoveredDevices.length >
+                                                  0
+                                                  ? 2 *
+                                                  (bleScannerState
+                                                      .discoveredDevices[index]
+                                                      .rssi +
+                                                      100) /
+                                                  100
+                                                  : 0, //patchBLE.patchRSSI / 100,
+                                              size: 25,
+                                              barCount: 4,
+                                              spacing: 0.2,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                            const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                                            child: connectedToDevice
+                                                ? Container()
+                                                : MaterialButton(
+                                              minWidth: 80.0,
+                                              color: hPi4Global.hpi4Color,
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Text('Connect',
+                                                      style: new TextStyle(
+                                                          fontSize: 16.0,
+                                                          color: Colors.white)),
+                                                ],
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                BorderRadius.circular(8.0),
+                                              ),
+                                              onPressed: () async {
+                                                connectToDevice(
+                                                    context,
+                                                    bleScannerState
+                                                        .discoveredDevices[index]);
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Padding(
-                                      padding:
-                                      const EdgeInsets.fromLTRB(4, 0, 4, 0),
-                                      child: connectedToDevice
-                                          ? Container()
-                                          : MaterialButton(
-                                        minWidth: 80.0,
-                                        color: hPi4Global.hpi4Color,
-                                        child: Row(
-                                          children: <Widget>[
-                                            Text('Connect',
-                                                style: new TextStyle(
-                                                    fontSize: 16.0,
-                                                    color: Colors.white)),
-                                          ],
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                          BorderRadius.circular(8.0),
-                                        ),
-                                        onPressed: () async {
-                                          connectToDevice(
-                                              context,
-                                              bleScannerState
-                                                  .discoveredDevices[index]);
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ]
                               ),
+
+
                             );
                           }),
                   ),
@@ -654,7 +663,7 @@ class _HomePageState extends State<HomePage> {
               'ADS1293 Breakout/Shield',
               'AFE4490 Breakout/Shield',
               'MAX86150 Breakout',
-              'Pulse Express (MAX30102/MAX32664D)',
+              'Pulse Express',
               'tinyGSR Breakout',
               'MAX30003 ECG Breakout',
               'MAX30001 ECG & BioZ Breakout'

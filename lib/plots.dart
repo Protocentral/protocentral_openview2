@@ -1,9 +1,11 @@
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:convert/convert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'globals.dart';
 import 'home.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'states/OpenViewBLEProvider.dart';
 import 'dart:async';
 import 'dart:io';
+import 'onBoardDataLog.dart';
 
 
 import 'package:flutter/cupertino.dart';
@@ -22,18 +25,42 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
 
+typedef LogHeader = ({
+  int logFileID,
+  int sessionLength,
+  int sessionID,
+  int sessionType,
+  int rampUp,
+  int rampDown,
+  int platCurr,
+  int platTime,
+  int tpcsPW,
+  int tpcsIPI,
+  int tpcsTrainTime,
+  int tpcsTrainITI,
+  int tmSec,
+  int tmMin,
+  int tmHour,
+  int tmMday,
+  int tmMon,
+  int tmYear
+});
+
+
 class WaveFormsPage extends StatefulWidget {
   WaveFormsPage({Key? key,
     required this.selectedBoard,
     required this.selectedDevice,
-    required this.selectedDeviceID,
+    required this.currentDevice,
     required this.fble,
+    required this.currConnection,
   }) : super();
 
   final String selectedBoard;
   final String selectedDevice;
-  final String selectedDeviceID;
+  final DiscoveredDevice currentDevice;
   final FlutterReactiveBle fble;
+  final StreamSubscription<ConnectionStateUpdate> currConnection;
 
   @override
   _WaveFormsPageState createState() => _WaveFormsPageState();
@@ -92,7 +119,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   bool listeningTempStream = false;
   bool listeningHRVRespStream = false;
 
-  bool startDataLogging = false;
+  bool startAppLogging = false;
+  bool startFlashLogging = false;
+  bool startStreaming = false;
 
   int globalHeartRate = 0;
   int globalSpO2 = 0;
@@ -101,6 +130,66 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   int _globalBatteryLevel = 50;
 
   String displaySpO2 = "--" ;
+
+
+  bool streamStarted = false;
+
+  bool pcConnected = false;
+
+  late Stream<List<int>> _streamCommand;
+  late Stream<List<int>> _streamData;
+
+  late StreamSubscription _streamCommandSubscription;
+  late StreamSubscription _streamDataSubscription;
+
+  late QualifiedCharacteristic commandTxCharacteristic;
+  late QualifiedCharacteristic dataCharacteristic;
+
+  double displayPercent = 0;
+  double globalDisplayPercentOffset = 0;
+
+  int totalDataCounter = 0;
+  int totalUploadDataCounter = 0;
+  int totalUploadBytesCounter = 0;
+
+  int dataReceiveCounter = 0;
+  int globalTotalFiles = 0;
+
+  int totalSessionCount = 0;
+
+  List<int> currentFileData = [];
+  List<String> auditDevice = [];
+
+  int currentFileNumber = 0;
+  int currentFileExpectedLength = 0;
+  int currentFileDataCounter = 0;
+  int fetchedFileLength = 0;
+  int fetchedCurrentFilesLength = 0;
+  bool currentFileReceivedComplete = false;
+  bool fetchingFile = false;
+
+  List<int> logData = [];
+  int _globalReceivedData = 0;
+  int globalDataCounter = 0;
+  double _globalExpectedDataMB = 0;
+
+  String globalDeviceID = "";
+
+  int _globalExpectedLength = 1;
+  int tappedIndex = 0;
+  int _toggleValue = 0;
+
+  bool listeningDataStream = false;
+  bool listeningUploadStream = false;
+  bool listeningConnectionStream = false;
+  bool _listeningCommandStream = false;
+
+  late DiscoveredDevice globalDiscoveredDevice;
+
+  final _scrollController = ScrollController();
+
+  bool isSwitched = false;
+  var textValue = 'Switch is OFF';
 
 
   void logConsole(String logString) {
@@ -116,8 +205,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
 
-      subscribeToCharacteristics();
-      dataFormatBasedOnBoards();
+     //subscribeToLogCharacteristics();
+     // dataFormatBasedOnBoards();
 
     });
   }
@@ -138,52 +227,51 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     super.dispose();
   }
 
-
   void subscribeToCharacteristics(){
     ECGCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_ECG_CHAR),
         serviceId: Uuid.parse(hPi4Global.UUID_ECG_SERVICE),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     RESPCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_RESP_CHAR),
         serviceId: Uuid.parse(hPi4Global.UUID_ECG_SERVICE),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     PPGCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_HIST),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_HRV),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     BatteryCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_BATT),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_BATT),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     HRCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_HR),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_HR),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     SPO2Characteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_SPO2_CHAR),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_SPO2),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     TempCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_TEMP_CHAR),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_HEALTH_THERM),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     HRVRespCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_HRV),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_HRV),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
     CommandCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
         serviceId: Uuid.parse(hPi4Global.UUID_SERVICE_CMD),
-        deviceId: widget.selectedDeviceID);
+        deviceId: widget.currentDevice.id);
 
   }
 
@@ -204,7 +292,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     } else if (widget.selectedBoard == 'MAX86150 Breakout') {
       _startECG16Listening();
       _startPPG16Listening();
-    } else if (widget.selectedBoard == 'Pulse Express (MAX30102/MAX32664D)') {
+    } else if (widget.selectedBoard == 'Pulse Express') {
       _startECG32Listening();
       _startRESP32Listening();
     } else if (widget.selectedBoard == 'tinyGSR Breakout') {
@@ -226,7 +314,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       await _startListeningTemp();
     }
   }
-
 
   void closeAllStreams() async {
     if (listeningECGStream == true) {
@@ -260,24 +347,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     if (listeningTempStream == true) {
       await streamTempSubscription.cancel();
     }
-  }
 
-  Future<void> _startListeningBattery() async {
-    print("AKW: Started listening to Battery stream");
-    listeningBatteryStream = true;
+    if (_listeningCommandStream) {
+      _streamCommandSubscription.cancel();
+    }
 
-    await Future.delayed(Duration(seconds: 1), () async {
-      _streamBattery =
-          await widget.fble.subscribeToCharacteristic(BatteryCharacteristic);
-    });
-
-    streamBatterySubscription = _streamBattery.listen((event) {
-      // print("AKW: Rx Battery: " + event.toString());
-      setStateIfMounted(() {
-        _globalBatteryLevel = event[0];
-        print("AKW: Rx Battery: " + event[0].toString());
-      });
-    });
+    if (listeningDataStream) {
+      _streamDataSubscription.cancel();
+    }
   }
 
   Future<void> _startListeningHR() async {
@@ -378,7 +455,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ecgList.forEach((element) {
           setStateIfMounted(() {
             ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               ecgDataLog.add(element.toDouble());
             }
           });
@@ -414,7 +491,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ecgList.forEach((element) {
           setStateIfMounted(() {
             ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               ecgDataLog.add(element.toDouble());
             }
           });
@@ -449,7 +526,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ppgList.forEach((element) {
           setStateIfMounted(() {
             ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               ppgDataLog.add(element.toDouble());
             }
           });
@@ -484,7 +561,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ppgList.forEach((element) {
           setStateIfMounted(() {
             ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               ppgDataLog.add(element.toDouble());
             }
           });
@@ -518,7 +595,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         respList.forEach((element) {
           setStateIfMounted(() {
             respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               respDataLog.add(element.toDouble());
             }
           });
@@ -556,7 +633,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         respList.forEach((element) {
           setStateIfMounted(() {
             respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-            if(startDataLogging == true){
+            if(startAppLogging == true){
               respDataLog.add(element.toDouble());
             }
           });
@@ -930,7 +1007,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ],
       );
     }
-    else if(widget.selectedBoard == "Pulse Express (MAX30102/MAX32664D)"){
+    else if(widget.selectedBoard == "Pulse Express"){
       return Column(
         children: [
           buildChart(27, 95, ecgLineData, Colors.green),
@@ -1041,25 +1118,401 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     }
   }
 
+  Widget displayHealthyPiMoveCharts(){
+    return Column(
+      children: [
+        Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text(
+                    "HEART RATE ",
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text( globalHeartRate.toString() + " bpm",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ]
+        ),
+        buildChart(10, 70, ecgLineData, Colors.green),
+        SizedBox(
+          height: SizeConfig.blockSizeVertical * 0.1,
+        ),
+        Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text(
+                    "SPO2 ",
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child:  Text(displaySpO2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ]
+        ),
+        buildChart(10, 70, ppgLineData, Colors.yellow),
+        SizedBox(
+          height: SizeConfig.blockSizeVertical * 0.1,
+        ),
+        Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text(
+                    "RESPIRATION RATE ",
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text( globalRespRate.toString() + " rpm",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ]
+        ),
+        buildChart(10, 70, respLineData, Colors.blue),
+        SizedBox(
+          height: SizeConfig.blockSizeVertical * 0.1,
+        ),
+        Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text(
+                    "TEMPERATURE ",
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Text( globalTemp.toStringAsPrecision(3) + "\u00b0 C",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ]
+        ),
+
+      ],
+    );
+  }
+
   Widget displayDeviceName() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            "Connected To:    " + widget.selectedDevice + " / " + widget.selectedBoard,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-            ),
+          Column(
+              children: [
+                Text(
+                  "Connected: " + widget.selectedDevice + " ( " + widget.currentDevice.id +" )",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  "Board: " + widget.selectedBoard,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ]
           ),
+
         ],
       ),
     );
   }
 
+  Future<void> _sendCurrentDateTime() async {
+    /* Send current DataTime to wiser device - Bluetooth Packet format
+
+     | Byte  | Value
+     ----------------
+     | 0 | WISER_CMD_SET_DEVICE_TIME (0x41)
+     | 1 | sec
+     | 2 | min
+     | 3 | hour
+     | 4 | mday(day of the month)
+     | 5 | month
+     | 6 | year
+
+     */
+
+    List<int> commandDateTimePacket = [];
+
+    var dt = DateTime.now();
+    String cdate = DateFormat("yy").format(DateTime.now());
+    print(cdate);
+    print(dt.month);
+    print(dt.day);
+    print(dt.hour);
+    print(dt.minute);
+    print(dt.second);
+
+    ByteData sessionParametersLength = new ByteData(8);
+    commandDateTimePacket.addAll(hPi4Global.WISER_CMD_SET_DEVICE_TIME);
+
+    sessionParametersLength.setUint8(0, dt.second);
+    sessionParametersLength.setUint8(1, dt.minute);
+    sessionParametersLength.setUint8(2, dt.hour);
+    sessionParametersLength.setUint8(3, dt.day);
+    sessionParametersLength.setUint8(4, dt.month);
+    sessionParametersLength.setUint8(5, int.parse(cdate));
+
+    Uint8List cmdByteList = sessionParametersLength.buffer.asUint8List(0, 6);
+
+    logConsole("AKW: Sending DateTime information: " + cmdByteList.toString());
+
+    commandDateTimePacket.addAll(cmdByteList);
+
+    logConsole("AKW: Sending DateTime Command: " + commandDateTimePacket.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
+        value: commandDateTimePacket);
+    print("DateTime Sent");
+  }
+
   Widget _buildCharts() {
+    if(widget.currentDevice.name.contains("healthypi move")){
+      return Expanded(
+          child: Row(
+              children: <Widget>[
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                        //color: Colors.white,
+                        color: Colors.transparent,
+                        width: SizeConfig.blockSizeHorizontal * 20,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: <Widget>[
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                child: MaterialButton(
+                                  minWidth: 80.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      startStreaming ? Text('Stop',
+                                          style: new TextStyle(fontSize: 16.0, color: Colors.black))
+                                          : Text('Start', style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+                                    if(startStreaming == false){
+                                      setState((){
+                                        startStreaming = true;
+                                      });
+                                      subscribeToCharacteristics();
+                                      dataFormatBasedOnBoards();
+                                    }else{
+                                      closeAllStreams();
+                                      ecgLineData.clear();
+                                      ppgLineData.clear();
+                                      respLineData.clear();
+                                      setState((){
+                                        startStreaming = false;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                child: MaterialButton(
+                                  minWidth: 80.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Log to APP',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+                                    setState(() {
+                                      startAppLogging = true;
+                                    });
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                child: MaterialButton(
+                                  minWidth: 80.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Log to Flash',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(builder: (_)
+                                        => Fetchlogs(
+                                          selectedBoard:widget.selectedBoard,
+                                          selectedDevice: widget.selectedDevice,
+                                          currentDevice: widget.currentDevice,
+                                          fble:widget.fble,
+                                          currConnection: widget.currConnection,
+                                        )));
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                child: MaterialButton(
+                                  minWidth: 80.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Set Time',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+                                    _sendCurrentDateTime();
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                child: MaterialButton(
+                                  minWidth: 80.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Disconnect',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+                                    if(startAppLogging == true){
+                                      startAppLogging = false;
+                                      _writeLogDataToFile(ecgDataLog, ppgDataLog,respDataLog);
+                                    }else{
+                                      closeAllStreams();
+                                      await _disconnect();
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+
+                            ],
+                          ),
+                        )),
+                ),
+                SizedBox(
+                  width: SizeConfig.blockSizeHorizontal * 1,
+                ),
+                Container(
+                    color: Colors.black,
+                    width: SizeConfig.blockSizeHorizontal * 76,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: <Widget>[
+                          SizedBox(
+                            height: SizeConfig.blockSizeVertical * 1,
+                          ),
+                          displayHealthyPiMoveCharts(),
+                        ],
+                      ),
+                    )),
+              ]
+          )
+        );
+    }else{
       return Expanded(
           child: Container(
               color: Colors.black,
@@ -1074,6 +1527,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   ],
                 ),
               )));
+    }
+
 
   }
 
@@ -1100,7 +1555,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   String debugText = "Console Inited...";
 
-
   Widget displayDisconnectButton() {
     return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
         builder: (context, bleScannerState, bleScanner, wiserBle, child) {
@@ -1111,7 +1565,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           color: Colors.red,
           child: Row(
             children: <Widget>[
-              Text('Stop',
+              Text('Disconnect',
                   style: new TextStyle(fontSize: 18.0, color: Colors.white)),
             ],
           ),
@@ -1119,8 +1573,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             borderRadius: BorderRadius.circular(8.0),
           ),
           onPressed: () async {
-            if(startDataLogging == true){
-              startDataLogging = false;
+            if(startAppLogging == true){
+              startAppLogging = false;
               _writeLogDataToFile(ecgDataLog, ppgDataLog,respDataLog);
             }else{
               closeAllStreams();
@@ -1234,7 +1688,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       if (connectedToDevice == true) {
         showLoadingIndicator("Disconnecting....", context);
         await Future.delayed(Duration(seconds: 6), () async {
-          await hPi4Global.connection.cancel();
+          await widget.currConnection.cancel();
           setState(() {
             connectedToDevice = false;
             pcCurrentDeviceID = "";
@@ -1250,6 +1704,138 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     }
   }
 
+  Widget LogToAppButton(){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: startAppLogging ? Colors.grey:Colors.white,
+        child: Row(
+          children: <Widget>[
+            Text('Log to App',
+                style: new TextStyle(
+                    fontSize: 16.0, color: hPi4Global.hpi4Color)),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          setState(() {
+            startAppLogging = true;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget LogToFlashButton(){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: startAppLogging ? Colors.grey:Colors.white,
+        child: Row(
+          children: <Widget>[
+            Text('Log to Flash',
+                style: new TextStyle(
+                    fontSize: 16.0, color: hPi4Global.hpi4Color)),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_)
+              => Fetchlogs(
+                selectedBoard:widget.selectedBoard,
+                selectedDevice: widget.selectedDevice,
+                currentDevice: widget.currentDevice,
+                fble:widget.fble,
+                currConnection: widget.currConnection,
+              )));
+
+        },
+      ),
+    );
+  }
+
+  Widget StartAndStopButton(){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: startStreaming ? Colors.red:Colors.green,
+        child: Row(
+          children: <Widget>[
+            startStreaming ? Text('Stop',
+                style: new TextStyle(fontSize: 16.0, color: Colors.white))
+                : Text('Start', style: new TextStyle(
+                fontSize: 16.0, color: Colors.white)),
+
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          if(startStreaming == false){
+            setState((){
+              startStreaming = true;
+            });
+            subscribeToCharacteristics();
+            dataFormatBasedOnBoards();
+          }else{
+            closeAllStreams();
+            ecgLineData.clear();
+            ppgLineData.clear();
+            respLineData.clear();
+            setState((){
+              startStreaming = false;
+            });
+          }
+        },
+      ),
+    );
+  }
+
+   Widget displayAppBarButtons(){
+    if(widget.currentDevice.name.contains("healthypi move")){
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          Row(
+              children: <Widget>[
+                Image.asset('assets/proto-online-white.png',
+                    fit: BoxFit.fitWidth, height: 30),
+                displayDeviceName(),
+              ]
+          ),
+        ],
+      );
+    }else{
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          Column(
+              children: <Widget>[
+                Image.asset('assets/proto-online-white.png',
+                    fit: BoxFit.fitWidth, height: 30),
+                displayDeviceName(),
+
+              ]
+          ),
+          LogToAppButton(),
+          LogToFlashButton(),
+          StartAndStopButton(),
+          displayDisconnectButton(),
+        ],
+      );
+    }
+  }
 
   Widget build(BuildContext context) {
     SizeConfig().init(context);
@@ -1258,58 +1844,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            Image.asset('assets/proto-online-white.png',
-                fit: BoxFit.fitWidth, height: 30),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: MaterialButton(
-                minWidth: 80.0,
-                color: startDataLogging ? Colors.grey:Colors.white,
-                child: Row(
-                  children: <Widget>[
-                    Text('Start Logging',
-                        style: new TextStyle(
-                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
-                  ],
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                onPressed: () async {
-                  setState(() {
-                    startDataLogging = true;
-                  });
-                },
-              ),
-            ),
-            /*Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: MaterialButton(
-                minWidth: 80.0,
-                color: startDataLogging ? Colors.grey:Colors.white,
-                child: Row(
-                  children: <Widget>[
-                    Text('Onboard Datalogger',
-                        style: new TextStyle(
-                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
-                  ],
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                onPressed: () async {
-
-                },
-              ),
-            ),*/
-            displayDeviceName(),
-            displayDisconnectButton(),
-          ],
-        ),
+        leading: null,
+        title:  displayAppBarButtons(),
       ),
       body: Center(
         child: Padding(
@@ -1319,6 +1855,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               _buildCharts(),
+              //showPages(),
             ],
           ),
         ),

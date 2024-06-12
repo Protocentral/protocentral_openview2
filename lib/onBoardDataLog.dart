@@ -1,26 +1,26 @@
 import 'dart:ffi';
-import 'dart:io';
-import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-
-import 'package:signal_strength_indicator/signal_strength_indicator.dart';
-import 'ble/ble_scanner.dart';
-
-import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
-import 'globals.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'states/OpenViewBLEProvider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
-import 'dart:async';
-
-import 'dart:typed_data';
+import 'globals.dart';
 import 'home.dart';
+import 'sizeConfig.dart';
 
+import 'ble/ble_scanner.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'states/OpenViewBLEProvider.dart';
+import 'dart:async';
+import 'dart:io';
+import 'plots.dart';
+
+import 'package:flutter/cupertino.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
 
 typedef LogHeader = ({
@@ -44,26 +44,31 @@ typedef LogHeader = ({
   int tmYear
 });
 
-class FetchLogData extends StatefulWidget {
-  const FetchLogData(
-      {Key? key,
-        required this.title,
-        //required this.currentDevice,
-        //required this.currConnection,
-        //required this.fble,
-      })
-      : super(key: key);
+class Fetchlogs extends StatefulWidget {
+  Fetchlogs({Key? key,
+    required this.selectedBoard,
+    required this.selectedDevice,
+    required this.currentDevice,
+    required this.fble,
+    required this.currConnection,
+  }) : super();
 
-  final String title;
-  //final DiscoveredDevice currentDevice;
-  //final StreamSubscription<ConnectionStateUpdate> currConnection;
-  //final FlutterReactiveBle fble;
+  final String selectedBoard;
+  final String selectedDevice;
+  final DiscoveredDevice currentDevice;
+  final FlutterReactiveBle fble;
+  final StreamSubscription<ConnectionStateUpdate> currConnection;
 
   @override
-  _FetchLogDataState createState() => _FetchLogDataState();
+  _FetchlogsState createState() => _FetchlogsState();
 }
 
-class _FetchLogDataState extends State<FetchLogData> {
+class _FetchlogsState extends State<Fetchlogs> {
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  Key key = UniqueKey();
+
+  ///////fetch logs code
+
   bool streamStarted = false;
 
   bool pcConnected = false;
@@ -119,22 +124,20 @@ class _FetchLogDataState extends State<FetchLogData> {
 
   final _scrollController = ScrollController();
 
+
+
+  void logConsole(String logString) async {
+    print("AKW - " + logString);
+    debugText += logString;
+    debugText += "\n";
+  }
+
   @override
   void initState() {
-    // widget.stopScan();
-    tappedIndex = 0;
-
     pcConnected = true;
     connectedToDevice = true;
 
-    /*dataCharacteristic = QualifiedCharacteristic(
-        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD_DATA),
-        serviceId: Uuid.parse(hPi4Global.UUID_SERVICE_CMD),
-        deviceId: widget.currentDevice.id);
-    commandTxCharacteristic = QualifiedCharacteristic(
-        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
-        serviceId: Uuid.parse(hPi4Global.UUID_SERVICE_CMD),
-        deviceId: widget.currentDevice.id);*/
+    subscribeToCharacteristics();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await _fetchLogCount(widget.currentDevice.id, context);
@@ -143,13 +146,10 @@ class _FetchLogDataState extends State<FetchLogData> {
 
     super.initState();
 
-    //Wakelock.enable();
   }
 
   @override
-  void dispose() async {
-    await closeAllStreams();
-    await _disconnect();
+  dispose() {
     super.dispose();
   }
 
@@ -179,8 +179,21 @@ class _FetchLogDataState extends State<FetchLogData> {
 
   int logFileCount = 0;
 
+  void subscribeToCharacteristics(){
+    dataCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_DATA),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
+        deviceId: widget.currentDevice.id);
+
+    commandTxCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
+        deviceId: widget.currentDevice.id);
+
+  }
+
   Future<void> _startListeningCommand(String deviceID) async {
-    /*_listeningCommandStream = true;
+    _listeningCommandStream = true;
     //int nonZeroFiles = 0;
 
     //int _fetchStartFile = 0;
@@ -191,7 +204,7 @@ class _FetchLogDataState extends State<FetchLogData> {
 
     _streamCommandSubscription = _streamCommand.listen((value) async {
       print("CMD Stream: " + value.length.toString());
-    });*/
+    });
   }
 
   Future waitWhile(bool test(), [Duration pollInterval = Duration.zero]) {
@@ -211,50 +224,11 @@ class _FetchLogDataState extends State<FetchLogData> {
   bool isTransfering = false;
   bool isFetchIconTap = false;
 
-  void logConsole(String logString) async {
-    print("AKW - " + logString);
-    debugText += logString;
-    debugText += "\n";
-  }
-
   String connUpdate = "";
 
   int logIndexNumElements = 0;
 
   static const int WISER_FILE_HEADER_LEN = 28;
-
-  Future<void> _showDownloadSuccessDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Downloaded'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 72,
-                ),
-                Center(
-                    child: Text('File downloaded successfully!. Please check in the downloads')),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Future<void> _writeLogDataToFile(List<int> mData, int sessionID) async {
     logConsole("Log data size: " + mData.length.toString());
@@ -315,7 +289,7 @@ class _FetchLogDataState extends State<FetchLogData> {
 
   Future<void> _startListeningData(
       String deviceID, int expectedLength, int sessionID) async {
-    /*listeningDataStream = true;
+    listeningDataStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
       _streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
     });
@@ -445,7 +419,7 @@ class _FetchLogDataState extends State<FetchLogData> {
       logData.clear();
       }
       }
-    });*/
+    });
   }
 
   double fileUploadDisplayPercent = 0;
@@ -474,20 +448,112 @@ class _FetchLogDataState extends State<FetchLogData> {
     );
   }
 
+  void setStateIfMounted(f) {
+    if (mounted) setState(f);
+  }
+
+  String debugText = "Console Inited...";
+
+
+  Widget displayDisconnectButton() {
+    return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
+        builder: (context, bleScannerState, bleScanner, wiserBle, child) {
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: MaterialButton(
+              minWidth: 100.0,
+              color: Colors.red,
+              child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text('Close',
+                      style: new TextStyle(fontSize: 18.0, color: Colors.white)),
+                ],
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              onPressed: () async {
+                //closeAllStreams();
+               // await _disconnect();
+                Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_)
+                    => WaveFormsPage(
+                      selectedBoard:widget.selectedBoard,
+                      selectedDevice: widget.selectedDevice,
+                      currentDevice: widget.currentDevice,
+                      fble:widget.fble,
+                      currConnection: widget.currConnection,
+                    )));
+
+              },
+            ),
+          );
+        });
+  }
+
+
+  Future<void> _showDownloadSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Downloaded'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 72,
+                ),
+                Center(
+                    child: Text('File downloaded successfully!. Please check in the downloads')),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () async{
+                //Navigator.pop(context);
+                closeAllStreams();
+                await _disconnect();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (_) => HomePage(title: 'HealthyPi5')),
+                );
+
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _disconnect() async {
-   /* //String deviceID = patchCurrentMAC;
-    fetchingFile = false;
     try {
       logConsole('Disconnecting ');
-      if (connectedToDevice == true) await widget.currConnection.cancel();
+      if (connectedToDevice == true) {
+        showLoadingIndicator("Disconnecting....", context);
+        await Future.delayed(Duration(seconds: 6), () async {
+          await widget.currConnection.cancel();
+          setState(() {
+            connectedToDevice = false;
+            pcCurrentDeviceID = "";
+            pcCurrentDeviceName = "";
+          });
+        });
+        //Navigator.pop(context);
+      }
     } on Exception catch (e, _) {
       logConsole("Error disconnecting from a device: $e");
     } finally {
       // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
-    }*/
+    }
   }
-
-  String debugText = "Console Inited...";
 
   Widget _getDeviceCard() {
     return Padding(
@@ -508,8 +574,8 @@ class _FetchLogDataState extends State<FetchLogData> {
                             padding: const EdgeInsets.fromLTRB(
                                 8, 4, 8, 4), // .all(8.0),
                             child: Text(
-                              "Connected to Device: " ,
-                                  //+ widget.currentDevice.name,
+                              "Connected to Device: " +
+                                  widget.currentDevice.name,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -522,10 +588,10 @@ class _FetchLogDataState extends State<FetchLogData> {
                             padding: const EdgeInsets.all(8.0),
                             child: MaterialButton(
                               onPressed: () async {
-                                /*await _fetchLogCount(
+                                await _fetchLogCount(
                                     widget.currentDevice.id, context);
                                 await _fetchLogIndex(
-                                    widget.currentDevice.id, context);*/
+                                    widget.currentDevice.id, context);
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
@@ -554,17 +620,12 @@ class _FetchLogDataState extends State<FetchLogData> {
     );
   }
 
-  bool _endFetchEnabled = false;
-
-  //late StreamSubscription<ConnectionStateUpdate> _connection;
-  bool connectedToDevice = false;
-
   Future<void> _fetchLogCount(String deviceID, BuildContext context) async {
     logConsole("Fetch log count initiated");
     showLoadingIndicator("Fetching logs count...", context);
     await _startListeningCommand(deviceID);
     await _startListeningData(deviceID, 0, 0);
-    await Future.delayed(Duration(seconds: 2), () async {
+    await Future.delayed(Duration(seconds: 4), () async {
       await _sendCommand(hPi4Global.getSessionCount, deviceID);
     });
     Navigator.pop(context);
@@ -575,7 +636,7 @@ class _FetchLogDataState extends State<FetchLogData> {
     showLoadingIndicator("Fetching logs...", context);
     await _startListeningCommand(deviceID);
     await _startListeningData(deviceID, 0, 0);
-    await Future.delayed(Duration(seconds: 2), () async {
+    await Future.delayed(Duration(seconds: 4), () async {
       await _sendCommand(hPi4Global.sessionLogIndex, deviceID);
       //await _sendCommand(WiserGlobal.getSessionCount, deviceID);
     });
@@ -594,7 +655,7 @@ class _FetchLogDataState extends State<FetchLogData> {
       await _sendCommand(commandFetchLogFile, deviceID);
     });
     Navigator.pop(context);
-    //await _fetchLogIndex(widget.currentDevice.id, context);
+    await _fetchLogIndex(widget.currentDevice.id, context);
   }
 
   Future<void> _fetchLogFile(
@@ -626,24 +687,8 @@ class _FetchLogDataState extends State<FetchLogData> {
     logConsole(
         "Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
 
-    /*await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
-        value: commandList);*/
-  }
-
-  Future<void> cancelAction() async {
-    if (_listeningCommandStream) {
-      _streamCommandSubscription.cancel();
-    }
-    if (listeningDataStream) {
-      _streamDataSubscription.cancel();
-    }
-    await _disconnect();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-          builder: (_) => HomePage(
-            title: 'wiser',
-          )),
-    );
+    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
+        value: commandList);
   }
 
   double count = 0.1;
@@ -691,7 +736,7 @@ class _FetchLogDataState extends State<FetchLogData> {
       ),
     )
         : Container(
-        height: 400,
+        height: 600,
         child: Scrollbar(
           //isAlwaysShown: true,
           controller: _scrollController,
@@ -730,12 +775,12 @@ class _FetchLogDataState extends State<FetchLogData> {
                                   contentPadding: EdgeInsets.only(
                                       left: 0.0, right: 0.0),
                                   minLeadingWidth: 10,
-                                  leading: CircleAvatar(
+                                  /*leading: CircleAvatar(
                                     backgroundColor: Colors.white,
                                     child: Image.asset(
                                         'assets/wiser_graphics_icon_tdcs.png',
                                         fit: BoxFit.contain),
-                                  ),
+                                  ),*/
                                   title: Column(
                                     children: [
                                       Row(children: [
@@ -803,6 +848,18 @@ class _FetchLogDataState extends State<FetchLogData> {
                                                 : IconButton(
                                               onPressed:
                                                   () async {
+
+                                              },
+                                              icon: Icon(
+                                                  Icons.file_open_outlined),
+                                              color: hPi4Global
+                                                  .hpi4Color,
+                                            ),
+                                            isTransfering
+                                                ? Container()
+                                                : IconButton(
+                                              onPressed:
+                                                  () async {
                                                 setState(() {
                                                   isFetchIconTap =
                                                   true;
@@ -810,7 +867,7 @@ class _FetchLogDataState extends State<FetchLogData> {
                                                       index;
                                                 });
 
-                                               /* await _fetchLogFile(
+                                                await _fetchLogFile(
                                                     widget
                                                         .currentDevice
                                                         .id,
@@ -819,7 +876,7 @@ class _FetchLogDataState extends State<FetchLogData> {
                                                         .logFileID,
                                                     logHeaderList[
                                                     index]
-                                                        .sessionLength);*/
+                                                        .sessionLength);
                                               },
                                               icon: Icon(Icons
                                                   .download_rounded),
@@ -831,14 +888,14 @@ class _FetchLogDataState extends State<FetchLogData> {
                                                 : IconButton(
                                               onPressed:
                                                   () async {
-                                                /*_deleteLogIndex(
+                                                _deleteLogIndex(
                                                     widget
                                                         .currentDevice
                                                         .id,
                                                     logHeaderList[
                                                     index]
                                                         .logFileID,
-                                                    context);*/
+                                                    context);
                                               },
                                               icon: Icon(
                                                   Icons.delete),
@@ -893,75 +950,89 @@ class _FetchLogDataState extends State<FetchLogData> {
         ));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: hPi4Global.appBackgroundColor,
-        //key: _scaffoldKey,
-        appBar: AppBar(
-          //backgroundColor: PatchGlobal.patchWebAppBarSecondaryColor,
-          backgroundColor: hPi4Global.hpi4Color,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Image.asset('assets/proto-online-white.png',
-                  fit: BoxFit.fitWidth, height: 30),
-            ],
-          ),
+  Widget GetData(){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: Colors.white,
+        child: Row(
+          children: <Widget>[
+            Text('Get Logs',
+                style: new TextStyle(
+                    fontSize: 16.0, color: hPi4Global.hpi4Color)),
+          ],
         ),
-        body: Center(child: Consumer2<ConnectionStateUpdate, BleScannerState>(
-            builder: (context, connStateUpdates, bleScannerState, child) {
-              return SingleChildScrollView(
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _getDeviceCard(),
-                        _getSessionIDList(),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          await _fetchLogCount(
+              widget.currentDevice.id, context);
+          await _fetchLogIndex(
+              widget.currentDevice.id, context);
+        },
+      ),
+    );
+  }
+
+
+
+  Widget build(BuildContext context) {
+    SizeConfig().init(context);
+    return Scaffold(
+      backgroundColor: hPi4Global.appBackgroundColor,
+      key: _scaffoldKey,
+      appBar: AppBar(
+        backgroundColor: hPi4Global.hpi4Color,
+        leading: null,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Row(
+                children: <Widget>[
+                  Image.asset('assets/proto-online-white.png',
+                      fit: BoxFit.fitWidth, height: 30),
+                  GetData(),
+                ]
+            ),
+          ],
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    //_getDeviceCard(),
+                    _getSessionIDList(),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: MaterialButton(
-                                      onPressed: () async {
-                                        await cancelAction();
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: <Widget>[
-                                            Icon(
-                                              Icons.cancel,
-                                              color: Colors.white,
-                                            ),
-                                            const Text(
-                                              ' Disconnect & Close ',
-                                              style: TextStyle(
-                                                  fontSize: 16, color: Colors.white),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: displayDisconnectButton(),
                               ),
                             ],
                           ),
-                        ),
-                      ]));
-            })));
+                        ],
+                      ),
+                    ),
+                  ])),
+        ),
+      ),
+    );
   }
 }

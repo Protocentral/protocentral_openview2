@@ -40,7 +40,7 @@ class BleScanner implements ReactiveState<BleScannerState> {
       if (knownDeviceIndex >= 0) {
         _devices[knownDeviceIndex] = device;
       } else {
-        if (device.name.contains(" ")) {
+        if (device.name.contains(" ")||device.name.contains("-")||device.name.contains("_")) {
           _devices.add(device);
         }
         //_devices.add(device);

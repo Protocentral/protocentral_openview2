@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'globals.dart';
 import 'home.dart';
 import 'sizeConfig.dart';
-import 'onBoardDataLog.dart';
 
 import 'ble/ble_scanner.dart';
 import 'states/OpenViewBLEProvider.dart';
@@ -372,7 +371,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               pc_rx_state = CESState_Init;
             }
-            else if(widget.selectedPortBoard == "Pulse Express (MAX30102/MAX32664D)"){
+            else if(widget.selectedPortBoard == "Pulse Express"){
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -853,7 +852,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if(widget.selectedPortBoard == "Pulse Express (MAX30102/MAX32664D)"){
+    else if(widget.selectedPortBoard == "Pulse Express"){
       return Column(
         children: [
           buildChart(32, 95, ecgLineData, Colors.green),
@@ -1187,33 +1186,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 },
               ),
             ),
-            /*Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: MaterialButton(
-                minWidth: 80.0,
-                color: startDataLogging ? Colors.grey:Colors.white,
-                child: Row(
-                  children: <Widget>[
-                    Text('Onboard Datalogger',
-                        style: new TextStyle(
-                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
-                  ],
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                onPressed: () async {
-                  if (widget.selectedPort.isOpen) {
-                    widget.selectedPort.close();
-                  }
-                  Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_)
-                      => FetchLogData(
-                          title: "Openview"
-                      )));
-                },
-              ),
-            ),*/
             displayDeviceName(),
             displayDisconnectButton(),
           ],
