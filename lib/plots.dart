@@ -1285,6 +1285,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   late OverlayEntry overlayEntry1;
+  bool overlayFlag = false;
 
   void _showOverlay(BuildContext context) async {
     // Declaring and Initializing OverlayState and
@@ -1292,9 +1293,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     OverlayState overlayState = Overlay.of(context);
     //OverlayEntry overlayEntry1;
     overlayEntry1 = OverlayEntry(builder: (context) {
-
       // You can return any widget you like here
       // to be displayed on the Overlay
+      overlayFlag = true;
       return Positioned(
         left: MediaQuery.of(context).size.width * 0.3,
         top: MediaQuery.of(context).size.height * 0.2,
@@ -1402,9 +1403,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                   color: startStreaming ? Colors.red:Colors.green,
                                   child: Row(
                                     children: <Widget>[
-                                      startStreaming ? Text('Stop',
+                                      startStreaming ? Text('Stop stream',
                                           style: new TextStyle(fontSize: 16.0, color: Colors.black))
-                                          : Text('Start', style: new TextStyle(
+                                          : Text('Start stream', style: new TextStyle(
                                           fontSize: 16.0, color: Colors.black)),
                                     ],
                                   ),
@@ -1523,7 +1524,10 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     BorderRadius.circular(8.0),
                                   ),
                                   onPressed: () async {
-                                    overlayEntry1.remove();
+                                    if(overlayFlag == true){
+                                      overlayFlag = false;
+                                      overlayEntry1.remove();
+                                    }
                                     if(startAppLogging == true){
                                       startAppLogging = false;
                                       _writeLogDataToFile(ecgDataLog, ppgDataLog,respDataLog);
@@ -1687,8 +1691,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     await file.writeAsString(csv);
 
     print("File exported successfully!");
-
-    // Removing the first OverlayEntry from the Overlay
 
     await _showDownloadSuccessDialog();
 
