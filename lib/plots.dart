@@ -1284,6 +1284,49 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
+  late OverlayEntry overlayEntry1;
+
+  void _showOverlay(BuildContext context) async {
+    // Declaring and Initializing OverlayState and
+    // OverlayEntry objects
+    OverlayState overlayState = Overlay.of(context);
+    //OverlayEntry overlayEntry1;
+    overlayEntry1 = OverlayEntry(builder: (context) {
+
+      // You can return any widget you like here
+      // to be displayed on the Overlay
+      return Positioned(
+        left: MediaQuery.of(context).size.width * 0.3,
+        top: MediaQuery.of(context).size.height * 0.2,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: EdgeInsets.all(MediaQuery.of(context).size.height * 0.03),
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: MediaQuery.of(context).size.height * 0.1,
+            //color: Colors.white.withOpacity(0.3),
+            color: Colors.white,
+            child: Material(
+              color: Colors.transparent,
+              child: Text('data logging in the app...',
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.height * 0.03,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
+            ),
+          ),
+        ),
+      );
+    });
+
+    // Inserting the OverlayEntry into the Overlay
+    overlayState.insertAll([overlayEntry1]);
+
+    // Awaiting for 3 seconds
+    //await Future.delayed(Duration(seconds: 3));
+
+  }
+
   Future<void> _sendCurrentDateTime() async {
     /* Send current DataTime to wiser device - Bluetooth Packet format
 
@@ -1303,12 +1346,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
     var dt = DateTime.now();
     String cdate = DateFormat("yy").format(DateTime.now());
-    print(cdate);
+    /*print(cdate);
     print(dt.month);
     print(dt.day);
     print(dt.hour);
     print(dt.minute);
-    print(dt.second);
+    print(dt.second);*/
+
+    //showLoadingIndicator("setting time....", context);
 
     ByteData sessionParametersLength = new ByteData(8);
     commandDateTimePacket.addAll(hPi4Global.WISER_CMD_SET_DEVICE_TIME);
@@ -1329,6 +1374,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     logConsole("AKW: Sending DateTime Command: " + commandDateTimePacket.toString());
     await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
         value: commandDateTimePacket);
+
+    //Navigator.pop(context);
     print("DateTime Sent");
   }
 
@@ -1352,7 +1399,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                 const EdgeInsets.fromLTRB(4, 2, 4, 2),
                                 child: MaterialButton(
                                   minWidth: 80.0,
-                                  color: Colors.white,
+                                  color: startStreaming ? Colors.red:Colors.green,
                                   child: Row(
                                     children: <Widget>[
                                       startStreaming ? Text('Stop',
@@ -1404,6 +1451,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     setState(() {
                                       startAppLogging = true;
                                     });
+                                    _showOverlay(context);
                                   },
                                 ),
                               ),
@@ -1462,7 +1510,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                 const EdgeInsets.fromLTRB(4, 2, 4, 2),
                                 child: MaterialButton(
                                   minWidth: 80.0,
-                                  color: Colors.white,
+                                  //color: Colors.white,
+                                  color: Colors.red,
                                   child: Row(
                                     children: <Widget>[
                                       Text('Disconnect',style: new TextStyle(
@@ -1474,6 +1523,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     BorderRadius.circular(8.0),
                                   ),
                                   onPressed: () async {
+                                    overlayEntry1.remove();
                                     if(startAppLogging == true){
                                       startAppLogging = false;
                                       _writeLogDataToFile(ecgDataLog, ppgDataLog,respDataLog);
@@ -1637,6 +1687,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     await file.writeAsString(csv);
 
     print("File exported successfully!");
+
+    // Removing the first OverlayEntry from the Overlay
 
     await _showDownloadSuccessDialog();
 
@@ -1829,7 +1881,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               ]
           ),
           LogToAppButton(),
-          LogToFlashButton(),
+          //LogToFlashButton(),
           StartAndStopButton(),
           displayDisconnectButton(),
         ],
@@ -1844,7 +1896,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
-        leading: null,
+          automaticallyImplyLeading: false,
         title:  displayAppBarButtons(),
       ),
       body: Center(

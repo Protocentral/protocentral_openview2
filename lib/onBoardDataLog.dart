@@ -985,7 +985,7 @@ class _FetchlogsState extends State<Fetchlogs> {
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
-        leading: null,
+        automaticallyImplyLeading: false,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
