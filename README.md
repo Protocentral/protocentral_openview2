@@ -32,13 +32,13 @@ The Android and iOS mobile versions use BLE to connect to the boards (when used 
 
 ## Installing and using Protocentral OpenView 2
 
-You can download the latest version for your operating system from the [Releases](https://github.com/Protocentral/Protocentral_openview_2/releases) page.
+You can download the latest version for your operating system from the [Releases](https://github.com/Protocentral/Protocentral_openview2/releases) page.
 
 OpenView 2 is written on the [Flutter](https://flutter.dev/) and is fully open source. You can compile your own from the source code provide in this GitHub repository.
 
 ### Using on Desktop Platforms:
 
-1. Download the zip file from the [Releases](https://github.com/Protocentral/protocentral_openview_2/releases) page.
+1. Download the zip file from the [Releases](https://github.com/Protocentral/protocentral_openview2/releases) page.
 2. Extract the zip file installed
 3. Open the app in the folder extracted and run the application
 
