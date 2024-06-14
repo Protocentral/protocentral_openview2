@@ -24,28 +24,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
-
-typedef LogHeader = ({
-  int logFileID,
-  int sessionLength,
-  int sessionID,
-  int sessionType,
-  int rampUp,
-  int rampDown,
-  int platCurr,
-  int platTime,
-  int tpcsPW,
-  int tpcsIPI,
-  int tpcsTrainTime,
-  int tpcsTrainITI,
-  int tmSec,
-  int tmMin,
-  int tmHour,
-  int tmMday,
-  int tmMon,
-  int tmYear
-});
-
+//import 'package:mcumgr_flutter/mcumgr_flutter.dart';
 
 class WaveFormsPage extends StatefulWidget {
   WaveFormsPage({Key? key,
@@ -131,11 +110,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   String displaySpO2 = "--" ;
 
-
-  bool streamStarted = false;
-
-  bool pcConnected = false;
-
   late Stream<List<int>> _streamCommand;
   late Stream<List<int>> _streamData;
 
@@ -145,52 +119,16 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   late QualifiedCharacteristic commandTxCharacteristic;
   late QualifiedCharacteristic dataCharacteristic;
 
-  double displayPercent = 0;
-  double globalDisplayPercentOffset = 0;
-
-  int totalDataCounter = 0;
-  int totalUploadDataCounter = 0;
-  int totalUploadBytesCounter = 0;
-
-  int dataReceiveCounter = 0;
-  int globalTotalFiles = 0;
-
-  int totalSessionCount = 0;
-
-  List<int> currentFileData = [];
-  List<String> auditDevice = [];
-
-  int currentFileNumber = 0;
-  int currentFileExpectedLength = 0;
-  int currentFileDataCounter = 0;
-  int fetchedFileLength = 0;
-  int fetchedCurrentFilesLength = 0;
-  bool currentFileReceivedComplete = false;
-  bool fetchingFile = false;
-
-  List<int> logData = [];
-  int _globalReceivedData = 0;
-  int globalDataCounter = 0;
-  double _globalExpectedDataMB = 0;
-
-  String globalDeviceID = "";
-
-  int _globalExpectedLength = 1;
-  int tappedIndex = 0;
-  int _toggleValue = 0;
-
   bool listeningDataStream = false;
   bool listeningUploadStream = false;
   bool listeningConnectionStream = false;
   bool _listeningCommandStream = false;
 
-  late DiscoveredDevice globalDiscoveredDevice;
-
-  final _scrollController = ScrollController();
-
-  bool isSwitched = false;
-  var textValue = 'Switch is OFF';
-
+ /* final managerFactory: UpdateManagerFactory = FirmwareUpdateManagerFactory()
+// `deviceId` is a String with the device's MAC address (on Android) or UUID (on iOS)
+  final updateManager = await managerFactory.getUpdateManager(deviceId);
+// call `setup` before using the manager
+  final updateStream = updateManager.setup();*/
 
   void logConsole(String logString) {
     print("AKW - " + logString);
@@ -205,7 +143,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
 
-     //subscribeToLogCharacteristics();
+      subscribeToCharacteristics();
      // dataFormatBasedOnBoards();
 
     });
@@ -271,6 +209,16 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     CommandCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
         serviceId: Uuid.parse(hPi4Global.UUID_SERVICE_CMD),
+        deviceId: widget.currentDevice.id);
+
+    dataCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_DATA),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
+        deviceId: widget.currentDevice.id);
+
+    commandTxCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
         deviceId: widget.currentDevice.id);
 
   }
@@ -1328,8 +1276,88 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   }
 
+  Future<void> _showSetTimeDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Set Time'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.black,
+                  size: 50,
+                ),
+                Center(
+                    child: Column(
+                        children: <Widget>[
+                          Text('This function will set the time on the HealthyPi Move '
+                              'using the time on this mobile device!.',
+                            style: TextStyle(fontSize: 16, color: Colors.black,),),
+                          Text('Press OK to continue',style: TextStyle(fontSize: 16, color: Colors.black,),),
+                        ]
+                    ),
+                    ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async{
+                Navigator.pop(context);
+                _sendCurrentDateTime();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showCommandSentDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sent'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(
+                      children: <Widget>[
+                        Text('Command sent',style: TextStyle(fontSize: 16, color: Colors.black,),),
+                      ]
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async{
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _sendCurrentDateTime() async {
-    /* Send current DataTime to wiser device - Bluetooth Packet format
+    /* Send current DataTime to device - Bluetooth Packet format
 
      | Byte  | Value
      ----------------
@@ -1354,8 +1382,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print(dt.minute);
     print(dt.second);*/
 
-    //showLoadingIndicator("setting time....", context);
-
     ByteData sessionParametersLength = new ByteData(8);
     commandDateTimePacket.addAll(hPi4Global.WISER_CMD_SET_DEVICE_TIME);
 
@@ -1376,12 +1402,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
         value: commandDateTimePacket);
 
-    //Navigator.pop(context);
     print("DateTime Sent");
+
+    _showCommandSentDialog();
   }
 
   Widget _buildCharts() {
     if(widget.currentDevice.name.contains("healthypi move")){
+      //if(widget.currentDevice.name.contains("healthypi")||widget.currentDevice.name.contains("WISER")){
       return Expanded(
           child: Row(
               children: <Widget>[
@@ -1392,14 +1420,15 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         color: Colors.transparent,
                         width: SizeConfig.blockSizeHorizontal * 20,
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(0.0),
                           child: Column(
                             children: <Widget>[
                               Padding(
                                 padding:
-                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
                                 child: MaterialButton(
-                                  minWidth: 80.0,
+                                  minWidth: 60.0,
+                                  //height: 30.0,
                                   color: startStreaming ? Colors.red:Colors.green,
                                   child: Row(
                                     children: <Widget>[
@@ -1418,7 +1447,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                       setState((){
                                         startStreaming = true;
                                       });
-                                      subscribeToCharacteristics();
                                       dataFormatBasedOnBoards();
                                     }else{
                                       closeAllStreams();
@@ -1434,9 +1462,10 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                               ),
                               Padding(
                                 padding:
-                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
                                 child: MaterialButton(
-                                  minWidth: 80.0,
+                                  minWidth: 60.0,
+                                  //height: 30.0,
                                   color: Colors.white,
                                   child: Row(
                                     children: <Widget>[
@@ -1458,9 +1487,10 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                               ),
                               Padding(
                                 padding:
-                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
                                 child: MaterialButton(
-                                  minWidth: 80.0,
+                                  minWidth: 60.0,
+                                  //height: 30.0,
                                   color: Colors.white,
                                   child: Row(
                                     children: <Widget>[
@@ -1487,9 +1517,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                               ),
                               Padding(
                                 padding:
-                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
                                 child: MaterialButton(
-                                  minWidth: 80.0,
+                                  minWidth: 60.0,
                                   color: Colors.white,
                                   child: Row(
                                     children: <Widget>[
@@ -1502,15 +1532,37 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     BorderRadius.circular(8.0),
                                   ),
                                   onPressed: () async {
-                                    _sendCurrentDateTime();
+                                   // _sendCurrentDateTime();
+                                    _showSetTimeDialog();
                                   },
                                 ),
                               ),
+                              /*Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                                child: MaterialButton(
+                                  minWidth: 60.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Update DFU',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+
+                                  },
+                                ),
+                              ),*/
                               Padding(
                                 padding:
-                                const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
                                 child: MaterialButton(
-                                  minWidth: 80.0,
+                                  minWidth: 60.0,
                                   //color: Colors.white,
                                   color: Colors.red,
                                   child: Row(
@@ -1838,7 +1890,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             setState((){
               startStreaming = true;
             });
-            subscribeToCharacteristics();
             dataFormatBasedOnBoards();
           }else{
             closeAllStreams();
@@ -1856,6 +1907,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
    Widget displayAppBarButtons(){
     if(widget.currentDevice.name.contains("healthypi move")){
+     //if(widget.currentDevice.name.contains("healthypi")||widget.currentDevice.name.contains("WISER")){
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
