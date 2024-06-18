@@ -479,7 +479,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             }
           });
 
-          if (ppgDataCounter >= 128 * 6) {
+          if (ppgDataCounter >= 128 * 3) {
             ppgLineData.removeAt(0);
           }
         });
@@ -656,6 +656,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 2,
                     child: Text(
                       "HEART RATE ",
                       style: TextStyle(
@@ -669,6 +670,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 3.5,
                     child: Text( globalHeartRate.toString() + " bpm",
                       style: TextStyle(
                         fontSize: 12,
@@ -679,16 +681,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(10, 95, ecgLineData, Colors.green),
-          SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.1,
-          ),
+          buildChart(17, 95, ecgLineData, Colors.green),
           Column(
               children: [
                 Align(
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 2,
                     child: Text(
                       "SPO2 ",
                       style: TextStyle(
@@ -702,6 +702,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 3.5,
                     child:  Text(displaySpO2,
                       style: TextStyle(
                         fontSize: 12,
@@ -712,16 +713,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(10, 95, ppgLineData, Colors.yellow),
-          SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.1,
-          ),
+          buildChart(17, 95, ppgLineData, Colors.yellow),
           Column(
               children: [
                 Align(
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 2,
                     child: Text(
                       "RESPIRATION RATE ",
                       style: TextStyle(
@@ -735,6 +734,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 3.5,
                     child: Text( globalRespRate.toString() + " rpm",
                       style: TextStyle(
                         fontSize: 12,
@@ -745,16 +745,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-          buildChart(10, 95, respLineData, Colors.blue),
-          SizedBox(
-            height: SizeConfig.blockSizeVertical * 0.1,
-          ),
+          buildChart(16, 95, respLineData, Colors.blue),
           Column(
               children: [
                 Align(
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 2,
                     child: Text(
                       "TEMPERATURE ",
                       style: TextStyle(
@@ -768,6 +766,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     color: Colors.transparent,
+                    height: SizeConfig.blockSizeVertical * 3.5,
                     child: Text( globalTemp.toStringAsPrecision(3) + "\u00b0 C",
                       style: TextStyle(
                         fontSize: 12,
@@ -778,7 +777,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
               ]
           ),
-
         ],
       );
     }
@@ -1075,6 +1073,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 2,
                   child: Text(
                     "HEART RATE ",
                     style: TextStyle(
@@ -1088,6 +1087,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 3.5,
                   child: Text( globalHeartRate.toString() + " bpm",
                     style: TextStyle(
                       fontSize: 12,
@@ -1098,16 +1098,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               ),
             ]
         ),
-        buildChart(10, 70, ecgLineData, Colors.green),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 0.1,
-        ),
+        buildChart(17, 70, ecgLineData, Colors.green),
         Column(
             children: [
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 2,
                   child: Text(
                     "SPO2 ",
                     style: TextStyle(
@@ -1121,6 +1119,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 3.5,
                   child:  Text(displaySpO2,
                     style: TextStyle(
                       fontSize: 12,
@@ -1131,16 +1130,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               ),
             ]
         ),
-        buildChart(10, 70, ppgLineData, Colors.yellow),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 0.1,
-        ),
+        buildChart(17, 70, ppgLineData, Colors.yellow),
         Column(
             children: [
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 2,
                   child: Text(
                     "RESPIRATION RATE ",
                     style: TextStyle(
@@ -1154,6 +1151,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 3.5,
                   child: Text( globalRespRate.toString() + " rpm",
                     style: TextStyle(
                       fontSize: 12,
@@ -1164,16 +1162,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               ),
             ]
         ),
-        buildChart(10, 70, respLineData, Colors.blue),
-        SizedBox(
-          height: SizeConfig.blockSizeVertical * 0.1,
-        ),
+        buildChart(16, 70, respLineData, Colors.blue),
         Column(
             children: [
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 2,
                   child: Text(
                     "TEMPERATURE ",
                     style: TextStyle(
@@ -1187,6 +1183,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 alignment: Alignment.centerRight,
                 child: Container(
                   color: Colors.transparent,
+                  height: SizeConfig.blockSizeVertical * 3.5,
                   child: Text( globalTemp.toStringAsPrecision(3) + "\u00b0 C",
                     style: TextStyle(
                       fontSize: 12,
@@ -1605,12 +1602,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     color: Colors.black,
                     width: SizeConfig.blockSizeHorizontal * 76,
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(0.0),
                       child: Column(
                         children: <Widget>[
-                          SizedBox(
-                            height: SizeConfig.blockSizeVertical * 1,
-                          ),
                           displayHealthyPiMoveCharts(),
                         ],
                       ),
@@ -1623,18 +1617,14 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           child: Container(
               color: Colors.black,
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(0.0),
                 child: Column(
                   children: <Widget>[
-                    SizedBox(
-                      height: SizeConfig.blockSizeVertical * 1,
-                    ),
                     displayHealthyPiCharts(),
                   ],
                 ),
               )));
     }
-
 
   }
 
