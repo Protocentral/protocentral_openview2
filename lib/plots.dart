@@ -101,12 +101,15 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   bool startAppLogging = false;
   bool startFlashLogging = false;
   bool startStreaming = false;
+  bool endFlashLoggingResponse = false;
 
   int globalHeartRate = 0;
   int globalSpO2 = 0;
   int globalRespRate = 0;
   double globalTemp = 0;
   int _globalBatteryLevel = 50;
+
+  int flashMemoryAvailable = 25;
 
   String displaySpO2 = "--" ;
 
@@ -597,6 +600,33 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       },
       cancelOnError: true,
     );
+  }
+
+  Future<void> _startListeningData() async {
+    listeningDataStream = true;
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
+    });
+
+    _streamDataSubscription = _streamData.listen((value) async {
+      ByteData bdata = Uint8List.fromList(value).buffer.asByteData();
+      print("Data Rx: " + value.toString());
+      int _pktType = bdata.getUint8(0);
+
+      if (_pktType == hPi4Global.CES_CMDIF_TYPE_CMD_RSP) {
+        int _cmdType = bdata.getUint8(1);
+        if (_cmdType == 84) {
+          setState(() {
+            //endFlashLoggingResponse = true;
+          });
+
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
+        }
+      } else{
+
+      }
+    });
   }
 
   LineChartBarData currentLine(List<FlSpot> points, Color plotcolor) {
@@ -1254,7 +1284,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             color: Colors.white,
             child: Material(
               color: Colors.transparent,
-              child: Text('data logging in the app...',
+              child: Text('data logging to the Flash...',
                   style: TextStyle(
                       fontSize: MediaQuery.of(context).size.height * 0.03,
                       fontWeight: FontWeight.bold,
@@ -1353,6 +1383,111 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
+  Future<void> _showInsufficientMemoryDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.red,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(
+                      children: <Widget>[
+                        Text('Enough memory is not available to log the data.',style: TextStyle(fontSize: 16, color: Colors.black,),),
+                      ]
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async{
+                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_)
+                    => Fetchlogs(
+                      selectedBoard:widget.selectedBoard,
+                      selectedDevice: widget.selectedDevice,
+                      currentDevice: widget.currentDevice,
+                      fble:widget.fble,
+                      currConnection: widget.currConnection,
+                    )));
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showEndFlashingDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.grey,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(
+                      children: <Widget>[
+                        Text('Data is already logging to flash. ',
+                          style: TextStyle(fontSize: 16, color: Colors.black,),),
+                        Text('Do you want end logging or continue with the logging and disconnect from the device ',
+                          style: TextStyle(fontSize: 16, color: Colors.black,),),
+                      ]
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('End Logging'),
+              onPressed: () async{
+               // Navigator.pop(context);
+                _sendEndLogtoFlashCommand();
+                closeAllStreams();
+                await _disconnect();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                );
+              },
+            ),
+            TextButton(
+              child: Text('Disconnect & Continue'),
+              onPressed: () async{
+                //Navigator.pop(context);
+                closeAllStreams();
+                await _disconnect();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _sendCurrentDateTime() async {
     /* Send current DataTime to device - Bluetooth Packet format
 
@@ -1404,8 +1539,30 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     _showCommandSentDialog();
   }
 
+  Future<void> _sendLogtoFlashCommand() async {
+    logConsole("AKW: Sending start logging flash Command: " + hPi4Global.startLoggingFlash.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
+        value: hPi4Global.startLoggingFlash);
+
+    print("start logging flash command Sent");
+
+    setState(() {
+      startFlashLogging = true;
+    });
+
+    _showCommandSentDialog();
+  }
+
+  Future<void> _sendEndLogtoFlashCommand() async {
+    logConsole("AKW: Sending end logging flash Command: " + hPi4Global.endLoggingFlash.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
+        value: hPi4Global.endLoggingFlash);
+
+    print("end logging flash command Sent");
+  }
+
   Widget _buildCharts() {
-    if(widget.currentDevice.name.contains("healthypi move")){
+    if(widget.currentDevice.name.contains("healthypi move") || widget.currentDevice.name.contains("healthypi")){
       //if(widget.currentDevice.name.contains("healthypi")||widget.currentDevice.name.contains("WISER")){
       return Expanded(
           child: Row(
@@ -1478,7 +1635,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     setState(() {
                                       startAppLogging = true;
                                     });
-                                    _showOverlay(context);
                                   },
                                 ),
                               ),
@@ -1500,6 +1656,33 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                     BorderRadius.circular(8.0),
                                   ),
                                   onPressed: () async {
+                                    if(flashMemoryAvailable > 25){
+                                      _sendLogtoFlashCommand();
+                                      _showOverlay(context);
+                                    }else{
+                                      _showInsufficientMemoryDialog();
+                                    }
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                                child: MaterialButton(
+                                  minWidth: 60.0,
+                                  color: Colors.white,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Get Logs',style: new TextStyle(
+                                          fontSize: 16.0, color: Colors.black)),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(8.0),
+                                  ),
+                                  onPressed: () async {
+
                                     Navigator.of(context).pushReplacement(
                                         MaterialPageRoute(builder: (_)
                                         => Fetchlogs(
@@ -1577,10 +1760,18 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                                       overlayFlag = false;
                                       overlayEntry1.remove();
                                     }
-                                    if(startAppLogging == true){
+                                    if(startFlashLogging == true && startAppLogging == false){
+                                      startFlashLogging = false;
+                                      _showEndFlashingDialog();
+                                    }
+                                    else if(startFlashLogging == false && startAppLogging == true){
                                       startAppLogging = false;
                                       _writeLogDataToFile(ecgDataLog, ppgDataLog,respDataLog);
-                                    }else{
+                                    }
+                                    else if(startFlashLogging == true && startAppLogging == true){
+
+                                    }
+                                    else{
                                       closeAllStreams();
                                       await _disconnect();
                                       Navigator.of(context).pushReplacement(
@@ -1825,38 +2016,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Widget LogToFlashButton(){
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-      child: MaterialButton(
-        minWidth: 80.0,
-        color: startAppLogging ? Colors.grey:Colors.white,
-        child: Row(
-          children: <Widget>[
-            Text('Log to Flash',
-                style: new TextStyle(
-                    fontSize: 16.0, color: hPi4Global.hpi4Color)),
-          ],
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        onPressed: () async {
-          Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_)
-              => Fetchlogs(
-                selectedBoard:widget.selectedBoard,
-                selectedDevice: widget.selectedDevice,
-                currentDevice: widget.currentDevice,
-                fble:widget.fble,
-                currConnection: widget.currConnection,
-              )));
-
-        },
-      ),
-    );
-  }
-
   Widget StartAndStopButton(){
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
@@ -1896,7 +2055,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
    Widget displayAppBarButtons(){
-    if(widget.currentDevice.name.contains("healthypi move")){
+    if(widget.currentDevice.name.contains("healthypi move")|| widget.currentDevice.name.contains("healthypi")){
      //if(widget.currentDevice.name.contains("healthypi")||widget.currentDevice.name.contains("WISER")){
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -1925,7 +2084,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               ]
           ),
           LogToAppButton(),
-          //LogToFlashButton(),
           StartAndStopButton(),
           displayDisconnectButton(),
         ],

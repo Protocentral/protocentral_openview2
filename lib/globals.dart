@@ -80,6 +80,9 @@ class hPi4Global {
 
   static const List<int> WISER_CMD_SET_DEVICE_TIME = [0x41];
 
+  static const List<int> startLoggingFlash = [0x42];
+  static const List<int> endLoggingFlash = [0x43];
+
 }
 
 class BatteryLevelPainter extends CustomPainter {
