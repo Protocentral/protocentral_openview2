@@ -1,7 +1,15 @@
+import 'dart:io';
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:simple_html_css/simple_html_css.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_libserialport/flutter_libserialport.dart';
+import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 
 import 'globals.dart';
 import 'quickScan.dart';
@@ -9,22 +17,8 @@ import 'plots.dart';
 import 'plotSerial.dart';
 import 'sizeConfig.dart';
 import 'about.dart';
-
 import 'ble/ble_scanner.dart';
 import 'states/OpenViewBLEProvider.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'package:signal_strength_indicator/signal_strength_indicator.dart';
-import 'dart:async';
-import 'dart:io';
-import 'package:simple_html_css/simple_html_css.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import 'package:flutter/cupertino.dart';
-
-import 'package:flutter_libserialport/flutter_libserialport.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-
 
 late FlutterReactiveBle _fble;
 bool connectedToDevice = false;
@@ -59,22 +53,30 @@ const int CES_CMDIF_IND_PKTTYPE = 4;
 int CES_CMDIF_PKT_OVERHEAD = 5;
 
 /************** Packet Related Variables **********************/
-
 int pc_rx_state = 0; // To check the state of the packet
 int CES_Pkt_Len = 0; // To store the Packet Length Deatils
 int CES_Pkt_Pos_Counter = 0;
 int CES_Data_Counter = 0; // Packet and data counter
-
 int CES_Pkt_PktType = 0; // To store the Packet Type
+int computed_val1 = 0;
+int computed_val2 = 0;
 
 var CES_Pkt_Data_Counter = new List.filled(1000, 0, growable: false);
-
 var ces_pkt_ch1_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch2_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch3_buffer = new List.filled(4, 0, growable: false);
 
-int computed_val1 = 0;
-int computed_val2 = 0;
+var listOFBoards = {
+  'Healthypi',
+  'ADS1292R Breakout/Shield',
+  'ADS1293 Breakout/Shield',
+  'AFE4490 Breakout/Shield',
+  'MAX86150 Breakout',
+  'Pulse Express',
+  'tinyGSR Breakout',
+  'MAX30003 ECG Breakout',
+  'MAX30001 ECG & BioZ Breakout'
+};
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key, required this.title}) : super(key: key);
@@ -127,9 +129,6 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAppDrawer() {
     return Drawer(
-      // Add a ListView to the drawer. This ensures the user can scroll
-      // through the options in the drawer if there isn't enough vertical
-      // space to fit everything.
       child: ListView(
         // Important: Remove any padding from the ListView.
         padding: EdgeInsets.zero,
@@ -181,10 +180,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showPrivacyDialog() async {
-    String htmlContent =
-    await rootBundle.loadString('assets/privacyPolicy.html');
+    String htmlContent = await rootBundle.loadString('assets/privacyPolicy.html');
 
-    // flutter defined function
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -203,7 +200,6 @@ class _HomePageState extends State<HomePage> {
                       linksCallback: (link) {
                         print("You clicked on $link");
                       },
-
                       // as name suggests, optionally set the default text style
                       defaultTextStyle: TextStyle(
                         color: Colors.black,
@@ -220,7 +216,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           actions: <Widget>[
-            // usually buttons at the bottom of the dialog
             new TextButton(
               child: new Text("Close"),
               onPressed: () {
@@ -306,10 +301,6 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              //color: Colors.blue[900],
-              //shape: RoundedRectangleBorder(
-              //  borderRadius: BorderRadius.circular(8.0),
-              //),
             ),
           ),
           Row(
@@ -321,7 +312,6 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     TextSpan(
                       text: ' Privacy Policy',
-                      //'s', // Privacy Policy and Terms of Service ',
                       style: TextStyle(fontSize: 16, color:hPi4Global.hpi4Color),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () async {
@@ -330,13 +320,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                     TextSpan(
                         text: ' | ',
-                        //'s', // Privacy Policy and Terms of Service ',
-
                         style: TextStyle(fontSize: 16, color: Colors.black)),
                     TextSpan(
                       text: 'Terms of use',
-                      //'s', // Privacy Policy and Terms of Service ',
-
                       style: TextStyle(fontSize: 16, color:hPi4Global.hpi4Color),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () async {
@@ -370,7 +356,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> connectToDevice(
       BuildContext context, DiscoveredDevice currentDevice) async {
     //showLoadingIndicator("Connecting to device...",context);
-
     _fble = await Provider.of<OpenViewBLEProvider>(context, listen: false).getBLE();
 
     _connection = _fble.connectToDevice(id: currentDevice.id).listen(
@@ -437,9 +422,6 @@ class _HomePageState extends State<HomePage> {
   Widget listOfBoardsDropDown() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      /*decoration: BoxDecoration(
-          color: hPi4Global.hpi4Color,
-          borderRadius: BorderRadius.circular(8.0)),*/
       child: DropdownButton(
         underline: SizedBox(),
         dropdownColor: hPi4Global.hpi4Color,
@@ -452,17 +434,7 @@ class _HomePageState extends State<HomePage> {
         isExpanded: true,
         iconSize: 30.0,
         style: TextStyle(color: Colors.white, fontSize: 16.0),
-        items: [
-          'Healthypi',
-          'ADS1292R Breakout/Shield',
-          'ADS1293 Breakout/Shield',
-          'AFE4490 Breakout/Shield',
-          'MAX86150 Breakout',
-          'Pulse Express',
-          'tinyGSR Breakout',
-          'MAX30003 ECG Breakout',
-          'MAX30001 ECG & BioZ Breakout'
-        ].map(
+        items: listOFBoards.map(
               (val) {
             return DropdownMenuItem<String>(
               value: val,
@@ -493,26 +465,7 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        /*connectedToDevice
-                            ? MaterialButton(
-                          minWidth: 100.0,
-                          color: Colors.red,
-                          child: Row(
-                            children: <Widget>[
-                              Text('Disconnect',
-                                  style: new TextStyle(
-                                      fontSize: 18.0, color: Colors.white)),
-                            ],
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          onPressed: () async {
-                            await _disconnect();
-                            bleScanner.startScan([], "");
-                          },
-                        )
-                            : */MaterialButton(
+                      MaterialButton(
                           minWidth: 100.0,
                           color: hPi4Global.hpi4Color,
                           child: Row(
@@ -621,8 +574,6 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ]
                               ),
-
-
                             );
                           }),
                   ),
@@ -657,17 +608,7 @@ class _HomePageState extends State<HomePage> {
             //isExpanded: true,
             iconSize: 50.0,
             style: TextStyle(color: Colors.white, fontSize: 16.0),
-            items: [
-              'Healthypi',
-              'ADS1292R Breakout/Shield',
-              'ADS1293 Breakout/Shield',
-              'AFE4490 Breakout/Shield',
-              'MAX86150 Breakout',
-              'Pulse Express',
-              'tinyGSR Breakout',
-              'MAX30003 ECG Breakout',
-              'MAX30001 ECG & BioZ Breakout'
-            ].map(
+            items: listOFBoards.map(
                   (val) {
                 return DropdownMenuItem<String>(
                   value: val,
@@ -749,7 +690,6 @@ class _HomePageState extends State<HomePage> {
                       if (!_serialPort.openReadWrite()) {
                         print(SerialPort.lastError);
                       }
-
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_)
                   => PlotSerialPage(

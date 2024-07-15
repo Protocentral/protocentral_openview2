@@ -1,27 +1,22 @@
-import 'dart:ffi';
+import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:csv/csv.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
 import 'globals.dart';
 import 'home.dart';
 import 'sizeConfig.dart';
-
-import 'ble/ble_scanner.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'states/OpenViewBLEProvider.dart';
-import 'dart:async';
-import 'dart:io';
 import 'plots.dart';
-
-import 'package:flutter/cupertino.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:csv/csv.dart';
+import 'ble/ble_scanner.dart';
+import 'states/OpenViewBLEProvider.dart';
 
 typedef LogHeader = ({
   int logFileID,
@@ -45,7 +40,8 @@ typedef LogHeader = ({
 });
 
 class Fetchlogs extends StatefulWidget {
-  Fetchlogs({Key? key,
+  Fetchlogs({
+    Key? key,
     required this.selectedBoard,
     required this.selectedDevice,
     required this.currentDevice,
@@ -66,8 +62,6 @@ class Fetchlogs extends StatefulWidget {
 class _FetchlogsState extends State<Fetchlogs> {
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   Key key = UniqueKey();
-
-  ///////fetch logs code
 
   bool streamStarted = false;
 
@@ -108,7 +102,6 @@ class _FetchlogsState extends State<Fetchlogs> {
   List<int> logData = [];
   int _globalReceivedData = 0;
   int globalDataCounter = 0;
-  double _globalExpectedDataMB = 0;
 
   String globalDeviceID = "";
 
@@ -123,8 +116,6 @@ class _FetchlogsState extends State<Fetchlogs> {
   late DiscoveredDevice globalDiscoveredDevice;
 
   final _scrollController = ScrollController();
-
-
 
   void logConsole(String logString) async {
     print("AKW - " + logString);
@@ -145,7 +136,6 @@ class _FetchlogsState extends State<Fetchlogs> {
     });
 
     super.initState();
-
   }
 
   @override
@@ -179,7 +169,7 @@ class _FetchlogsState extends State<Fetchlogs> {
 
   int logFileCount = 0;
 
-  void subscribeToCharacteristics(){
+  void subscribeToCharacteristics() {
     dataCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_DATA),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
@@ -189,17 +179,14 @@ class _FetchlogsState extends State<Fetchlogs> {
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
         deviceId: widget.currentDevice.id);
-
   }
 
   Future<void> _startListeningCommand(String deviceID) async {
     _listeningCommandStream = true;
-    //int nonZeroFiles = 0;
-
-    //int _fetchStartFile = 0;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamCommand = widget.fble.subscribeToCharacteristic(commandTxCharacteristic);
+      _streamCommand =
+          widget.fble.subscribeToCharacteristic(commandTxCharacteristic);
     });
 
     _streamCommandSubscription = _streamCommand.listen((value) async {
@@ -234,7 +221,7 @@ class _FetchlogsState extends State<Fetchlogs> {
     logConsole("Log data size: " + mData.length.toString());
 
     ByteData bdata =
-    Uint8List.fromList(mData).buffer.asByteData(WISER_FILE_HEADER_LEN);
+        Uint8List.fromList(mData).buffer.asByteData(WISER_FILE_HEADER_LEN);
 
     int logNumberPoints = ((mData.length - WISER_FILE_HEADER_LEN) ~/ 6);
 
@@ -258,7 +245,6 @@ class _FetchlogsState extends State<Fetchlogs> {
     }
 
     // Code to convert logData to CSV file
-
     String csv = const ListToCsvConverter().convert(dataList);
 
     Directory _directory = Directory("");
@@ -274,7 +260,8 @@ class _FetchlogsState extends State<Fetchlogs> {
 
     final String directory = exPath;
 
-    File file= File('$directory/logdata$sessionID.csv');;
+    File file = File('$directory/logdata$sessionID.csv');
+    ;
     print("Save file");
 
     await file.writeAsString(csv);
@@ -282,7 +269,6 @@ class _FetchlogsState extends State<Fetchlogs> {
     print("File exported successfully!");
 
     await _showDownloadSuccessDialog();
-
   }
 
   bool logIndexReceived = false;
@@ -313,111 +299,101 @@ class _FetchlogsState extends State<Fetchlogs> {
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
         //print("Data Rx: " + value.toString());
         print("Data Rx length: " + value.length.toString());
-
-        /*ByteData bdata = Uint8List.fromList(value)
-            .buffer
-            .asByteData(1); // Frame body starts from 2nd byte
-            */
-
         LogHeader _mLog = (
-            logFileID: bdata.getUint16(1, Endian.little),
-            sessionID: bdata.getUint8(1), // same as log file id
+          logFileID: bdata.getUint16(1, Endian.little),
+          sessionID: bdata.getUint8(1), // same as log file id
 
-      sessionLength: bdata.getUint16(3, Endian.little),
-      // Session length is at
+          sessionLength: bdata.getUint16(3, Endian.little),
+          // Session length is at
+          //logSessionLength: bdata.getUint16(2, Endian.little),
+          // Session ID is at 5
+          sessionType: bdata.getUint8(6),
+          rampUp: bdata.getUint16(7, Endian.little),
+          rampDown: bdata.getUint16(9, Endian.little),
+          platCurr: bdata.getUint16(11, Endian.little),
+          platTime: bdata.getUint16(13, Endian.little),
+          tpcsPW: bdata.getUint16(15, Endian.little),
+          tpcsIPI: bdata.getUint16(17, Endian.little),
+          tpcsTrainTime: bdata.getUint16(19, Endian.little),
+          tpcsTrainITI: bdata.getUint16(21, Endian.little),
+          tmYear: bdata.getUint8(23),
+          tmMon: bdata.getUint8(24),
+          tmMday: bdata.getUint8(25),
+          tmHour: bdata.getUint8(26),
+          tmMin: bdata.getUint8(27),
+          tmSec: bdata.getUint8(28),
+        );
+        print("Log: " + _mLog.toString());
 
-      //logSessionLength: bdata.getUint16(2, Endian.little),
-      // Session ID is at 5
-      sessionType: bdata.getUint8(6),
-      rampUp: bdata.getUint16(7, Endian.little),
-      rampDown: bdata.getUint16(9, Endian.little),
-      platCurr: bdata.getUint16(11, Endian.little),
-      platTime: bdata.getUint16(13, Endian.little),
-      tpcsPW: bdata.getUint16(15, Endian.little),
-      tpcsIPI: bdata.getUint16(17, Endian.little),
-      tpcsTrainTime: bdata.getUint16(19, Endian.little),
-      tpcsTrainITI: bdata.getUint16(21, Endian.little),
-      tmYear: bdata.getUint8(23),
-      tmMon: bdata.getUint8(24),
-      tmMday: bdata.getUint8(25),
-      tmHour: bdata.getUint8(26),
-      tmMin: bdata.getUint8(27),
-      tmSec: bdata.getUint8(28),
-      );
-      print("Log: " + _mLog.toString());
+        logHeaderList.add(_mLog);
 
-      logHeaderList.add(_mLog);
+        if (logHeaderList.length == totalSessionCount) {
+          setState(() {
+            logIndexReceived = true;
+          });
 
-      //print("......"+logHeaderList[0].logFileID.toString());
+          print("All logs received. Cancel subscription");
 
-      if (logHeaderList.length == totalSessionCount) {
-      setState(() {
-      logIndexReceived = true;
-      });
-
-      print("All logs received. Cancel subscription");
-
-      await _streamCommandSubscription.cancel();
-      await _streamDataSubscription.cancel();
-      } else {}
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
+        } else {}
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
-      int pktPayloadSize = value.length - 1; //((value[1] << 8) + value[2]);
+        int pktPayloadSize = value.length - 1; //((value[1] << 8) + value[2]);
 
-      logConsole("Data Rx length: " +
-      value.length.toString() +
-      " | Actual Payload: " +
-      pktPayloadSize.toString());
-      currentFileDataCounter += pktPayloadSize;
-      _globalReceivedData += pktPayloadSize;
-      logData.addAll(value.sublist(1, value.length));
+        logConsole("Data Rx length: " +
+            value.length.toString() +
+            " | Actual Payload: " +
+            pktPayloadSize.toString());
+        currentFileDataCounter += pktPayloadSize;
+        _globalReceivedData += pktPayloadSize;
+        logData.addAll(value.sublist(1, value.length));
 
-      setState(() {
-      displayPercent = globalDisplayPercentOffset +
-      (_globalReceivedData / _globalExpectedLength) * 100.truncate();
-      if (displayPercent > 100) {
-      displayPercent = 100;
-      }
-      });
+        setState(() {
+          displayPercent = globalDisplayPercentOffset +
+              (_globalReceivedData / _globalExpectedLength) * 100.truncate();
+          if (displayPercent > 100) {
+            displayPercent = 100;
+          }
+        });
 
-      logConsole("File data counter: " +
-      currentFileDataCounter.toString() +
-      " | Received: " +
-      displayPercent.toString() +
-      "%");
+        logConsole("File data counter: " +
+            currentFileDataCounter.toString() +
+            " | Received: " +
+            displayPercent.toString() +
+            "%");
 
-      if (currentFileDataCounter >= (expectedLength)) {
-      logConsole(
-      "All data " + currentFileDataCounter.toString() + " received");
+        if (currentFileDataCounter >= (expectedLength)) {
+          logConsole(
+              "All data " + currentFileDataCounter.toString() + " received");
 
-      if (currentFileDataCounter > expectedLength) {
-      int diffData = currentFileDataCounter - expectedLength;
-      logConsole("Data received more than expected by: " +
-      diffData.toString() +
-      " bytes");
-      //logData.removeRange(expectedLength, currentFileDataCounter);
-      }
+          if (currentFileDataCounter > expectedLength) {
+            int diffData = currentFileDataCounter - expectedLength;
+            logConsole("Data received more than expected by: " +
+                diffData.toString() +
+                " bytes");
+            //logData.removeRange(expectedLength, currentFileDataCounter);
+          }
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
 
-      await _streamCommandSubscription.cancel();
-      await _streamDataSubscription.cancel();
+          await _writeLogDataToFile(logData, sessionID);
 
-      await _writeLogDataToFile(logData, sessionID);
+          //Navigator.pop(context);
 
-      //Navigator.pop(context);
+          setState(() {
+            flagFetching = false;
+            isTransfering = false;
+            isFetchIconTap = false;
+          });
 
-      setState(() {
-      flagFetching = false;
-      isTransfering = false;
-      isFetchIconTap = false;
-      });
-
-      // Reset all fetch variables
-      displayPercent = 0;
-      globalDisplayPercentOffset = 0;
-      currentFileDataCounter = 0;
-      _globalReceivedData = 0;
-      currentFileReceivedComplete = false;
-      logData.clear();
-      }
+          // Reset all fetch variables
+          displayPercent = 0;
+          globalDisplayPercentOffset = 0;
+          currentFileDataCounter = 0;
+          _globalReceivedData = 0;
+          currentFileReceivedComplete = false;
+          logData.clear();
+        }
       }
     });
   }
@@ -454,44 +430,38 @@ class _FetchlogsState extends State<Fetchlogs> {
 
   String debugText = "Console Inited...";
 
-
   Widget displayDisconnectButton() {
     return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
         builder: (context, bleScannerState, bleScanner, wiserBle, child) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: MaterialButton(
-              minWidth: 100.0,
-              color: Colors.red,
-              child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text('Close',
-                      style: new TextStyle(fontSize: 18.0, color: Colors.white)),
-                ],
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              onPressed: () async {
-                //closeAllStreams();
-               // await _disconnect();
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_)
-                    => WaveFormsPage(
-                      selectedBoard:widget.selectedBoard,
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: MaterialButton(
+          minWidth: 100.0,
+          color: Colors.red,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('Close',
+                  style: new TextStyle(fontSize: 18.0, color: Colors.white)),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (_) => WaveFormsPage(
+                      selectedBoard: widget.selectedBoard,
                       selectedDevice: widget.selectedDevice,
                       currentDevice: widget.currentDevice,
-                      fble:widget.fble,
+                      fble: widget.fble,
                       currConnection: widget.currConnection,
                     )));
-
-              },
-            ),
-          );
-        });
+          },
+        ),
+      );
+    });
   }
-
 
   Future<void> _showDownloadSuccessDialog() async {
     return showDialog<void>(
@@ -509,14 +479,15 @@ class _FetchlogsState extends State<Fetchlogs> {
                   size: 72,
                 ),
                 Center(
-                    child: Text('File downloaded successfully!. Please check in the downloads')),
+                    child: Text(
+                        'File downloaded successfully!. Please check in the downloads')),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
               child: Text('Close'),
-              onPressed: () async{
+              onPressed: () async {
                 //Navigator.pop(context);
                 closeAllStreams();
                 await _disconnect();
@@ -524,7 +495,6 @@ class _FetchlogsState extends State<Fetchlogs> {
                   MaterialPageRoute(
                       builder: (_) => HomePage(title: 'HealthyPi5')),
                 );
-
               },
             ),
           ],
@@ -555,71 +525,6 @@ class _FetchlogsState extends State<Fetchlogs> {
     }
   }
 
-  Widget _getDeviceCard() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Consumer2<ConnectionStateUpdate, BleScannerState>(builder:
-                        (context, connStateUpdate, bleScannerState, child) {
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                                8, 4, 8, 4), // .all(8.0),
-                            child: Text(
-                              "Connected to Device: " +
-                                  widget.currentDevice.name,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                //color: Colors.white,
-                              ),
-                              //textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: MaterialButton(
-                              onPressed: () async {
-                                await _fetchLogCount(
-                                    widget.currentDevice.id, context);
-                                await _fetchLogIndex(
-                                    widget.currentDevice.id, context);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Icon(
-                                      Icons.download,
-                                      color: Colors.white,
-                                    ),
-                                    const Text(
-                                      'Fetch refresh',
-                                      style: TextStyle(
-                                          fontSize: 16, color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              color: hPi4Global.hpi4Color,
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ]))),
-    );
-  }
-
   Future<void> _fetchLogCount(String deviceID, BuildContext context) async {
     logConsole("Fetch log count initiated");
     showLoadingIndicator("Fetching logs count...", context);
@@ -638,7 +543,6 @@ class _FetchlogsState extends State<Fetchlogs> {
     await _startListeningData(deviceID, 0, 0);
     await Future.delayed(Duration(seconds: 4), () async {
       await _sendCommand(hPi4Global.sessionLogIndex, deviceID);
-      //await _sendCommand(WiserGlobal.getSessionCount, deviceID);
     });
     Navigator.pop(context);
   }
@@ -687,7 +591,8 @@ class _FetchlogsState extends State<Fetchlogs> {
     logConsole(
         "Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
 
-    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
+    await widget.fble.writeCharacteristicWithoutResponse(
+        commandTxCharacteristic,
         value: commandList);
   }
 
@@ -713,244 +618,236 @@ class _FetchlogsState extends State<Fetchlogs> {
   Widget _getSessionIDList() {
     return (logIndexReceived == false)
         ? Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        width: 320,
-        height: 100,
-        child: Card(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0)),
-          child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  "No logs present on device ",
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-              ]),
-        ),
-      ),
-    )
-        : Container(
-        height: 600,
-        child: Scrollbar(
-          //isAlwaysShown: true,
-          controller: _scrollController,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    "Session logs on device ",
-                    style: TextStyle(
-                      fontSize: 22,
-                      //color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(
-                    height: 15.0,
-                  ),
-                  ListView.builder(
-                    // itemCount: logIndexNumElements,
-                      itemCount: totalSessionCount,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (BuildContext context, int index) {
-                        return (index >= 0)
-                            ? Card(
-                            child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: ListTile(
-                                  dense: true,
-                                  contentPadding: EdgeInsets.only(
-                                      left: 0.0, right: 0.0),
-                                  minLeadingWidth: 10,
-                                  /*leading: CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    child: Image.asset(
-                                        'assets/wiser_graphics_icon_tdcs.png',
-                                        fit: BoxFit.contain),
-                                  ),*/
-                                  title: Column(
-                                    children: [
-                                      Row(children: [
-                                        Text(
-                                            logHeaderList[index]
-                                                .platCurr
-                                                .toString() +
-                                                " uA",
-                                            style: new TextStyle(
-                                                fontSize: 16,
-                                                fontWeight:
-                                                FontWeight.bold)),
-                                      ]),
-                                      Row(children: [
-                                        Text(
-                                            "Ramp-up: " +
-                                                logHeaderList[index]
-                                                    .rampUp
-                                                    .toString() +
-                                                " uA/S" +
-                                                " | Ramp-down: " +
-                                                logHeaderList[index]
-                                                    .rampDown
-                                                    .toString() +
-                                                " uA/S",
-                                            style: new TextStyle(
-                                                fontSize: 14)),
-                                      ]),
-                                      Row(children: [
-                                        Text(
-                                            "Session ID: " +
-                                                logHeaderList[index]
-                                                    .sessionID
-                                                    .toString(),
-                                            style: new TextStyle(
-                                                fontSize: 12)),
-                                      ]),
-                                      Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                                _getFormattedDate(
-                                                    logHeaderList[index]
-                                                        .tmYear,
-                                                    logHeaderList[index]
-                                                        .tmMon,
-                                                    logHeaderList[index]
-                                                        .tmMday,
-                                                    logHeaderList[index]
-                                                        .tmHour,
-                                                    logHeaderList[index]
-                                                        .tmMin,
-                                                    logHeaderList[index]
-                                                        .tmSec),
-                                                style: new TextStyle(
-                                                    fontSize: 12)),
-                                          ]),
-                                      Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.end,
-                                          children: [
-                                            isTransfering
-                                                ? Container()
-                                                : IconButton(
-                                              onPressed:
-                                                  () async {
-
-                                              },
-                                              icon: Icon(
-                                                  Icons.file_open_outlined),
-                                              color: hPi4Global
-                                                  .hpi4Color,
-                                            ),
-                                            isTransfering
-                                                ? Container()
-                                                : IconButton(
-                                              onPressed:
-                                                  () async {
-                                                setState(() {
-                                                  isFetchIconTap =
-                                                  true;
-                                                  tappedIndex =
-                                                      index;
-                                                });
-
-                                                await _fetchLogFile(
-                                                    widget
-                                                        .currentDevice
-                                                        .id,
-                                                    logHeaderList[
-                                                    index]
-                                                        .logFileID,
-                                                    logHeaderList[
-                                                    index]
-                                                        .sessionLength);
-                                              },
-                                              icon: Icon(Icons
-                                                  .download_rounded),
-                                              color: hPi4Global
-                                                  .hpi4Color,
-                                            ),
-                                            isTransfering
-                                                ? Container()
-                                                : IconButton(
-                                              onPressed:
-                                                  () async {
-                                                _deleteLogIndex(
-                                                    widget
-                                                        .currentDevice
-                                                        .id,
-                                                    logHeaderList[
-                                                    index]
-                                                        .logFileID,
-                                                    context);
-                                              },
-                                              icon: Icon(
-                                                  Icons.delete),
-                                              color: hPi4Global
-                                                  .hpi4Color,
-                                            ),
-                                          ]),
-                                      isFetchIconTap
-                                          ? Visibility(
-                                        visible:
-                                        tappedIndex == index,
-                                        child: Row(
-                                          children: [
-                                            Padding(
-                                              padding:
-                                              EdgeInsets.all(
-                                                  8.0),
-                                              child: SizedBox(
-                                                width: 150,
-                                                child:
-                                                LinearProgressIndicator(
-                                                  backgroundColor:
-                                                  Colors.blueGrey[
-                                                  100],
-                                                  //color: Colors.blue,
-                                                  value:
-                                                  (displayPercent /
-                                                      100),
-                                                  minHeight: 25,
-                                                  semanticsLabel:
-                                                  'Receiving Data',
-                                                ),
-                                              ),
-                                            ),
-                                            Text(displayPercent
-                                                .truncate()
-                                                .toString() +
-                                                " %"),
-                                          ],
-                                        ),
-                                      )
-                                          : Container(),
-                                    ],
-                                  ),
-                                )))
-                            : Container();
-                      }),
-                ],
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              width: 320,
+              height: 100,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        "No logs present on device ",
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      ),
+                    ]),
               ),
             ),
-          ),
-        ));
+          )
+        : Container(
+            height: 600,
+            child: Scrollbar(
+              //isAlwaysShown: true,
+              controller: _scrollController,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        "Session logs on device ",
+                        style: TextStyle(
+                          fontSize: 22,
+                          //color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(
+                        height: 15.0,
+                      ),
+                      ListView.builder(
+                          // itemCount: logIndexNumElements,
+                          itemCount: totalSessionCount,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (BuildContext context, int index) {
+                            return (index >= 0)
+                                ? Card(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: ListTile(
+                                          dense: true,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 0.0, right: 0.0),
+                                          minLeadingWidth: 10,
+                                        title: Column(
+                                            children: [
+                                              Row(children: [
+                                                Text(
+                                                    logHeaderList[index]
+                                                            .platCurr
+                                                            .toString() +
+                                                        " uA",
+                                                    style: new TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ]),
+                                              Row(children: [
+                                                Text(
+                                                    "Ramp-up: " +
+                                                        logHeaderList[index]
+                                                            .rampUp
+                                                            .toString() +
+                                                        " uA/S" +
+                                                        " | Ramp-down: " +
+                                                        logHeaderList[index]
+                                                            .rampDown
+                                                            .toString() +
+                                                        " uA/S",
+                                                    style: new TextStyle(
+                                                        fontSize: 14)),
+                                              ]),
+                                              Row(children: [
+                                                Text(
+                                                    "Session ID: " +
+                                                        logHeaderList[index]
+                                                            .sessionID
+                                                            .toString(),
+                                                    style: new TextStyle(
+                                                        fontSize: 12)),
+                                              ]),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                        _getFormattedDate(
+                                                            logHeaderList[index]
+                                                                .tmYear,
+                                                            logHeaderList[index]
+                                                                .tmMon,
+                                                            logHeaderList[index]
+                                                                .tmMday,
+                                                            logHeaderList[index]
+                                                                .tmHour,
+                                                            logHeaderList[index]
+                                                                .tmMin,
+                                                            logHeaderList[index]
+                                                                .tmSec),
+                                                        style: new TextStyle(
+                                                            fontSize: 12)),
+                                                  ]),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {},
+                                                            icon: Icon(Icons
+                                                                .file_open_outlined),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                              setState(() {
+                                                                isFetchIconTap =
+                                                                    true;
+                                                                tappedIndex =
+                                                                    index;
+                                                              });
+
+                                                              await _fetchLogFile(
+                                                                  widget
+                                                                      .currentDevice
+                                                                      .id,
+                                                                  logHeaderList[
+                                                                          index]
+                                                                      .logFileID,
+                                                                  logHeaderList[
+                                                                          index]
+                                                                      .sessionLength);
+                                                            },
+                                                            icon: Icon(Icons
+                                                                .download_rounded),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                              _deleteLogIndex(
+                                                                  widget
+                                                                      .currentDevice
+                                                                      .id,
+                                                                  logHeaderList[
+                                                                          index]
+                                                                      .logFileID,
+                                                                  context);
+                                                            },
+                                                            icon: Icon(
+                                                                Icons.delete),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                  ]),
+                                              isFetchIconTap
+                                                  ? Visibility(
+                                                      visible:
+                                                          tappedIndex == index,
+                                                      child: Row(
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    8.0),
+                                                            child: SizedBox(
+                                                              width: 150,
+                                                              child:
+                                                                  LinearProgressIndicator(
+                                                                backgroundColor:
+                                                                    Colors.blueGrey[
+                                                                        100],
+                                                                //color: Colors.blue,
+                                                                value:
+                                                                    (displayPercent /
+                                                                        100),
+                                                                minHeight: 25,
+                                                                semanticsLabel:
+                                                                    'Receiving Data',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Text(displayPercent
+                                                                  .truncate()
+                                                                  .toString() +
+                                                              " %"),
+                                                        ],
+                                                      ),
+                                                    )
+                                                  : Container(),
+                                            ],
+                                          ),
+                                        )))
+                                : Container();
+                          }),
+                    ],
+                  ),
+                ),
+              ),
+            ));
   }
 
-  Widget GetData(){
+  Widget GetData() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
       child: MaterialButton(
@@ -959,24 +856,20 @@ class _FetchlogsState extends State<Fetchlogs> {
         child: Row(
           children: <Widget>[
             Text('Get Logs',
-                style: new TextStyle(
-                    fontSize: 16.0, color: hPi4Global.hpi4Color)),
+                style:
+                    new TextStyle(fontSize: 16.0, color: hPi4Global.hpi4Color)),
           ],
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
         onPressed: () async {
-          await _fetchLogCount(
-              widget.currentDevice.id, context);
-          await _fetchLogIndex(
-              widget.currentDevice.id, context);
+          await _fetchLogCount(widget.currentDevice.id, context);
+          await _fetchLogIndex(widget.currentDevice.id, context);
         },
       ),
     );
   }
-
-
 
   Widget build(BuildContext context) {
     SizeConfig().init(context);
@@ -990,13 +883,11 @@ class _FetchlogsState extends State<Fetchlogs> {
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            Row(
-                children: <Widget>[
-                  Image.asset('assets/proto-online-white.png',
-                      fit: BoxFit.fitWidth, height: 30),
-                  GetData(),
-                ]
-            ),
+            Row(children: <Widget>[
+              Image.asset('assets/proto-online-white.png',
+                  fit: BoxFit.fitWidth, height: 30),
+              GetData(),
+            ]),
           ],
         ),
       ),
@@ -1008,29 +899,29 @@ class _FetchlogsState extends State<Fetchlogs> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    //_getDeviceCard(),
-                    _getSessionIDList(),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
+                //_getDeviceCard(),
+                _getSessionIDList(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: displayDisconnectButton(),
-                              ),
-                            ],
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: displayDisconnectButton(),
                           ),
                         ],
                       ),
-                    ),
-                  ])),
+                    ],
+                  ),
+                ),
+              ])),
         ),
       ),
     );

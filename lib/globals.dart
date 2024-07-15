@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -82,6 +83,14 @@ class hPi4Global {
 
   static const List<int> startLoggingFlash = [0x42];
   static const List<int> endLoggingFlash = [0x43];
+
+  static int toInt16(Uint8List byteArray, int index) {
+    ByteBuffer buffer = byteArray.buffer;
+    ByteData data = new ByteData.view(buffer);
+    int short = data.getInt16(index, Endian.little);
+    return short;
+  }
+
 
 }
 

@@ -1,18 +1,11 @@
-import 'dart:ffi';
-import 'package:path_provider/path_provider.dart';
-import 'package:sn_progress_dialog/sn_progress_dialog.dart';
-import 'ble/ble_scanner.dart';
-import 'states/OpenViewBLEProvider.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 import 'globals.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-
-import 'dart:async';
-import 'dart:io';
-
-import 'package:progress_indicators/progress_indicators.dart';
+import 'ble/ble_scanner.dart';
+import 'states/OpenViewBLEProvider.dart';
 
 class QuickScanPage extends StatefulWidget {
   @override
@@ -29,11 +22,6 @@ class _QuickScanPageState extends State<QuickScanPage> {
   bool dfuRunning = false;
 
   String displayText = "--";
-  int _selectedDeviceIndex = 0;
-
-  //PermissionStatus permStatus;
-
-  String _currentDFUDeviceID = "";
 
   @override
   void initState() {
@@ -146,24 +134,8 @@ class _QuickScanPageState extends State<QuickScanPage> {
                       leading: Column(children: [
                         Icon(Icons.bluetooth),
                       ]),
-                      /*trailing: BatteryIndicator(
-                        batteryFromPhone: false,
-                        batteryLevel: bleScanner
-                            .discoveredDevices[index].manufacturerData[2],
-                        style: BatteryIndicatorStyle.skeumorphism,
-                        colorful: true,
-                        showPercentNum: true,
-                        //mainColor: _color,
-                        size: 20,
-                        //ratio: _ratio,
-                        //showPercentSlide: _showPercentSlide,
-                      ),*/
-                      /*onTap: () async {
-
-                    },*/
                     );
                   }),
-              //_buildCheckforUpdatesButton(bleScanner.discoveredDevices),
             ],
           );
         }),
