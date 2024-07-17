@@ -600,7 +600,7 @@ class _HomePageState extends State<HomePage> {
           DropdownButton(
             underline: SizedBox(),
             dropdownColor: hPi4Global.hpi4Color,
-            hint: selectedPortBoard  == null
+            hint: selectedPortBoard == null
                 ? Text('Select Board')
                 : Text(selectedPortBoard,
               style: TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),

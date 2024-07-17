@@ -803,7 +803,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     return Column(
       children: [
         displayHeartRateValue(),
-        buildChart(17, 70, ecgLineData, Colors.green),
+        buildChart(16, 70, ecgLineData, Colors.green),
         displaySpo2Value(),
         buildChart(17, 70, ppgLineData, Colors.yellow),
         displayRespirationRateValue(),
@@ -1171,7 +1171,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
-                        minWidth: 60.0,
+                        minWidth: 50.0,
                         //height: 30.0,
                         color: Colors.white,
                         child: Row(
@@ -1197,7 +1197,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
-                        minWidth: 60.0,
+                        minWidth: 50.0,
                         color: Colors.white,
                         child: Row(
                           children: <Widget>[
@@ -1225,7 +1225,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
-                        minWidth: 60.0,
+                        minWidth: 50.0,
                         color: Colors.white,
                         child: Row(
                           children: <Widget>[
@@ -1246,7 +1246,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
-                        minWidth: 60.0,
+                        minWidth: 50.0,
                         //color: Colors.white,
                         color: Colors.red,
                         child: Row(
@@ -1468,7 +1468,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       logConsole('Disconnecting ');
       if (connectedToDevice == true) {
         showLoadingIndicator("Disconnecting....", context);
-        await Future.delayed(Duration(seconds: 6), () async {
+        await Future.delayed(Duration(seconds: 4), () async {
           await widget.currConnection.cancel();
           setState(() {
             connectedToDevice = false;
@@ -1482,6 +1482,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       logConsole("Error disconnecting from a device: $e");
     } finally {
       // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
+
     }
   }
 
@@ -1489,13 +1490,13 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
       child: MaterialButton(
-        minWidth: 60.0,
+        minWidth: 50.0,
         color: startAppLogging ? Colors.grey : Colors.white,
         child: Row(
           children: <Widget>[
             Text('Log to App',
                 style:
-                    new TextStyle(fontSize: 16.0, color: hPi4Global.hpi4Color)),
+                    new TextStyle(fontSize: 16.0, color: Colors.black)),
           ],
         ),
         shape: RoundedRectangleBorder(
@@ -1514,7 +1515,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
       child: MaterialButton(
-        minWidth: 60.0,
+        minWidth: 50.0,
         color: startStreaming ? Colors.red : Colors.green,
         child: Row(
           children: <Widget>[
