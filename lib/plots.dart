@@ -200,39 +200,38 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   void dataFormatBasedOnBoardsSelection() async {
-    if (widget.selectedBoard == 'ADS1292R Breakout/Shield' ||
-        widget.selectedBoard == 'MAX30003 ECG Breakout') {
+    if (widget.selectedBoard == 'ADS1292R Breakout/Shield') {
+      _startECG16Listening();
+      _startRESP16Listening();
       await _startListeningHR();
-      if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
-        await _startListeningSPO2();
-      } else {
-        await _startListeningHRVResp();
-      }
-    }
-    if (widget.selectedBoard == 'ADS1292R Breakout/Shield' ||
-        widget.selectedBoard == 'ADS1293 Breakout/Shield' ||
-        widget.selectedBoard == 'MAX86150 Breakout' ||
-        widget.selectedBoard == 'Pulse Express' ||
-        widget.selectedBoard == 'tinyGSR Breakout' ||
-        widget.selectedBoard == 'MAX30003 ECG Breakout' ||
-        widget.selectedBoard == 'MAX30001 ECG & BioZ Breakout') {
-      _startECGListening();
-    }
-
-    if (widget.selectedBoard == 'ADS1293 Breakout/Shield' ||
-        widget.selectedBoard == 'AFE4490 Breakout/Shield' ||
-        widget.selectedBoard == 'MAX86150 Breakout') {
-      _startPPGListening();
-    }
-
-    if (widget.selectedBoard == 'ADS1293 Breakout/Shield' ||
-        widget.selectedBoard == 'Pulse Express' ||
-        widget.selectedBoard == 'MAX30001 ECG & BioZ Breakout') {
-      _startRESPListening();
+      await _startListeningHRVResp();
+    } else if (widget.selectedBoard == 'ADS1293 Breakout/Shield') {
+      _startECG32Listening();
+      _startPPG16Listening();
+      _startRESP32Listening();
+    } else if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
+      _startPPG32Listening();
+      await _startListeningHR();
+      await _startListeningSPO2();
+    } else if (widget.selectedBoard == 'MAX86150 Breakout') {
+      _startECG16Listening();
+      _startPPG16Listening();
+    } else if (widget.selectedBoard == 'Pulse Express') {
+      _startECG32Listening();
+      _startRESP32Listening();
+    } else if (widget.selectedBoard == 'tinyGSR Breakout') {
+      _startECG16Listening();
+    } else if (widget.selectedBoard == 'MAX30003 ECG Breakout') {
+      _startECG32Listening();
+      await _startListeningHR();
+      await _startListeningHRVResp();
+    } else if (widget.selectedBoard == 'MAX30001 ECG & BioZ Breakout') {
+      _startECG32Listening();
+      _startRESP32Listening();
     } else {
-      _startECGListening();
-      _startPPGListening();
-      _startRESPListening();
+      _startECG32Listening();
+      _startPPG16Listening();
+      _startRESP32Listening();
       await _startListeningHR();
       await _startListeningSPO2();
       await _startListeningHRVResp();
@@ -349,51 +348,31 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  void _startECGListening() async {
+  void _startECG16Listening() async {
     print("AKW: Started listening to stream");
     listeningECGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamECG =
-          await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
+      _streamECG = await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
     });
 
     streamECGSubscription = _streamECG.listen(
-      (event) {
+          (event) {
         ByteData ecgByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        if (widget.selectedBoard == 'ADS1292R Breakout/Shield' ||
-            widget.selectedBoard == 'MAX86150 Breakout' ||
-            widget.selectedBoard == 'tinyGSR Breakout') {
-          Int16List ecgList = ecgByteData.buffer.asInt16List();
+        Int16List ecgList = ecgByteData.buffer.asInt16List();
 
-          ecgList.forEach((element) {
-            setStateIfMounted(() {
-              ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                ecgDataLog.add(element.toDouble());
-              }
-            });
-
-            if (ecgDataCounter >= 128 * 6) {
-              ecgLineData.removeAt(0);
+        ecgList.forEach((element) {
+          setStateIfMounted(() {
+            ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              ecgDataLog.add(element.toDouble());
             }
           });
-        } else {
-          Int32List ecgList = ecgByteData.buffer.asInt32List();
 
-          ecgList.forEach((element) {
-            setStateIfMounted(() {
-              ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                ecgDataLog.add(element.toDouble());
-              }
-            });
-
-            if (ecgDataCounter >= 128 * 6) {
-              ecgLineData.removeAt(0);
-            }
-          });
-        }
+          if (ecgDataCounter >= 128 * 6) {
+            ecgLineData.removeAt(0);
+          }
+        });
       },
       onError: (Object error) {
         // Handle a possible error
@@ -403,49 +382,66 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startPPGListening() async {
+  void _startECG32Listening() async {
+    print("AKW: Started listening to stream");
+    listeningECGStream = true;
+
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamECG = await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
+    });
+
+    streamECGSubscription = _streamECG.listen(
+          (event) {
+        ByteData ecgByteData = Uint8List.fromList(event).buffer.asByteData(0);
+        Int32List ecgList = ecgByteData.buffer.asInt32List();
+
+        ecgList.forEach((element) {
+          setStateIfMounted(() {
+            ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              ecgDataLog.add(element.toDouble());
+            }
+          });
+
+          if (ecgDataCounter >= 128 * 6) {
+            ecgLineData.removeAt(0);
+          }
+        });
+      },
+      onError: (Object error) {
+        // Handle a possible error
+        print("Error while monitoring data characteristic \n$error");
+      },
+      cancelOnError: true,
+    );
+  }
+
+  void _startPPG16Listening() async {
     print("AKW: Started listening to ppg stream");
     listeningPPGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamPPG =
-          await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
+      _streamPPG = await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
     });
 
     streamPPGSubscription = _streamPPG.listen(
-      (event) {
+          (event) {
+        // print("AKW: Rx PPG: " + event.length.toString());
         ByteData ppgByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
-          Int32List ppgList = ppgByteData.buffer.asInt32List();
+        Int16List ppgList = ppgByteData.buffer.asInt16List();
 
-          ppgList.forEach((element) {
-            setStateIfMounted(() {
-              ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                ppgDataLog.add(element.toDouble());
-              }
-            });
-
-            if (ppgDataCounter >= 128 * 3) {
-              ppgLineData.removeAt(0);
+        ppgList.forEach((element) {
+          setStateIfMounted(() {
+            ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              ppgDataLog.add(element.toDouble());
             }
           });
-        } else {
-          Int16List ppgList = ppgByteData.buffer.asInt16List();
 
-          ppgList.forEach((element) {
-            setStateIfMounted(() {
-              ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                ppgDataLog.add(element.toDouble());
-              }
-            });
-
-            if (ppgDataCounter >= 128 * 3) {
-              ppgLineData.removeAt(0);
-            }
-          });
-        }
+          if (ppgDataCounter >= 128 * 3) {
+            ppgLineData.removeAt(0);
+          }
+        });
       },
       onError: (Object error) {
         // Handle a possible error
@@ -455,49 +451,99 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startRESPListening() async {
+  void _startPPG32Listening() async {
+    print("AKW: Started listening to ppg stream");
+    listeningPPGStream = true;
+
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamPPG = await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
+    });
+
+    streamPPGSubscription = _streamPPG.listen(
+          (event) {
+        // print("AKW: Rx PPG: " + event.length.toString());
+        ByteData ppgByteData = Uint8List.fromList(event).buffer.asByteData(0);
+        Int32List ppgList = ppgByteData.buffer.asInt32List();
+
+        ppgList.forEach((element) {
+          setStateIfMounted(() {
+            ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              ppgDataLog.add(element.toDouble());
+            }
+          });
+
+          if (ppgDataCounter >= 128 * 6) {
+            ppgLineData.removeAt(0);
+          }
+        });
+      },
+      onError: (Object error) {
+        // Handle a possible error
+        print("Error while monitoring data characteristic \n$error");
+      },
+      cancelOnError: true,
+    );
+  }
+
+  void _startRESP16Listening() async {
     print("AKW: Started listening to respiration stream");
     listeningRESPStream = true;
     int i = 0;
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamRESP =
-          await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
+      _streamRESP = await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
     });
 
     streamRESPSubscription = _streamRESP.listen(
-      (event) {
-        ByteData respByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        if (widget.selectedBoard == 'ADS1292R Breakout/Shield') {
-          Int16List respList = respByteData.buffer.asInt16List();
-
-          respList.forEach((element) {
-            setStateIfMounted(() {
-              respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                respDataLog.add(element.toDouble());
-              }
-            });
-
-            if (respDataCounter >= 256 * 6) {
-              respLineData.removeAt(0);
+          (event) {
+        ByteData respByteData =
+        Uint8List.fromList(event).buffer.asByteData(0);
+        Int16List respList = respByteData.buffer.asInt16List();
+        respList.forEach((element) {
+          setStateIfMounted(() {
+            respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              respDataLog.add(element.toDouble());
             }
           });
-        } else {
-          Int32List respList = respByteData.buffer.asInt32List();
 
-          respList.forEach((element) {
-            setStateIfMounted(() {
-              respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-              if (startAppLogging == true) {
-                respDataLog.add(element.toDouble());
-              }
-            });
+          if (respDataCounter >= 256 * 6) {
+            respLineData.removeAt(0);
+          }
+        });
+      },
+      onError: (Object error) {
+        // Handle a possible error
+        print("Error while monitoring data characteristic \n$error");
+      },
+      cancelOnError: true,
+    );
+  }
 
-            if (respDataCounter >= 256 * 6) {
-              respLineData.removeAt(0);
+  void _startRESP32Listening() async {
+    print("AKW: Started listening to respiration stream");
+    listeningRESPStream = true;
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamRESP = await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
+    });
+
+    streamRESPSubscription = _streamRESP.listen(
+          (event) {
+        ByteData respByteData =
+        Uint8List.fromList(event).buffer.asByteData(0);
+        Int32List respList = respByteData.buffer.asInt32List();
+        respList.forEach((element) {
+          setStateIfMounted(() {
+            respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
+            if(startAppLogging == true){
+              respDataLog.add(element.toDouble());
             }
           });
-        }
+
+          if (respDataCounter >= 256 * 6) {
+            respLineData.removeAt(0);
+          }
+        });
       },
       onError: (Object error) {
         // Handle a possible error
@@ -1537,9 +1583,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             dataFormatBasedOnBoardsSelection();
           } else {
             closeAllStreams();
-            ecgLineData.clear();
-            ppgLineData.clear();
-            respLineData.clear();
+            //ecgLineData.clear();
+            //ppgLineData.clear();
+            //respLineData.clear();
+            ecgLineData.removeAt(0);
+            ppgLineData.removeAt(0);
+            respLineData.removeAt(0);
             setState(() {
               startStreaming = false;
             });
