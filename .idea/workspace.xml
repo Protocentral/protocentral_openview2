@@ -5,11 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="efa1097f-5f84-43ba-91da-1f6b19e2922b" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/lib/utils/charts.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/utils/loadingDialog.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/utils/overlay.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/utils/showPrivacy.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/utils/showTerms.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/utils/variables.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Podfile.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/about.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/about.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/globals.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/globals.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/home.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/home.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/onBoardDataLog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/onBoardDataLog.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/plotSerial.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/plotSerial.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/plots.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/plots.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/quickScan.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/quickScan.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/sizeConfig.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/sizeConfig.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,6 +51,11 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="AndroidSdkUpdater" />
     <property name="show.migrate.to.gradle.popup" value="false" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/utils" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter">

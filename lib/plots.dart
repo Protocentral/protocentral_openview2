@@ -1,25 +1,26 @@
+import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
+import 'package:csv/csv.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-
-import 'globals.dart';
-import 'home.dart';
-import 'sizeConfig.dart';
-
-import 'ble/ble_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'states/OpenViewBLEProvider.dart';
-import 'dart:async';
-import 'dart:io';
-import 'onBoardDataLog.dart';
-
 import 'package:flutter/cupertino.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'states/OpenViewBLEProvider.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:csv/csv.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+
+import 'home.dart';
+import 'globals.dart';
+import 'sizeConfig.dart';
+import 'utils/charts.dart';
+import 'utils/overlay.dart';
+import 'onBoardDataLog.dart';
+import 'ble/ble_scanner.dart';
+import 'utils/loadingDialog.dart';
 
 class WaveFormsPage extends StatefulWidget {
   WaveFormsPage({
@@ -114,10 +115,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   int flashMemoryAvailable = 25;
 
   String displaySpO2 = "--";
-
-  void logConsole(String logString) {
-    print("AKW - " + logString);
-  }
 
   @override
   void initState() {
@@ -353,18 +350,19 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     listeningECGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamECG = await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
+      _streamECG =
+          await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
     });
 
     streamECGSubscription = _streamECG.listen(
-          (event) {
+      (event) {
         ByteData ecgByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int16List ecgList = ecgByteData.buffer.asInt16List();
 
         ecgList.forEach((element) {
           setStateIfMounted(() {
             ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               ecgDataLog.add(element.toDouble());
             }
           });
@@ -387,18 +385,19 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     listeningECGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamECG = await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
+      _streamECG =
+          await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
     });
 
     streamECGSubscription = _streamECG.listen(
-          (event) {
+      (event) {
         ByteData ecgByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int32List ecgList = ecgByteData.buffer.asInt32List();
 
         ecgList.forEach((element) {
           setStateIfMounted(() {
             ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               ecgDataLog.add(element.toDouble());
             }
           });
@@ -421,11 +420,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     listeningPPGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamPPG = await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
+      _streamPPG =
+          await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
     });
 
     streamPPGSubscription = _streamPPG.listen(
-          (event) {
+      (event) {
         // print("AKW: Rx PPG: " + event.length.toString());
         ByteData ppgByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int16List ppgList = ppgByteData.buffer.asInt16List();
@@ -433,7 +433,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ppgList.forEach((element) {
           setStateIfMounted(() {
             ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               ppgDataLog.add(element.toDouble());
             }
           });
@@ -456,11 +456,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     listeningPPGStream = true;
 
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamPPG = await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
+      _streamPPG =
+          await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
     });
 
     streamPPGSubscription = _streamPPG.listen(
-          (event) {
+      (event) {
         // print("AKW: Rx PPG: " + event.length.toString());
         ByteData ppgByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int32List ppgList = ppgByteData.buffer.asInt32List();
@@ -468,7 +469,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ppgList.forEach((element) {
           setStateIfMounted(() {
             ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               ppgDataLog.add(element.toDouble());
             }
           });
@@ -491,18 +492,18 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     listeningRESPStream = true;
     int i = 0;
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamRESP = await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
+      _streamRESP =
+          await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
     });
 
     streamRESPSubscription = _streamRESP.listen(
-          (event) {
-        ByteData respByteData =
-        Uint8List.fromList(event).buffer.asByteData(0);
+      (event) {
+        ByteData respByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int16List respList = respByteData.buffer.asInt16List();
         respList.forEach((element) {
           setStateIfMounted(() {
             respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               respDataLog.add(element.toDouble());
             }
           });
@@ -524,18 +525,18 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print("AKW: Started listening to respiration stream");
     listeningRESPStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamRESP = await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
+      _streamRESP =
+          await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
     });
 
     streamRESPSubscription = _streamRESP.listen(
-          (event) {
-        ByteData respByteData =
-        Uint8List.fromList(event).buffer.asByteData(0);
+      (event) {
+        ByteData respByteData = Uint8List.fromList(event).buffer.asByteData(0);
         Int32List respList = respByteData.buffer.asInt32List();
         respList.forEach((element) {
           setStateIfMounted(() {
             respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-            if(startAppLogging == true){
+            if (startAppLogging == true) {
               respDataLog.add(element.toDouble());
             }
           });
@@ -576,54 +577,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         }
       } else {}
     });
-  }
-
-  LineChartBarData currentLine(List<FlSpot> points, Color plotcolor) {
-    return LineChartBarData(
-      spots: points,
-      dotData: FlDotData(
-        show: false,
-      ),
-      gradient: LinearGradient(
-        colors: [plotcolor, plotcolor],
-        //stops: const [0.1, 1.0],
-      ),
-      barWidth: 3,
-      isCurved: false,
-    );
-  }
-
-  buildChart(
-      int vertical, int horizontal, List<FlSpot> source, Color plotColor) {
-    return Container(
-      height: SizeConfig.blockSizeVertical * vertical,
-      width: SizeConfig.blockSizeHorizontal * horizontal,
-      child: LineChart(
-        LineChartData(
-          lineTouchData: LineTouchData(enabled: false),
-          clipData: FlClipData.all(),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            drawHorizontalLine: false,
-          ),
-          borderData: FlBorderData(
-            show: false,
-            //border: Border.all(color: const Color(0xff37434d)),
-          ),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          lineBarsData: [
-            currentLine(source, plotColor),
-          ],
-        ),
-        swapAnimationDuration: Duration.zero,
-      ),
-    );
   }
 
   Widget displayHeartRateValue() {
@@ -725,7 +678,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     ]);
   }
 
-  Widget displayTemperatureValue(){
+  Widget displayTemperatureValue() {
     return Column(children: [
       Align(
         alignment: Alignment.centerRight,
@@ -769,20 +722,20 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(25, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(25, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
-          buildChart(25, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(25, 95, respLineData, Colors.blue),
         ],
       );
     } else if (widget.selectedBoard == "ADS1293 Breakout/Shield") {
       return Column(
         children: [
-          buildChart(15, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(15, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(15, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(15, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
-          buildChart(15, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(15, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
@@ -790,7 +743,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(50, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(50, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
           displaySpo2Value(),
         ],
@@ -798,27 +751,27 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     } else if (widget.selectedBoard == "MAX86150 Breakout") {
       return Column(
         children: [
-          buildChart(15, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(15, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(15, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(15, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
-          buildChart(15, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(15, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
     } else if (widget.selectedBoard == "Pulse Express") {
       return Column(
         children: [
-          buildChart(27, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(27, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(27, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(27, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
     } else if (widget.selectedBoard == "tinyGSR Breakout") {
       return Column(
         children: [
-          buildChart(54, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(54, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
         ],
       );
@@ -826,7 +779,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(50, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(50, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
         ],
@@ -834,9 +787,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     } else if (widget.selectedBoard == "MAX30001 ECG & BioZ Breakout") {
       return Column(
         children: [
-          buildChart(27, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(27, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(27, 95, ppgLineData, Colors.blue),
+          buildPlots().buildChart(27, 95, ppgLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
@@ -849,11 +802,11 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     return Column(
       children: [
         displayHeartRateValue(),
-        buildChart(16, 70, ecgLineData, Colors.green),
+        buildPlots().buildChart(16, 70, ecgLineData, Colors.green),
         displaySpo2Value(),
-        buildChart(17, 70, ppgLineData, Colors.yellow),
+        buildPlots().buildChart(17, 70, ppgLineData, Colors.yellow),
         displayRespirationRateValue(),
-        buildChart(16, 70, respLineData, Colors.blue),
+        buildPlots().buildChart(16, 70, respLineData, Colors.blue),
         displayTemperatureValue(),
       ],
     );
@@ -1159,9 +1112,10 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     sessionParametersLength.setUint8(5, int.parse(cdate));
 
     Uint8List cmdByteList = sessionParametersLength.buffer.asUint8List(0, 6);
-    logConsole("AKW: Sending DateTime information: " + cmdByteList.toString());
+    hPi4Global().logConsole(
+        "AKW: Sending DateTime information: " + cmdByteList.toString());
     commandDateTimePacket.addAll(cmdByteList);
-    logConsole(
+    hPi4Global().logConsole(
         "AKW: Sending DateTime Command: " + commandDateTimePacket.toString());
     await widget.fble.writeCharacteristicWithoutResponse(
         commandTxCharacteristic,
@@ -1172,7 +1126,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Future<void> _sendLogtoFlashCommand() async {
-    logConsole("AKW: Sending start logging flash Command: " +
+    hPi4Global().logConsole("AKW: Sending start logging flash Command: " +
         hPi4Global.startLoggingFlash.toString());
     await widget.fble.writeCharacteristicWithoutResponse(
         commandTxCharacteristic,
@@ -1188,7 +1142,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Future<void> _sendEndLogtoFlashCommand() async {
-    logConsole("AKW: Sending end logging flash Command: " +
+    hPi4Global().logConsole("AKW: Sending end logging flash Command: " +
         hPi4Global.endLoggingFlash.toString());
     await widget.fble.writeCharacteristicWithoutResponse(
         commandTxCharacteristic,
@@ -1233,6 +1187,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         onPressed: () async {
                           if (flashMemoryAvailable > 25) {
                             _sendLogtoFlashCommand();
+                            //ShowOverlay().showOverlay(context);
                             _showOverlay(context);
                           } else {
                             _showInsufficientMemoryDialog();
@@ -1370,23 +1325,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     if (mounted) setState(f);
   }
 
-  void showLoadingIndicator(String text, BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0))),
-              backgroundColor: Colors.black87,
-              content: LoadingIndicator(text: text),
-            ));
-      },
-    );
-  }
-
   String debugText = "Console Inited...";
 
   Widget displayDisconnectButton() {
@@ -1511,7 +1449,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   Future<void> _disconnect() async {
     try {
-      logConsole('Disconnecting ');
+      hPi4Global().logConsole('Disconnecting ');
       if (connectedToDevice == true) {
         showLoadingIndicator("Disconnecting....", context);
         await Future.delayed(Duration(seconds: 4), () async {
@@ -1525,10 +1463,9 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         //Navigator.pop(context);
       }
     } on Exception catch (e, _) {
-      logConsole("Error disconnecting from a device: $e");
+      hPi4Global().logConsole("Error disconnecting from a device: $e");
     } finally {
       // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
-
     }
   }
 
@@ -1541,8 +1478,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         child: Row(
           children: <Widget>[
             Text('Log to App',
-                style:
-                    new TextStyle(fontSize: 16.0, color: Colors.black)),
+                style: new TextStyle(fontSize: 16.0, color: Colors.black)),
           ],
         ),
         shape: RoundedRectangleBorder(
@@ -1583,9 +1519,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             dataFormatBasedOnBoardsSelection();
           } else {
             closeAllStreams();
-            //ecgLineData.clear();
-            //ppgLineData.clear();
-            //respLineData.clear();
             ecgLineData.removeAt(0);
             ppgLineData.removeAt(0);
             respLineData.removeAt(0);

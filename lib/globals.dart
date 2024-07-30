@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class hPi4Global {
   static const String UUID_SERV_DIS = "0000180a-0000-1000-8000-00805f9b34fb";
@@ -19,7 +18,8 @@ class hPi4Global {
   //static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
   //static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
 
-  static const String UUID_SERV_CMD_DATA = "01bf7492-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_SERV_CMD_DATA =
+      "01bf7492-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_CMD = "01bf1528-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_DATA = "01bf1527-970f-8d96-d44d-9023c47faddc";
 
@@ -91,6 +91,20 @@ class hPi4Global {
     return short;
   }
 
+  void logConsole(String logString) {
+    print("AKW - " + logString);
+  }
+
+  void launchURL(String _url) async {
+    await launch(_url,
+        forceSafariVC: true, forceWebView: true, enableJavaScript: true);
+  }
+
+  FutureOr<bool> timeOutConnection(BuildContext context) {
+    Navigator.pop(context);
+    print("AKW: Connection timed out");
+    return false;
+  }
 
 }
 

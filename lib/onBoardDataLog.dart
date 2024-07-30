@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'package:convert/convert.dart';
@@ -11,33 +11,14 @@ import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
-import 'globals.dart';
 import 'home.dart';
-import 'sizeConfig.dart';
 import 'plots.dart';
+import 'globals.dart';
+import 'sizeConfig.dart';
+import 'utils/variables.dart';
 import 'ble/ble_scanner.dart';
+import 'utils/loadingDialog.dart';
 import 'states/OpenViewBLEProvider.dart';
-
-typedef LogHeader = ({
-  int logFileID,
-  int sessionLength,
-  int sessionID,
-  int sessionType,
-  int rampUp,
-  int rampDown,
-  int platCurr,
-  int platTime,
-  int tpcsPW,
-  int tpcsIPI,
-  int tpcsTrainTime,
-  int tpcsTrainITI,
-  int tmSec,
-  int tmMin,
-  int tmHour,
-  int tmMday,
-  int tmMon,
-  int tmYear
-});
 
 class Fetchlogs extends StatefulWidget {
   Fetchlogs({
@@ -64,17 +45,21 @@ class _FetchlogsState extends State<Fetchlogs> {
   Key key = UniqueKey();
 
   bool streamStarted = false;
-
   bool pcConnected = false;
+  bool currentFileReceivedComplete = false;
+  bool fetchingFile = false;
+  bool listeningDataStream = false;
+  bool listeningUploadStream = false;
+  bool listeningConnectionStream = false;
+  bool _listeningCommandStream = false;
 
   late Stream<List<int>> _streamCommand;
   late Stream<List<int>> _streamData;
-
   late StreamSubscription _streamCommandSubscription;
   late StreamSubscription _streamDataSubscription;
-
   late QualifiedCharacteristic commandTxCharacteristic;
   late QualifiedCharacteristic dataCharacteristic;
+  late DiscoveredDevice globalDiscoveredDevice;
 
   double displayPercent = 0;
   double globalDisplayPercentOffset = 0;
@@ -82,38 +67,24 @@ class _FetchlogsState extends State<Fetchlogs> {
   int totalDataCounter = 0;
   int totalUploadDataCounter = 0;
   int totalUploadBytesCounter = 0;
-
   int dataReceiveCounter = 0;
   int globalTotalFiles = 0;
-
   int totalSessionCount = 0;
-
-  List<int> currentFileData = [];
-  List<String> auditDevice = [];
-
   int currentFileNumber = 0;
   int currentFileExpectedLength = 0;
   int currentFileDataCounter = 0;
   int fetchedFileLength = 0;
   int fetchedCurrentFilesLength = 0;
-  bool currentFileReceivedComplete = false;
-  bool fetchingFile = false;
-
-  List<int> logData = [];
   int _globalReceivedData = 0;
   int globalDataCounter = 0;
-
-  String globalDeviceID = "";
-
   int _globalExpectedLength = 1;
   int tappedIndex = 0;
 
-  bool listeningDataStream = false;
-  bool listeningUploadStream = false;
-  bool listeningConnectionStream = false;
-  bool _listeningCommandStream = false;
+  List<int> logData = [];
+  List<int> currentFileData = [];
+  List<String> auditDevice = [];
 
-  late DiscoveredDevice globalDiscoveredDevice;
+  String globalDeviceID = "";
 
   final _scrollController = ScrollController();
 
@@ -407,23 +378,6 @@ class _FetchlogsState extends State<Fetchlogs> {
 
   Stopwatch fetchStopwatch = new Stopwatch();
 
-  void showLoadingIndicator(String text, BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0))),
-              backgroundColor: Colors.black87,
-              content: LoadingIndicator(text: text),
-            ));
-      },
-    );
-  }
-
   void setStateIfMounted(f) {
     if (mounted) setState(f);
   }
@@ -680,7 +634,7 @@ class _FetchlogsState extends State<Fetchlogs> {
                                           contentPadding: EdgeInsets.only(
                                               left: 0.0, right: 0.0),
                                           minLeadingWidth: 10,
-                                        title: Column(
+                                          title: Column(
                                             children: [
                                               Row(children: [
                                                 Text(

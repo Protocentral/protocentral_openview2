@@ -1,20 +1,20 @@
 import 'dart:io';
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'globals.dart';
-import 'home.dart';
-import 'sizeConfig.dart';
-import 'ble/ble_scanner.dart';
-import 'states/OpenViewBLEProvider.dart';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:csv/csv.dart';
+import 'package:flutter_libserialport/flutter_libserialport.dart';
+
+import 'home.dart';
+import 'globals.dart';
+import 'sizeConfig.dart';
+import 'ble/ble_scanner.dart';
+import 'utils/variables.dart';
+import 'states/OpenViewBLEProvider.dart';
 
 class PlotSerialPage extends StatefulWidget {
   PlotSerialPage({
@@ -545,7 +545,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     );
   }
 
-  buildChart(int vertical, int horizontal, List<FlSpot> source, Color plotColor) {
+  buildChart(
+      int vertical, int horizontal, List<FlSpot> source, Color plotColor) {
     return Container(
       height: SizeConfig.blockSizeVertical * vertical,
       width: SizeConfig.blockSizeHorizontal * horizontal,
@@ -670,7 +671,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     ]);
   }
 
-  Widget displayTemperatureValue(){
+  Widget displayTemperatureValue() {
     return Column(children: [
       Align(
         alignment: Alignment.centerRight,
@@ -844,23 +845,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
   void setStateIfMounted(f) {
     if (mounted) setState(f);
-  }
-
-  void showLoadingIndicator(String text, BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0))),
-              backgroundColor: Colors.black87,
-              content: LoadingIndicator(text: text),
-            ));
-      },
-    );
   }
 
   String debugText = "Console Inited...";
