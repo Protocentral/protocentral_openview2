@@ -1,19 +1,18 @@
-import 'dart:io';
-import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
 import 'home.dart';
 import 'globals.dart';
-import 'sizeConfig.dart';
-import 'ble/ble_scanner.dart';
+import 'utils/charts.dart';
 import 'utils/variables.dart';
+import 'utils/sizeConfig.dart';
+import 'ble/ble_scanner.dart';
+import 'utils/logDataToFile.dart';
 import 'states/OpenViewBLEProvider.dart';
 
 class PlotSerialPage extends StatefulWidget {
@@ -79,10 +78,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     respLineData.clear();
 
     super.dispose();
-  }
-
-  void logConsole(String logString) {
-    print("AKW - " + logString);
   }
 
   void _startSerialListening() async {
@@ -530,54 +525,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     }
   }
 
-  LineChartBarData currentLine(List<FlSpot> points, Color plotcolor) {
-    return LineChartBarData(
-      spots: points,
-      dotData: FlDotData(
-        show: false,
-      ),
-      gradient: LinearGradient(
-        colors: [plotcolor, plotcolor],
-        //stops: const [0.1, 1.0],
-      ),
-      barWidth: 4,
-      isCurved: false,
-    );
-  }
-
-  buildChart(
-      int vertical, int horizontal, List<FlSpot> source, Color plotColor) {
-    return Container(
-      height: SizeConfig.blockSizeVertical * vertical,
-      width: SizeConfig.blockSizeHorizontal * horizontal,
-      child: LineChart(
-        LineChartData(
-          lineTouchData: LineTouchData(enabled: false),
-          clipData: FlClipData.all(),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            drawHorizontalLine: false,
-          ),
-          borderData: FlBorderData(
-            show: false,
-            //border: Border.all(color: const Color(0xff37434d)),
-          ),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          lineBarsData: [
-            currentLine(source, plotColor),
-          ],
-        ),
-        swapAnimationDuration: Duration.zero,
-      ),
-    );
-  }
-
   Widget displayHeartRateValue() {
     return Column(children: [
       Align(
@@ -713,13 +660,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(18, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(18, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displaySpo2Value(),
-          buildChart(18, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(18, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
-          buildChart(18, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(18, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
           displayTemperatureValue(),
         ],
@@ -728,20 +675,20 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(29, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(29, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
-          buildChart(28, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(28, 95, respLineData, Colors.blue),
         ],
       );
     } else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
       return Column(
         children: [
-          buildChart(23, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(23, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(23, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
-          buildChart(23, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(23, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
@@ -749,36 +696,36 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(30, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(30, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displaySpo2Value(),
-          buildChart(30, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
         ],
       );
     } else if (widget.selectedPortBoard == "MAX86150 Breakout") {
       return Column(
         children: [
-          buildChart(23, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(23, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(23, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
-          buildChart(23, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(23, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
     } else if (widget.selectedPortBoard == "Pulse Express") {
       return Column(
         children: [
-          buildChart(32, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(32, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(32, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
     } else if (widget.selectedPortBoard == "tinyGSR Breakout") {
       return Column(
         children: [
-          buildChart(65, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(65, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
         ],
       );
@@ -786,7 +733,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildChart(54, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(54, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
         ],
@@ -794,9 +741,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     } else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
       return Column(
         children: [
-          buildChart(32, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
-          buildChart(32, 95, ppgLineData, Colors.blue),
+          buildPlots().buildChart(32, 95, ppgLineData, Colors.blue),
           sizedBoxForCharts(),
         ],
       );
@@ -872,7 +819,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             }
             if (startDataLogging == true) {
               startDataLogging = false;
-              _writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog);
+              writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog, context);
             } else {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
@@ -882,90 +829,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ),
       );
     });
-  }
-
-  Future<void> _writeLogDataToFile(
-      List<double> ecgData, List<double> ppgData, List<double> respData) async {
-    logConsole("Log data size: " + ecgData.length.toString());
-
-    List<List<String>> dataList = []; //Outter List which contains the data List
-
-    List<String> header = [];
-    header.add("ECG");
-    header.add("PPG");
-    header.add("RESPIRATION");
-
-    dataList.add(header);
-
-    for (int i = 0; i < (ecgData.length - 50); i++) {
-      List<String> dataRow = [
-        (ecgData[i]).toString(),
-        (ppgData[i]).toString(),
-        (respData[i]).toString(),
-      ];
-      dataList.add(dataRow);
-    }
-
-    // Code to convert logData to CSV file
-    String csv = const ListToCsvConverter().convert(dataList);
-    final String logFileTime = DateTime.now().millisecondsSinceEpoch.toString();
-
-    Directory _directory = Directory("");
-
-    _directory = await getApplicationDocumentsDirectory();
-
-    final exPath = _directory.path;
-    print("Saved Path: $exPath");
-    await Directory(exPath).create(recursive: true);
-
-    final String directory = exPath;
-
-    File file = File('$directory/openview-log-$logFileTime.csv');
-    print("Save file");
-
-    await file.writeAsString(csv);
-
-    print("File exported successfully!");
-
-    await _showDownloadSuccessDialog();
-  }
-
-  Future<void> _showDownloadSuccessDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Downloaded'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 72,
-                ),
-                Center(
-                    child: Text(
-                        'File downloaded successfully!. Please check in the downloads')),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                      builder: (_) => HomePage(title: 'HealthyPi5')),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Widget build(BuildContext context) {

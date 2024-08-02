@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../sizeConfig.dart';
+import 'sizeConfig.dart';
 
 class buildPlots {
   LineChartBarData currentLine(List<FlSpot> points, Color plotcolor) {

@@ -4,30 +4,13 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="efa1097f-5f84-43ba-91da-1f6b19e2922b" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/utils/charts.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/utils/loadingDialog.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/utils/overlay.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/utils/showPrivacy.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/utils/showTerms.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/utils/variables.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/about.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/about.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/globals.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/globals.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/home.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/home.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/onBoardDataLog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/onBoardDataLog.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/plotSerial.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/plotSerial.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/plots.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/plots.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/quickScan.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/quickScan.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/sizeConfig.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/sizeConfig.dart" afterDir="false" />
-    </list>
+    <list default="true" id="efa1097f-5f84-43ba-91da-1f6b19e2922b" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[/Users/suvarnavadla/.android/avd/Nexus_One_Edited_API_30.avd]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>

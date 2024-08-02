@@ -14,7 +14,7 @@ import 'about.dart';
 import 'globals.dart';
 import 'quickScan.dart';
 import 'plotSerial.dart';
-import 'sizeConfig.dart';
+import 'utils/sizeConfig.dart';
 import 'utils/variables.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/showTerms.dart';

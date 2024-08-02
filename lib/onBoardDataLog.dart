@@ -14,7 +14,7 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'home.dart';
 import 'plots.dart';
 import 'globals.dart';
-import 'sizeConfig.dart';
+import 'utils/sizeConfig.dart';
 import 'utils/variables.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/loadingDialog.dart';

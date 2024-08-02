@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -10,17 +8,17 @@ import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'states/OpenViewBLEProvider.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
 import 'home.dart';
 import 'globals.dart';
-import 'sizeConfig.dart';
+import 'utils/sizeConfig.dart';
 import 'utils/charts.dart';
 import 'utils/overlay.dart';
 import 'onBoardDataLog.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/loadingDialog.dart';
+import 'utils/logDataToFile.dart';
 
 class WaveFormsPage extends StatefulWidget {
   WaveFormsPage({
@@ -1272,8 +1270,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           } else if (startFlashLogging == false &&
                               startAppLogging == true) {
                             startAppLogging = false;
-                            _writeLogDataToFile(
-                                ecgDataLog, ppgDataLog, respDataLog);
+                            writeLogDataToFile(
+                                ecgDataLog, ppgDataLog, respDataLog,context);
                           } else if (startFlashLogging == true &&
                               startAppLogging == true) {
                           } else {
@@ -1347,7 +1345,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           onPressed: () async {
             if (startAppLogging == true) {
               startAppLogging = false;
-              _writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog);
+              writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog, context);
             } else {
               closeAllStreams();
               await _disconnect();
@@ -1359,92 +1357,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         ),
       );
     });
-  }
-
-  Future<void> _writeLogDataToFile(
-      List<double> ecgData, List<double> ppgData, List<double> respData) async {
-    List<List<String>> dataList = []; //Outter List which contains the data List
-    List<String> header = [];
-
-    header.add("ECG");
-    header.add("PPG");
-    header.add("RESPIRATION");
-
-    dataList.add(header);
-
-    for (int i = 0; i < (ecgData.length - 50); i++) {
-      List<String> dataRow = [
-        (ecgData[i]).toString(),
-        (ppgData[i]).toString(),
-        (respData[i]).toString(),
-      ];
-      dataList.add(dataRow);
-    }
-    // Code to convert logData to CSV file
-    String csv = const ListToCsvConverter().convert(dataList);
-    final String logFileTime = DateTime.now().millisecondsSinceEpoch.toString();
-
-    Directory _directory = Directory("");
-    if (Platform.isAndroid) {
-      // Redirects it to download folder in android
-      _directory = Directory("/storage/emulated/0/Download");
-    } else {
-      _directory = await getApplicationDocumentsDirectory();
-    }
-    final exPath = _directory.path;
-    print("Saved Path: $exPath");
-    await Directory(exPath).create(recursive: true);
-
-    final String directory = exPath;
-
-    File file = File('$directory/openview-log-$logFileTime.csv');
-    print("Save file");
-
-    await file.writeAsString(csv);
-
-    print("File exported successfully!");
-
-    await _showDownloadSuccessDialog();
-  }
-
-  Future<void> _showDownloadSuccessDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Downloaded'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 72,
-                ),
-                Center(
-                    child: Text(
-                        'File downloaded successfully!. Please check in the downloads')),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () async {
-                //Navigator.pop(context);
-                closeAllStreams();
-                await _disconnect();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                      builder: (_) => HomePage(title: 'HealthyPi5')),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Future<void> _disconnect() async {
