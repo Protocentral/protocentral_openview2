@@ -15,11 +15,8 @@ class hPi4Global {
   static const String UUID_CHAR_HIST = "cd5c1525-4448-7db8-ae4c-d1da8cba36d0";
 
   static const String UUID_SERVICE_CMD = "01bf7492-970f-8d96-d44d-9023c47faddc";
-  //static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
-  //static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
 
-  static const String UUID_SERV_CMD_DATA =
-      "01bf7492-970f-8d96-d44d-9023c47faddc";
+  static const String UUID_SERV_CMD_DATA = "01bf7492-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_CMD = "01bf1528-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_DATA = "01bf1527-970f-8d96-d44d-9023c47faddc";
 
@@ -81,8 +78,8 @@ class hPi4Global {
 
   static const List<int> WISER_CMD_SET_DEVICE_TIME = [0x41];
 
-  static const List<int> startLoggingFlash = [0x42];
-  static const List<int> endLoggingFlash = [0x43];
+  static const List<int> startLoggingFlash = [0x43];
+  static const List<int> endLoggingFlash = [0x44];
 
   static int toInt16(Uint8List byteArray, int index) {
     ByteBuffer buffer = byteArray.buffer;

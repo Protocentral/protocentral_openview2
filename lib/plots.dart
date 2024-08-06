@@ -57,7 +57,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   double respDataCounter = 0;
   double globalTemp = 0;
 
-  late QualifiedCharacteristic CommandCharacteristic;
   late QualifiedCharacteristic ECGCharacteristic;
   late QualifiedCharacteristic PPGCharacteristic;
   late QualifiedCharacteristic RESPCharacteristic;
@@ -104,13 +103,13 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   bool startAppLogging = false;
   bool startFlashLogging = false;
+  bool memoryAvailable = false;
   bool startStreaming = false;
   bool endFlashLoggingResponse = false;
 
   int globalHeartRate = 0;
   int globalSpO2 = 0;
   int globalRespRate = 0;
-  int flashMemoryAvailable = 25;
 
   String displaySpO2 = "--";
 
@@ -176,11 +175,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     HRVRespCharacteristic = QualifiedCharacteristic(
         characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_HRV),
         serviceId: Uuid.parse(hPi4Global.UUID_SERV_HRV),
-        deviceId: widget.currentDevice.id);
-
-    CommandCharacteristic = QualifiedCharacteristic(
-        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
-        serviceId: Uuid.parse(hPi4Global.UUID_SERVICE_CMD),
         deviceId: widget.currentDevice.id);
 
     dataCharacteristic = QualifiedCharacteristic(
@@ -553,27 +547,34 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Future<void> _startListeningData() async {
+    print("AKW: Started listening to the response");
     listeningDataStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
+      _streamData = await widget.fble.subscribeToCharacteristic(dataCharacteristic);
     });
 
     _streamDataSubscription = _streamData.listen((value) async {
-      ByteData bdata = Uint8List.fromList(value).buffer.asByteData();
-      print("Data Rx: " + value.toString());
-      int _pktType = bdata.getUint8(0);
+      print("DataChar Rx: " + value.length.toString());
 
-      if (_pktType == hPi4Global.CES_CMDIF_TYPE_CMD_RSP) {
-        int _cmdType = bdata.getUint8(1);
-        if (_cmdType == 84) {
-          setState(() {
-            //endFlashLoggingResponse = true;
-          });
+      if (value.length > 2) {
+        print("Data Rx: " + value.toString());
 
-          await _streamCommandSubscription.cancel();
-          await _streamDataSubscription.cancel();
+        if (value[0] == 0x03) {
+          if (value[1] == 0x55) {
+            if (value[2] == 0x32) {
+              print("Availble memory is greater than 25%");
+              setState((){
+                memoryAvailable = true;
+              });
+            } else if (value[2] == 0x31) {
+              print("Availble memory is less than 25%");
+              setState((){
+                memoryAvailable = false;
+              });
+            }
+          }
         }
-      } else {}
+      }
     });
   }
 
@@ -930,48 +931,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _showCommandSentDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Sent'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 72,
-                ),
-                Center(
-                  child: Column(children: <Widget>[
-                    Text(
-                      'Command sent',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ]),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Ok'),
-              onPressed: () async {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _showInsufficientMemoryDialog() async {
     return showDialog<void>(
       context: context,
@@ -1119,24 +1078,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         commandTxCharacteristic,
         value: commandDateTimePacket);
     print("DateTime Sent");
-
-    _showCommandSentDialog();
-  }
-
-  Future<void> _sendLogtoFlashCommand() async {
-    hPi4Global().logConsole("AKW: Sending start logging flash Command: " +
-        hPi4Global.startLoggingFlash.toString());
-    await widget.fble.writeCharacteristicWithoutResponse(
-        commandTxCharacteristic,
-        value: hPi4Global.startLoggingFlash);
-
-    print("start logging flash command Sent");
-
-    setState(() {
-      startFlashLogging = true;
-    });
-
-    _showCommandSentDialog();
   }
 
   Future<void> _sendEndLogtoFlashCommand() async {
@@ -1147,6 +1088,11 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         value: hPi4Global.endLoggingFlash);
 
     print("end logging flash command Sent");
+  }
+
+  Future<void> _setMTU(String deviceMAC) async {
+    int recdMTU = await widget.fble.requestMtu(deviceId: deviceMAC, mtu: 517);
+    hPi4Global().logConsole("MTU negotiated: " + recdMTU.toString());
   }
 
   Widget _buildCharts() {
@@ -1183,9 +1129,18 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          if (flashMemoryAvailable > 25) {
-                            _sendLogtoFlashCommand();
-                            //ShowOverlay().showOverlay(context);
+                          await Future.delayed(Duration(seconds: 1), () async {
+                            await _setMTU(widget.currentDevice.id);
+                          });
+                          await Future.delayed(Duration(seconds: 1), () async {
+                            await _startListeningData();
+                          });
+                          await Future.delayed(Duration(seconds: 1), () async {
+                            await widget.fble.writeCharacteristicWithoutResponse(
+                                commandTxCharacteristic,
+                                value: hPi4Global.startSession);
+                          });
+                          if (memoryAvailable == true) {
                             _showOverlay(context);
                           } else {
                             _showInsufficientMemoryDialog();
