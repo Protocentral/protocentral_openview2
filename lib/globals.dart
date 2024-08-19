@@ -30,10 +30,8 @@ class hPi4Global {
 
   static const String UUID_CHAR_HR = "00002a37-0000-1000-8000-00805f9b34fb";
   static const String UUID_SPO2_CHAR = "00002a5e-0000-1000-8000-00805f9b34fb";
-  //static const String UUID_RR_CHAR      = "00002a6e-0000-1000-8000-00805f9b34fb";
   static const String UUID_TEMP_CHAR = "00002a6e-0000-1000-8000-00805f9b34fb";
 
-  //static const String UUID_CHAR_HIST = "01bf1525-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_ACT = "000000a2-0000-1000-8000-00805f9b34fb";
   static const String UUID_CHAR_BATT = "00002a19-0000-1000-8000-00805f9b34fb";
   static const String UUID_DIS_FW_REVISION =
@@ -63,23 +61,17 @@ class hPi4Global {
   static const List<int> sessionLogIndex = [0x50];
   static const List<int> sessionFetchLogFile = [0x51];
   static const List<int> sessionLogDelete = [0x52];
-  static const List<int> sessionLogWipeAll = [0x53];
+  //static const List<int> sessionLogWipeAll = [0x53];
   static const List<int> getSessionCount = [0x54];
 
   static const List<int> startSession = [0x55];
   static const List<int> stopSession = [0x56];
-
-  static const List<int> setSessionOptions = [0x57];
-  static const List<int> getSessionOptions = [0x58];
 
   static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
   static const int CES_CMDIF_TYPE_DATA = 0x02;
   static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;
 
   static const List<int> WISER_CMD_SET_DEVICE_TIME = [0x41];
-
-  static const List<int> startLoggingFlash = [0x43];
-  static const List<int> endLoggingFlash = [0x44];
 
   static int toInt16(Uint8List byteArray, int index) {
     ByteBuffer buffer = byteArray.buffer;

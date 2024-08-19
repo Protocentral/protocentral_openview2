@@ -27,10 +27,10 @@ Future<void> showDownloadSuccessDialog(BuildContext context) async {
             child: Text('Close'),
             onPressed: () {
               Navigator.pop(context);
-              Navigator.of(context).pushReplacement(
+              /*Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                     builder: (_) => HomePage(title: 'HealthyPi5')),
-              );
+              );*/
             },
           ),
         ],

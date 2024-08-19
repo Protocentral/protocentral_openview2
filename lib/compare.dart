@@ -1,0 +1,839 @@
+import 'dart:io';
+import 'dart:async';
+import 'dart:typed_data';
+import 'package:convert/convert.dart';
+import 'package:csv/csv.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:to_csv/to_csv.dart' as exportCSV;
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+
+import 'home.dart';
+import 'plots.dart';
+import 'globals.dart';
+import 'utils/sizeConfig.dart';
+import 'utils/variables.dart';
+import 'ble/ble_scanner.dart';
+import 'utils/loadingDialog.dart';
+import 'states/OpenViewBLEProvider.dart';
+
+class Fetchlogs extends StatefulWidget {
+  Fetchlogs({
+    Key? key,
+    required this.selectedBoard,
+    required this.selectedDevice,
+    required this.currentDevice,
+    required this.fble,
+    required this.currConnection,
+  }) : super();
+
+  final String selectedBoard;
+  final String selectedDevice;
+  final DiscoveredDevice currentDevice;
+  final FlutterReactiveBle fble;
+  final StreamSubscription<ConnectionStateUpdate> currConnection;
+
+  @override
+  _FetchlogsState createState() => _FetchlogsState();
+}
+
+class _FetchlogsState extends State<Fetchlogs> {
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  Key key = UniqueKey();
+
+  bool streamStarted = false;
+  bool pcConnected = false;
+  bool currentFileReceivedComplete = false;
+  bool fetchingFile = false;
+  bool listeningDataStream = false;
+  bool listeningUploadStream = false;
+  bool listeningConnectionStream = false;
+  bool _listeningCommandStream = false;
+
+  late Stream<List<int>> _streamCommand;
+  late Stream<List<int>> _streamData;
+  late StreamSubscription _streamCommandSubscription;
+  late StreamSubscription _streamDataSubscription;
+  late QualifiedCharacteristic commandTxCharacteristic;
+  late QualifiedCharacteristic dataCharacteristic;
+  late DiscoveredDevice globalDiscoveredDevice;
+
+  double displayPercent = 0;
+  double globalDisplayPercentOffset = 0;
+
+  int totalDataCounter = 0;
+  int totalUploadDataCounter = 0;
+  int totalUploadBytesCounter = 0;
+  int dataReceiveCounter = 0;
+  int globalTotalFiles = 0;
+  int totalSessionCount = 0;
+  int currentFileNumber = 0;
+  int currentFileExpectedLength = 0;
+  int currentFileDataCounter = 0;
+  int fetchedFileLength = 0;
+  int fetchedCurrentFilesLength = 0;
+  int _globalReceivedData = 0;
+  int globalDataCounter = 0;
+  int _globalExpectedLength = 1;
+  int tappedIndex = 0;
+
+  List<int> logData = [];
+  List<int> currentFileData = [];
+  List<String> auditDevice = [];
+
+  String globalDeviceID = "";
+
+  final _scrollController = ScrollController();
+
+  void logConsole(String logString) async {
+    print("AKW - " + logString);
+    debugText += logString;
+    debugText += "\n";
+  }
+
+  @override
+  void initState() {
+    pcConnected = true;
+    connectedToDevice = true;
+
+    subscribeToCharacteristics();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //await _fetchLogCount(widget.currentDevice.id, context);
+      //await _fetchLogIndex(widget.currentDevice.id, context);
+    });
+
+    super.initState();
+  }
+
+  @override
+  dispose() {
+    super.dispose();
+    closeAllStreams();
+  }
+
+  Future<void> closeAllStreams() async {
+    if (_listeningCommandStream) {
+      await _streamCommandSubscription.cancel();
+    }
+    if (listeningDataStream) {
+      await _streamDataSubscription.cancel();
+    }
+  }
+
+  bool flagFetching = false;
+
+  bool getFetchStatus() {
+    return flagFetching;
+  }
+
+  List<int> FilesList = [];
+
+  bool globalFetchInProgress = false;
+  int globalFetchTotalFiles = 0;
+  int globalFetchCurrentFile = 0;
+  String globalFetchCurrentFilename = "";
+
+  List<LogHeader> logHeaderList = List.empty(growable: true);
+
+  int logFileCount = 0;
+
+  void subscribeToCharacteristics() {
+    dataCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_DATA),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
+        deviceId: widget.currentDevice.id);
+
+    commandTxCharacteristic = QualifiedCharacteristic(
+        characteristicId: Uuid.parse(hPi4Global.UUID_CHAR_CMD),
+        serviceId: Uuid.parse(hPi4Global.UUID_SERV_CMD_DATA),
+        deviceId: widget.currentDevice.id);
+  }
+
+  Future<void> _startListeningCommand(String deviceID) async {
+    _listeningCommandStream = true;
+
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamCommand =
+          widget.fble.subscribeToCharacteristic(commandTxCharacteristic);
+    });
+
+    _streamCommandSubscription = _streamCommand.listen((value) async {
+      print("CMD Stream: " + value.length.toString());
+    });
+  }
+
+  Future waitWhile(bool test(), [Duration pollInterval = Duration.zero]) {
+    var completer = new Completer();
+    check() {
+      if (!test()) {
+        completer.complete();
+      } else {
+        new Timer(pollInterval, check);
+      }
+    }
+
+    check();
+    return completer.future;
+  }
+
+  bool isTransfering = false;
+  bool isFetchIconTap = false;
+
+  String connUpdate = "";
+
+  int logIndexNumElements = 0;
+
+  static const int WISER_FILE_HEADER_LEN = 10;
+
+  Future<void> _writeLogDataToFile(List<int> mData, int sessionID) async {
+    logConsole("Log data size: " + mData.length.toString());
+
+    ByteData bdata = Uint8List.fromList(mData).buffer.asByteData(WISER_FILE_HEADER_LEN);
+
+    int logNumberPoints = ((mData.length - WISER_FILE_HEADER_LEN) ~/ 10);
+
+    //List<String> data1 = ['1', 'Bilal Saeed', '1374934', '912839812'];
+    List<List<String>> dataList = []; //Outter List which contains the data List
+
+    List<String> header = [];
+
+    header.add("ecg");
+    header.add("resp");
+    header.add("ppg");
+    dataList.add(header);
+
+    for (int i = 0; i < logNumberPoints; i++) {
+      List<String> dataRow = [
+        bdata.getUint32((i * 10), Endian.little).toString(),
+        bdata.getInt32((i * 10) + 4, Endian.little).toString(),
+        bdata.getUint32((i * 10) + 8, Endian.little).toString(),
+      ];
+      dataList.add(dataRow);
+    }
+
+    // Code to convert logData to CSV file
+    String csv = const ListToCsvConverter().convert(dataList);
+
+    Directory _directory = Directory("");
+    if (Platform.isAndroid) {
+      _directory = Directory("/storage/emulated/0/Download");
+    } else {
+      _directory = await getApplicationDocumentsDirectory();
+    }
+    final exPath = _directory.path;
+    print("Saved Path: $exPath");
+    await Directory(exPath).create(recursive: true);
+
+    final String directory = exPath;
+
+    File file = File('$directory/logdata$sessionID.csv');
+    ;
+    print("Save file");
+
+    await file.writeAsString(csv);
+
+    await _showDownloadSuccessDialog();
+  }
+
+  bool logIndexReceived = false;
+
+  Future<void> _startListeningData(
+      String deviceID, int expectedLength, int sessionID) async {
+    listeningDataStream = true;
+    await Future.delayed(Duration(seconds: 1), () async {
+      _streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
+    });
+
+    _streamDataSubscription = _streamData.listen((value) async {
+      ByteData bdata = Uint8List.fromList(value).buffer.asByteData();
+      print("Data Rx: " + value.toString());
+      int _pktType = bdata.getUint8(0);
+
+      if (_pktType == hPi4Global.CES_CMDIF_TYPE_CMD_RSP) {
+        int _cmdType = bdata.getUint8(1);
+        if (_cmdType == 84) {
+          setState(() {
+            totalSessionCount = bdata.getUint8(2);
+          });
+          print("Data Rx count: " + totalSessionCount.toString());
+
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
+        }
+      } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
+        //print("Data Rx: " + value.toString());
+        //print("Data Rx length: " + value.length.toString());
+        LogHeader _mLog = (
+          logFileID: bdata.getUint16(1, Endian.little),
+          sessionLength: bdata.getUint16(3, Endian.little),
+          tmYear: bdata.getUint8(5),
+          tmMon: bdata.getUint8(6),
+          tmMday: bdata.getUint8(7),
+          tmHour: bdata.getUint8(8),
+          tmMin: bdata.getUint8(9),
+          tmSec: bdata.getUint8(10),
+        );
+        print("Log: " + _mLog.toString());
+
+        logHeaderList.add(_mLog);
+
+        if (logHeaderList.length == totalSessionCount) {
+          setState(() {
+            logIndexReceived = true;
+          });
+
+          print("All logs received. Cancel subscription");
+
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
+
+        } else {}
+      } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
+        int pktPayloadSize = value.length - 1; //((value[1] << 8) + value[2]);
+
+        logConsole("Data Rx length: " +
+            value.length.toString() +
+            " | Actual Payload: " +
+            pktPayloadSize.toString());
+        currentFileDataCounter += pktPayloadSize;
+        _globalReceivedData += pktPayloadSize;
+        logData.addAll(value.sublist(1, value.length));
+
+        setState(() {
+          displayPercent = globalDisplayPercentOffset +
+              (_globalReceivedData / _globalExpectedLength) * 100.truncate();
+          if (displayPercent > 100) {
+            displayPercent = 100;
+          }
+        });
+
+        logConsole("File data counter: " +
+            currentFileDataCounter.toString() +
+            " | Received: " +
+            displayPercent.toString() +
+            "%");
+
+        if (currentFileDataCounter >= (expectedLength)) {
+          logConsole(
+              "All data " + currentFileDataCounter.toString() + " received");
+
+          if (currentFileDataCounter > expectedLength) {
+            int diffData = currentFileDataCounter - expectedLength;
+            logConsole("Data received more than expected by: " +
+                diffData.toString() +
+                " bytes");
+            //logData.removeRange(expectedLength, currentFileDataCounter);
+          }
+          await _streamCommandSubscription.cancel();
+          await _streamDataSubscription.cancel();
+
+          await _writeLogDataToFile(logData, sessionID);
+
+          //Navigator.pop(context);
+
+          setState(() {
+            flagFetching = false;
+            isTransfering = false;
+            isFetchIconTap = false;
+          });
+
+          // Reset all fetch variables
+          displayPercent = 0;
+          globalDisplayPercentOffset = 0;
+          currentFileDataCounter = 0;
+          _globalReceivedData = 0;
+          currentFileReceivedComplete = false;
+          logData.clear();
+        }
+      }
+    });
+  }
+
+  double fileUploadDisplayPercent = 0;
+
+  double fileExpectedData = 0;
+
+  int uploadcurrentFileNumber = 0;
+  int uploadtotalFiles = 0;
+
+  Stopwatch fetchStopwatch = new Stopwatch();
+
+  void setStateIfMounted(f) {
+    if (mounted) setState(f);
+  }
+
+  String debugText = "Console Inited...";
+
+  Widget displayDisconnectButton() {
+    return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
+        builder: (context, bleScannerState, bleScanner, wiserBle, child) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: MaterialButton(
+          minWidth: 100.0,
+          color: Colors.red,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('Close',
+                  style: new TextStyle(fontSize: 18.0, color: Colors.white)),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (_) => WaveFormsPage(
+                      selectedBoard: widget.selectedBoard,
+                      selectedDevice: widget.selectedDevice,
+                      currentDevice: widget.currentDevice,
+                      fble: widget.fble,
+                      currConnection: widget.currConnection,
+                    )));
+          },
+        ),
+      );
+    });
+  }
+
+  Future<void> _showDownloadSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Downloaded'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 72,
+                ),
+                Center(
+                    child: Text(
+                        'File downloaded successfully!. Please check in the downloads')),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () async {
+                //Navigator.pop(context);
+                await _disconnect();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (_) => HomePage(title: 'HealthyPi5')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _disconnect() async {
+    try {
+      logConsole('Disconnecting ');
+      if (connectedToDevice == true) {
+        showLoadingIndicator("Disconnecting....", context);
+        await Future.delayed(Duration(seconds: 6), () async {
+          await widget.currConnection.cancel();
+          setState(() {
+            connectedToDevice = false;
+            pcCurrentDeviceID = "";
+            pcCurrentDeviceName = "";
+          });
+        });
+        //Navigator.pop(context);
+      }
+    } on Exception catch (e, _) {
+      logConsole("Error disconnecting from a device: $e");
+    } finally {
+      // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
+    }
+  }
+
+  Future<void> _fetchLogCount(String deviceID, BuildContext context) async {
+    logConsole("Fetch log count initiated");
+    showLoadingIndicator("Fetching logs count...", context);
+    await _startListeningCommand(deviceID);
+    await _startListeningData(deviceID, 0, 0);
+    await Future.delayed(Duration(seconds: 4), () async {
+      await _sendCommand(hPi4Global.getSessionCount, deviceID);
+    });
+    Navigator.pop(context);
+  }
+
+  Future<void> _fetchLogIndex(String deviceID, BuildContext context) async {
+    logConsole("Fetch logs initiated");
+    showLoadingIndicator("Fetching logs...", context);
+    await _startListeningCommand(deviceID);
+    await _startListeningData(deviceID, 0, 0);
+    await Future.delayed(Duration(seconds: 4), () async {
+      await _sendCommand(hPi4Global.sessionLogIndex, deviceID);
+    });
+    Navigator.pop(context);
+  }
+
+  Future<void> _deleteLogIndex(
+      String deviceID, int sessionID, BuildContext context) async {
+    logConsole("Deleted logs initiated");
+    showLoadingIndicator("Deleting log...", context);
+    await Future.delayed(Duration(seconds: 2), () async {
+      List<int> commandFetchLogFile = List.empty(growable: true);
+      commandFetchLogFile.addAll(hPi4Global.sessionLogDelete);
+      commandFetchLogFile.add(sessionID & 0xFF);
+      commandFetchLogFile.add((sessionID >> 8) & 0xFF);
+      await _sendCommand(commandFetchLogFile, deviceID);
+    });
+    Navigator.pop(context);
+    await _fetchLogIndex(widget.currentDevice.id, context);
+  }
+
+  Future<void> _fetchLogFile(
+      String deviceID, int sessionID, int sessionSize) async {
+    logConsole("Fetch logs initiated");
+    isTransfering = true;
+    await _startListeningCommand(deviceID);
+    // Session size is in bytes, so multiply by 6 to get the number of data points, add header size
+    await _startListeningData(deviceID, ((sessionSize * 6) + WISER_FILE_HEADER_LEN), sessionID);
+
+    // Reset all fetch variables
+    currentFileDataCounter = 0;
+    currentFileReceivedComplete = false;
+
+    _globalExpectedLength = sessionSize;
+    logData.clear();
+
+    await Future.delayed(Duration(seconds: 2), () async {
+      List<int> commandFetchLogFile = List.empty(growable: true);
+      commandFetchLogFile.addAll(hPi4Global.sessionFetchLogFile);
+      commandFetchLogFile.add((sessionID >> 8) & 0xFF);
+      commandFetchLogFile.add(sessionID & 0xFF);
+      await _sendCommand(commandFetchLogFile, deviceID);
+    });
+  }
+
+  Future<void> _sendCommand(List<int> commandList, String deviceID) async {
+    logConsole(
+        "Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
+
+    await widget.fble.writeCharacteristicWithoutResponse(
+        commandTxCharacteristic,
+        value: commandList);
+  }
+
+  double count = 0.1;
+
+  String _getFormattedDate(
+      int year, int month, int day, int hour, int min, int sec) {
+    String formattedDate = hour.toString() +
+        ":" +
+        min.toString() +
+        ":" +
+        sec.toString() +
+        " " +
+        day.toString() +
+        "/" +
+        month.toString() +
+        "/" +
+        year.toString();
+
+    return formattedDate;
+  }
+
+  Widget _getSessionIDList() {
+    return (logIndexReceived == false)
+        ? Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              width: 320,
+              height: 100,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        "No logs present on device ",
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      ),
+                    ]),
+              ),
+            ),
+          )
+        : Container(
+            height: 400,
+            child: Scrollbar(
+              //isAlwaysShown: true,
+              controller: _scrollController,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        "Session logs on device ",
+                        style: TextStyle(
+                          fontSize: 22,
+                          //color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(
+                        height: 15.0,
+                      ),
+                      ListView.builder(
+                          itemCount: totalSessionCount,
+                          //itemCount: 1,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (BuildContext context, int index) {
+                            return (index >= 0)
+                                ? Card(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: ListTile(
+                                          dense: true,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 0.0, right: 0.0),
+                                          minLeadingWidth: 10,
+                                          title: Column(
+                                            children: [
+                                              Row(children: [
+                                                Text(
+                                                    "Session ID: " +
+                                                        logHeaderList[index]
+                                                            .logFileID
+                                                            .toString(),
+                                                    style: new TextStyle(
+                                                        fontSize: 12)),
+                                              ]),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                        _getFormattedDate(
+                                                            logHeaderList[index]
+                                                                .tmYear,
+                                                            logHeaderList[index]
+                                                                .tmMon,
+                                                            logHeaderList[index]
+                                                                .tmMday,
+                                                            logHeaderList[index]
+                                                                .tmHour,
+                                                            logHeaderList[index]
+                                                                .tmMin,
+                                                            logHeaderList[index]
+                                                                .tmSec),
+                                                        style: new TextStyle(
+                                                            fontSize: 12)),
+                                                  ]),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {},
+                                                            icon: Icon(Icons
+                                                                .file_open_outlined),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                              setState(() {
+                                                                isFetchIconTap =
+                                                                    true;
+                                                                tappedIndex =
+                                                                    index;
+                                                              });
+
+                                                              await _fetchLogFile(
+                                                                  widget
+                                                                      .currentDevice
+                                                                      .id,
+                                                                  //logHeaderList[index].logFileID,
+                                                                  2,
+                                                                  logHeaderList[
+                                                                          index]
+                                                                      .sessionLength);
+                                                            },
+                                                            icon: Icon(Icons
+                                                                .download_rounded),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                    isTransfering
+                                                        ? Container()
+                                                        : IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                              _deleteLogIndex(
+                                                                  widget
+                                                                      .currentDevice
+                                                                      .id,
+                                                                  logHeaderList[
+                                                                          index]
+                                                                      .logFileID,
+                                                                  context);
+                                                            },
+                                                            icon: Icon(
+                                                                Icons.delete),
+                                                            color: hPi4Global
+                                                                .hpi4Color,
+                                                          ),
+                                                  ]),
+                                              isFetchIconTap
+                                                  ? Visibility(
+                                                      visible:
+                                                          tappedIndex == index,
+                                                      child: Row(
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    8.0),
+                                                            child: SizedBox(
+                                                              width: 150,
+                                                              child:
+                                                                  LinearProgressIndicator(
+                                                                backgroundColor:
+                                                                    Colors.blueGrey[
+                                                                        100],
+                                                                //color: Colors.blue,
+                                                                value:
+                                                                    (displayPercent /
+                                                                        100),
+                                                                minHeight: 25,
+                                                                semanticsLabel:
+                                                                    'Receiving Data',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Text(displayPercent
+                                                                  .truncate()
+                                                                  .toString() +
+                                                              " %"),
+                                                        ],
+                                                      ),
+                                                    )
+                                                  : Container(),
+                                            ],
+                                          ),
+                                        )))
+                                : Container();
+                          }),
+                    ],
+                  ),
+                ),
+              ),
+            ));
+  }
+
+  Widget GetData() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: Colors.white,
+        child: Row(
+          children: <Widget>[
+            Text('Get Logs',
+                style:
+                    new TextStyle(fontSize: 16.0, color: hPi4Global.hpi4Color)),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          await _fetchLogCount(widget.currentDevice.id, context);
+          await _fetchLogIndex(widget.currentDevice.id, context);
+        },
+      ),
+    );
+  }
+
+  Widget build(BuildContext context) {
+    SizeConfig().init(context);
+    return Scaffold(
+      backgroundColor: hPi4Global.appBackgroundColor,
+      key: _scaffoldKey,
+      appBar: AppBar(
+        backgroundColor: hPi4Global.hpi4Color,
+        automaticallyImplyLeading: false,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Row(children: <Widget>[
+              Image.asset('assets/proto-online-white.png',
+                  fit: BoxFit.fitWidth, height: 30),
+              GetData(),
+            ]),
+          ],
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                //_getDeviceCard(),
+                _getSessionIDList(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: displayDisconnectButton(),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ])),
+        ),
+      ),
+    );
+  }
+}

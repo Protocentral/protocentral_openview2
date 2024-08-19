@@ -4,9 +4,11 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_window
+  file_saver
   flutter_libserialport
   geolocator_windows
   permission_handler_windows
+  share_plus
   url_launcher_windows
 )
 

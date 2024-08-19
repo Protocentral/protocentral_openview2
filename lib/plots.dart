@@ -563,14 +563,20 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           if (value[1] == 0x55) {
             if (value[2] == 0x32) {
               print("Availble memory is greater than 25%");
+             // _showOverlay(context);
               setState((){
                 memoryAvailable = true;
+                startFlashLogging = true;
               });
+
             } else if (value[2] == 0x31) {
               print("Availble memory is less than 25%");
+              _showInsufficientMemoryDialog();
               setState((){
                 memoryAvailable = false;
+                startFlashLogging = false;
               });
+
             }
           }
         }
@@ -966,7 +972,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               onPressed: () async {
                 Navigator.pop(context);
                 Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (_) => Fetchlogs(
+                    builder: (_) => FetchLogs(
                           selectedBoard: widget.selectedBoard,
                           selectedDevice: widget.selectedDevice,
                           currentDevice: widget.currentDevice,
@@ -1080,12 +1086,40 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print("DateTime Sent");
   }
 
+  Future<void> _sendStartSessionCommand() async {
+    /* Send current DataTime with start session to device - Bluetooth Packet format
+     | 0 | Start Session (0x55), | 1 | sec, | 2 | min, | 3 | hour,
+     | 4 | mday(day of the month), | 5 | month, | 6 | year */
+
+    List<int> commandDateTimePacket = [];
+
+    var dt = DateTime.now();
+    String cdate = DateFormat("yy").format(DateTime.now());
+    ByteData sessionParametersLength = new ByteData(8);
+    commandDateTimePacket.addAll(hPi4Global.startSession);
+
+    sessionParametersLength.setUint8(0, dt.second);
+    sessionParametersLength.setUint8(1, dt.minute);
+    sessionParametersLength.setUint8(2, dt.hour);
+    sessionParametersLength.setUint8(3, dt.day);
+    sessionParametersLength.setUint8(4, dt.month);
+    sessionParametersLength.setUint8(5, int.parse(cdate));
+
+    Uint8List cmdByteList = sessionParametersLength.buffer.asUint8List(0, 6);
+    hPi4Global().logConsole("AKW: Sending datetime information with start session: " + cmdByteList.toString());
+    commandDateTimePacket.addAll(cmdByteList);
+    hPi4Global().logConsole("AKW: Sending datetime command with start session: " + commandDateTimePacket.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(
+        commandTxCharacteristic, value: commandDateTimePacket);
+    print("Command Sent");
+  }
+
   Future<void> _sendEndLogtoFlashCommand() async {
     hPi4Global().logConsole("AKW: Sending end logging flash Command: " +
-        hPi4Global.endLoggingFlash.toString());
+        hPi4Global.stopSession.toString());
     await widget.fble.writeCharacteristicWithoutResponse(
         commandTxCharacteristic,
-        value: hPi4Global.endLoggingFlash);
+        value: hPi4Global.stopSession);
 
     print("end logging flash command Sent");
   }
@@ -1135,16 +1169,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           await Future.delayed(Duration(seconds: 1), () async {
                             await _startListeningData();
                           });
-                          await Future.delayed(Duration(seconds: 1), () async {
-                            await widget.fble.writeCharacteristicWithoutResponse(
-                                commandTxCharacteristic,
-                                value: hPi4Global.startSession);
-                          });
-                          if (memoryAvailable == true) {
-                            _showOverlay(context);
-                          } else {
-                            _showInsufficientMemoryDialog();
-                          }
+                          await _sendStartSessionCommand();
+
                         },
                       ),
                     ),
@@ -1166,7 +1192,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         onPressed: () async {
                           Navigator.of(context)
                               .pushReplacement(MaterialPageRoute(
-                                  builder: (_) => Fetchlogs(
+                                  builder: (_) => FetchLogs(
                                         selectedBoard: widget.selectedBoard,
                                         selectedDevice: widget.selectedDevice,
                                         currentDevice: widget.currentDevice,
@@ -1214,21 +1240,21 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          if (overlayFlag == true) {
+                          /*if (overlayFlag == true) {
                             overlayFlag = false;
                             overlayEntry1.remove();
-                          }
-                          if (startFlashLogging == true &&
-                              startAppLogging == false) {
+                          }*/
+                          if (startFlashLogging == true && startAppLogging == false) {
                             startFlashLogging = false;
                             _showEndFlashingDialog();
-                          } else if (startFlashLogging == false &&
-                              startAppLogging == true) {
+                          } else if (startFlashLogging == false && startAppLogging == true) {
                             startAppLogging = false;
-                            writeLogDataToFile(
-                                ecgDataLog, ppgDataLog, respDataLog,context);
-                          } else if (startFlashLogging == true &&
-                              startAppLogging == true) {
+                            writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog,context);
+                          } else if (startFlashLogging == true && startAppLogging == true) {
+                            startAppLogging = false;
+                            startFlashLogging = false;
+                            writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog,context);
+                            _showEndFlashingDialog();
                           } else {
                             closeAllStreams();
                             await _disconnect();
