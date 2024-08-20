@@ -12,13 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 
 import 'home.dart';
-import 'plots.dart';
 import 'globals.dart';
-import 'utils/sizeConfig.dart';
 import 'utils/variables.dart';
 import 'ble/ble_scanner.dart';
-import 'utils/loadingDialog.dart';
-import 'states/OpenViewBLEProvider.dart';
 
 class FetchLogs extends StatefulWidget {
   FetchLogs({
@@ -286,8 +282,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
   bool logIndexReceived = false;
 
-  Future<void> _startListeningData(
-      String deviceID, int expectedLength, int sessionID) async {
+  Future<void> _startListeningData(String deviceID, int sessionID) async {
     listeningDataStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
       _streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
@@ -328,7 +323,6 @@ class _FetchLogsState extends State<FetchLogs> {
       );
 
       print("Log: " + _mLog.toString());
-
       logHeaderList.add(_mLog);
 
       //print("......"+logHeaderList[0].logFileID.toString());
@@ -344,8 +338,15 @@ class _FetchLogsState extends State<FetchLogs> {
       await _streamDataSubscription.cancel();
       } else {}
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
-      int pktPayloadSize = value.length - 1; //((value[1] << 8) + value[2]);
-
+      int pktPayloadSize = value.length - 1;  //((value[1] << 8) + value[2]);
+      int numberOfWrites = 0;
+      int expectedLength = 0;
+      if(currentFileDataCounter <=0){
+      numberOfWrites = bdata.getUint16(3, Endian.little);
+      expectedLength = (((numberOfWrites*64)*6) + WISER_FILE_HEADER_LEN);
+      _globalExpectedLength = (numberOfWrites * 64);
+      }
+      logConsole("Data execpted length: " + expectedLength.toString());
       logConsole("Data Rx length: " +
       value.length.toString() +
       " | Actual Payload: " +
@@ -355,18 +356,14 @@ class _FetchLogsState extends State<FetchLogs> {
       logData.addAll(value.sublist(1, value.length));
 
       setState(() {
-      displayPercent = globalDisplayPercentOffset +
-      (_globalReceivedData / _globalExpectedLength) * 100.truncate();
+      displayPercent = globalDisplayPercentOffset +(_globalReceivedData / _globalExpectedLength) * 100.truncate();
       if (displayPercent > 100) {
       displayPercent = 100;
       }
       });
 
-      logConsole("File data counter: " +
-      currentFileDataCounter.toString() +
-      " | Received: " +
-      displayPercent.toString() +
-      "%");
+      logConsole("File data counter: " +currentFileDataCounter.toString() +
+      " | Received: " +displayPercent.toString() +"%");
 
       if (currentFileDataCounter >= (expectedLength)) {
       logConsole(
@@ -459,7 +456,7 @@ class _FetchLogsState extends State<FetchLogs> {
     logConsole("Fetch log count initiated");
     showLoadingIndicator("Fetching logs count...", context);
     await _startListeningCommand(deviceID);
-    await _startListeningData(deviceID, 0, 0);
+    await _startListeningData(deviceID, 0);
     await Future.delayed(Duration(seconds: 2), () async {
       await _sendCommand(hPi4Global.getSessionCount, deviceID);
     });
@@ -470,7 +467,7 @@ class _FetchLogsState extends State<FetchLogs> {
     logConsole("Fetch logs initiated");
     showLoadingIndicator("Fetching logs...", context);
     await _startListeningCommand(deviceID);
-    await _startListeningData(deviceID, 0, 0);
+    await _startListeningData(deviceID,0);
     await Future.delayed(Duration(seconds: 2), () async {
       await _sendCommand(hPi4Global.sessionLogIndex, deviceID);
       //await _sendCommand(hPi4Global.getSessionCount, deviceID);
@@ -478,35 +475,33 @@ class _FetchLogsState extends State<FetchLogs> {
     Navigator.pop(context);
   }
 
-  Future<void> _deleteLogIndex(
-      String deviceID, int sessionID, BuildContext context) async {
+  Future<void> _deleteLogIndex(String deviceID, int sessionID, BuildContext context) async {
     logConsole("Deleted logs initiated");
     showLoadingIndicator("Deleting log...", context);
     await Future.delayed(Duration(seconds: 2), () async {
       List<int> commandFetchLogFile = List.empty(growable: true);
       commandFetchLogFile.addAll(hPi4Global.sessionLogDelete);
-      commandFetchLogFile.add(sessionID & 0xFF);
       commandFetchLogFile.add((sessionID >> 8) & 0xFF);
+      commandFetchLogFile.add(sessionID & 0xFF);
       await _sendCommand(commandFetchLogFile, deviceID);
     });
     Navigator.pop(context);
+    await _fetchLogCount(widget.currentDevice.id, context);
     await _fetchLogIndex(widget.currentDevice.id, context);
   }
 
-  Future<void> _fetchLogFile(
-      String deviceID, int sessionID, int sessionSize) async {
+  Future<void> _fetchLogFile(String deviceID, int sessionID) async {
     logConsole("Fetch logs initiated");
     isTransfering = true;
     await _startListeningCommand(deviceID);
     // Session size is in bytes, so multiply by 6 to get the number of data points, add header size
-    await _startListeningData(
-        deviceID, ((sessionSize * 6) + WISER_FILE_HEADER_LEN), sessionID);
+    await _startListeningData(deviceID, sessionID);
 
     // Reset all fetch variables
     currentFileDataCounter = 0;
     currentFileReceivedComplete = false;
 
-    _globalExpectedLength = sessionSize;
+    //_globalExpectedLength = sessionSize;
     logData.clear();
 
     await Future.delayed(Duration(seconds: 2), () async {
@@ -677,11 +672,7 @@ class _FetchLogsState extends State<FetchLogs> {
                                                     widget
                                                         .currentDevice
                                                         .id,
-                                                    //logHeaderList[index].logFileID,
-                                                    2,
-                                                    logHeaderList[
-                                                    index]
-                                                        .sessionLength);
+                                                    logHeaderList[index].logFileID);
                                               },
                                               icon: Icon(Icons
                                                   .download_rounded),
@@ -697,9 +688,7 @@ class _FetchLogsState extends State<FetchLogs> {
                                                     widget
                                                         .currentDevice
                                                         .id,
-                                                    logHeaderList[
-                                                    index]
-                                                        .logFileID,
+                                                    logHeaderList[index].logFileID,
                                                     context);
                                               },
                                               icon: Icon(
@@ -822,6 +811,7 @@ Widget GetData() {
                                     padding: const EdgeInsets.all(8.0),
                                     child: MaterialButton(
                                       onPressed: () async {
+                                        await _disconnect();
                                         await cancelAction();
                                       },
                                       child: Padding(
@@ -834,7 +824,7 @@ Widget GetData() {
                                               color: Colors.white,
                                             ),
                                             const Text(
-                                              ' Disconnect & Close ',
+                                              'Disconnect & Close ',
                                               style: TextStyle(
                                                   fontSize: 16, color: Colors.white),
                                             ),
