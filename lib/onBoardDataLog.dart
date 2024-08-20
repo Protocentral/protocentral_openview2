@@ -281,6 +281,8 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
   bool logIndexReceived = false;
+  int numberOfWrites = 0;
+  int expectedLength = 0;
 
   Future<void> _startListeningData(String deviceID, int sessionID) async {
     listeningDataStream = true;
@@ -339,11 +341,13 @@ class _FetchLogsState extends State<FetchLogs> {
       } else {}
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
       int pktPayloadSize = value.length - 1;  //((value[1] << 8) + value[2]);
-      int numberOfWrites = 0;
-      int expectedLength = 0;
+      //int numberOfWrites = 0;
+      //int expectedLength = 0;
       if(currentFileDataCounter <=0){
       numberOfWrites = bdata.getUint16(3, Endian.little);
-      expectedLength = (((numberOfWrites*64)*6) + WISER_FILE_HEADER_LEN);
+      logConsole("Number of writes: " + numberOfWrites.toString());
+
+      expectedLength = (numberOfWrites*64);
       _globalExpectedLength = (numberOfWrites * 64);
       }
       logConsole("Data execpted length: " + expectedLength.toString());
@@ -351,6 +355,7 @@ class _FetchLogsState extends State<FetchLogs> {
       value.length.toString() +
       " | Actual Payload: " +
       pktPayloadSize.toString());
+
       currentFileDataCounter += pktPayloadSize;
       _globalReceivedData += pktPayloadSize;
       logData.addAll(value.sublist(1, value.length));
