@@ -245,9 +245,9 @@ class _FetchLogsState extends State<FetchLogs> {
 
     for (int i = 0; i < logNumberPoints; i++) {
       List<String> dataRow = [
-        bdata.getUint16((i * 10), Endian.little).toString(),
-        bdata.getInt16((i * 10) + 4, Endian.little).toString(),
-        bdata.getUint16((i * 10) + 8, Endian.little).toString()
+        bdata.getInt32((i * 10), Endian.little).toString(),
+        bdata.getInt32((i * 10) + 4, Endian.little).toString(),
+        bdata.getInt16((i * 10) + 8, Endian.little).toString()
       ];
       dataList.add(dataRow);
     }
@@ -291,7 +291,7 @@ class _FetchLogsState extends State<FetchLogs> {
     });
 
     _streamDataSubscription = _streamData.listen((value) async {
-      ByteData bdata = Uint8List.fromList(value).buffer.asByteData();
+      ByteData bdata = Int8List.fromList(value).buffer.asByteData();
       print("Data Rx: " + value.toString());
       int _pktType = bdata.getUint8(0);
 

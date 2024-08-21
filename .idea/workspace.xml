@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="efa1097f-5f84-43ba-91da-1f6b19e2922b" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/lib/onBoardDataLog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/onBoardDataLog.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/compare.dart" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
