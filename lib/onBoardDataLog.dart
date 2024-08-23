@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 
 import 'home.dart';
+import 'plots.dart';
 import 'globals.dart';
 import 'utils/variables.dart';
 import 'ble/ble_scanner.dart';
@@ -103,8 +104,8 @@ class _FetchLogsState extends State<FetchLogs> {
         deviceId: widget.currentDevice.id);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-     // await _fetchLogCount(widget.currentDevice.id, context);
-     // await _fetchLogIndex(widget.currentDevice.id, context);
+      await _fetchLogCount(widget.currentDevice.id, context);
+      await _fetchLogIndex(widget.currentDevice.id, context);
     });
 
     super.initState();
@@ -114,7 +115,7 @@ class _FetchLogsState extends State<FetchLogs> {
   @override
   void dispose() async {
     await closeAllStreams();
-    await _disconnect();
+    //await _disconnect();
     super.dispose();
   }
 
@@ -212,10 +213,16 @@ class _FetchLogsState extends State<FetchLogs> {
             TextButton(
               child: Text('Close'),
               onPressed: () async{
-                await _disconnect();
+                //await _disconnect();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                      builder: (_) => HomePage(title: 'HealthyPi5')),
+                      builder: (_) => WaveFormsPage(
+                        selectedBoard: widget.selectedBoard,
+                        selectedDevice: widget.selectedDevice,
+                        currentDevice: widget.currentDevice,
+                        fble: widget.fble,
+                        currConnection: widget.currConnection,
+                      )),
                 );
               },
             ),
@@ -495,6 +502,19 @@ class _FetchLogsState extends State<FetchLogs> {
     await _fetchLogIndex(widget.currentDevice.id, context);
   }
 
+  Future<void> _deleteAllLog(String deviceID, BuildContext context) async {
+    logConsole("Deleted logs initiated");
+    showLoadingIndicator("Deleting all log...", context);
+    await Future.delayed(Duration(seconds: 2), () async {
+      List<int> commandFetchAllLog = List.empty(growable: true);
+      commandFetchAllLog.addAll(hPi4Global.sessionLogWipeAll);
+      await _sendCommand(commandFetchAllLog, deviceID);
+    });
+    Navigator.pop(context);
+    await _fetchLogCount(widget.currentDevice.id, context);
+    await _fetchLogIndex(widget.currentDevice.id, context);
+  }
+
   Future<void> _fetchLogFile(String deviceID, int sessionID) async {
     logConsole("Fetch logs initiated");
     isTransfering = true;
@@ -535,8 +555,12 @@ class _FetchLogsState extends State<FetchLogs> {
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (_) => HomePage(
-            title: 'wiser',
+          builder: (_) => WaveFormsPage(
+            selectedBoard: widget.selectedBoard,
+            selectedDevice: widget.selectedDevice,
+            currentDevice: widget.currentDevice,
+            fble: widget.fble,
+            currConnection: widget.currConnection,
           )),
     );
   }
@@ -585,7 +609,7 @@ class _FetchLogsState extends State<FetchLogs> {
         ),
       ),
     )
-        : Container(
+    : Container(
         height: 400,
         child: Scrollbar(
           //isAlwaysShown: true,
@@ -754,12 +778,16 @@ Widget GetData() {
     padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
     child: MaterialButton(
       minWidth: 80.0,
-      color: Colors.white,
+      color: hPi4Global.hpi4Color,
       child: Row(
         children: <Widget>[
-          Text('Get Logs',
+          Icon(
+            Icons.refresh,
+            color: Colors.white,
+          ),
+          Text('Refresh',
               style:
-              new TextStyle(fontSize: 16.0, color: hPi4Global.hpi4Color)),
+              new TextStyle(fontSize: 16.0, color: Colors.white)),
         ],
       ),
       shape: RoundedRectangleBorder(
@@ -773,6 +801,33 @@ Widget GetData() {
   );
 }
 
+  Widget DeleteAllData() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      child: MaterialButton(
+        minWidth: 80.0,
+        color: Colors.red,
+        child: Row(
+          children: <Widget>[
+            Icon(
+              Icons.delete,
+              color: Colors.white,
+            ),
+            Text('Delete all',
+                style:
+                new TextStyle(fontSize: 16.0, color: Colors.white)),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          _deleteAllLog(widget.currentDevice.id, context);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -781,6 +836,7 @@ Widget GetData() {
         appBar: AppBar(
           //backgroundColor: PatchGlobal.patchWebAppBarSecondaryColor,
           backgroundColor: hPi4Global.hpi4Color,
+          automaticallyImplyLeading: false,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,
@@ -788,7 +844,7 @@ Widget GetData() {
               Row(children: <Widget>[
                 Image.asset('assets/proto-online-white.png',
                     fit: BoxFit.fitWidth, height: 30),
-                GetData(),
+               // GetData(),
               ]),
             ],
           ),
@@ -800,6 +856,24 @@ Widget GetData() {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GetData(),
+                                  DeleteAllData(),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                         _getSessionIDList(),
                         Padding(
                           padding: const EdgeInsets.all(16),
@@ -816,7 +890,7 @@ Widget GetData() {
                                     padding: const EdgeInsets.all(8.0),
                                     child: MaterialButton(
                                       onPressed: () async {
-                                        await _disconnect();
+                                        //await _disconnect();
                                         await cancelAction();
                                       },
                                       child: Padding(
@@ -829,7 +903,7 @@ Widget GetData() {
                                               color: Colors.white,
                                             ),
                                             const Text(
-                                              'Disconnect & Close ',
+                                              'Close ',
                                               style: TextStyle(
                                                   fontSize: 16, color: Colors.white),
                                             ),

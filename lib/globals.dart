@@ -61,7 +61,7 @@ class hPi4Global {
   static const List<int> sessionLogIndex = [0x50];
   static const List<int> sessionFetchLogFile = [0x51];
   static const List<int> sessionLogDelete = [0x52];
-  //static const List<int> sessionLogWipeAll = [0x53];
+  static const List<int> sessionLogWipeAll = [0x53];
   static const List<int> getSessionCount = [0x54];
 
   static const List<int> startSession = [0x55];
