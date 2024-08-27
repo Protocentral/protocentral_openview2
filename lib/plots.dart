@@ -1055,6 +1055,47 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
+  Future<void> _showStopStreamingDialog(String displayAlert) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.red,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(children: <Widget>[
+                    Text(displayAlert,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _sendCurrentDateTime() async {
     /* Send current DataTime to device - Bluetooth Packet format
      | 0 | WISER_CMD_SET_DEVICE_TIME (0x41), | 1 | sec, | 2 | min, | 3 | hour,
@@ -1190,15 +1231,19 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          Navigator.of(context)
-                              .pushReplacement(MaterialPageRoute(
-                                  builder: (_) => FetchLogs(
-                                        selectedBoard: widget.selectedBoard,
-                                        selectedDevice: widget.selectedDevice,
-                                        currentDevice: widget.currentDevice,
-                                        fble: widget.fble,
-                                        currConnection: widget.currConnection,
-                                      )));
+                          if(startStreaming == false){
+                            Navigator.of(context)
+                                .pushReplacement(MaterialPageRoute(
+                                builder: (_) => FetchLogs(
+                                  selectedBoard: widget.selectedBoard,
+                                  selectedDevice: widget.selectedDevice,
+                                  currentDevice: widget.currentDevice,
+                                  fble: widget.fble,
+                                  currConnection: widget.currConnection,
+                                )));
+                          }else{
+                            _showStopStreamingDialog('Please stop streaming to view the logs.');
+                          }
                         },
                       ),
                     ),
@@ -1219,7 +1264,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         ),
                         onPressed: () async {
                           // _sendCurrentDateTime();
-                          _showSetTimeDialog();
+                          if(startStreaming == false){
+                            _showSetTimeDialog();
+                          }else{
+                            _showStopStreamingDialog( 'Please stop streaming to set device time.');
+                          }
+
                         },
                       ),
                     ),
