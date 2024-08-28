@@ -232,6 +232,75 @@ class _FetchLogsState extends State<FetchLogs> {
     );
   }
 
+  Future<void> _showEndFlashingDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.grey,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(children: <Widget>[
+                    Text(
+                      'Data is already logging to flash. ',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      'Do you want end logging or continue with the logging and check the logs later ',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('End Logging'),
+              onPressed: () async {
+                Navigator.pop(context);
+                _sendEndLogtoFlashCommand();
+              },
+            ),
+            TextButton(
+              child: Text('Continue & Close'),
+              onPressed: () async {
+                Navigator.pop(context);
+                closeAllStreams();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _sendEndLogtoFlashCommand() async {
+    hPi4Global().logConsole("AKW: Sending end logging flash Command: " +
+        hPi4Global.stopSession.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(
+        commandTxCharacteristic,
+        value: hPi4Global.stopSession);
+    print("end logging flash command Sent");
+    await _fetchLogCount(widget.currentDevice.id, context);
+    await _fetchLogIndex(widget.currentDevice.id, context);
+  }
+
+
   Future<void> _writeLogDataToFile(List<int> mData, int sessionID) async {
     logConsole("Log data size: " + mData.length.toString());
 
@@ -313,13 +382,15 @@ class _FetchLogsState extends State<FetchLogs> {
           await _streamCommandSubscription.cancel();
           await _streamDataSubscription.cancel();
         }
+        /*else{
+          _showEndFlashingDialog();
+        }*/
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
-        //print("Data Rx: " + value.toString());
+        print("Data Rx: " + value.toString());
         /*ByteData bdata = Uint8List.fromList(value)
             .buffer
             .asByteData(1); // Frame body starts from 2nd byte
             */
-
         LogHeader _mLog = (
             logFileID: bdata.getUint16(1, Endian.little),
             sessionLength: bdata.getUint16(3, Endian.little),
@@ -498,6 +569,7 @@ class _FetchLogsState extends State<FetchLogs> {
       await _sendCommand(commandFetchLogFile, deviceID);
     });
     Navigator.pop(context);
+    logHeaderList.clear();
     await _fetchLogCount(widget.currentDevice.id, context);
     await _fetchLogIndex(widget.currentDevice.id, context);
   }
@@ -511,6 +583,7 @@ class _FetchLogsState extends State<FetchLogs> {
       await _sendCommand(commandFetchAllLog, deviceID);
     });
     Navigator.pop(context);
+    logHeaderList.clear();
     await _fetchLogCount(widget.currentDevice.id, context);
     await _fetchLogIndex(widget.currentDevice.id, context);
   }

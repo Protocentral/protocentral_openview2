@@ -1192,7 +1192,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                       child: MaterialButton(
                         minWidth: 50.0,
                         //height: 30.0,
-                        color: Colors.white,
+                        color: startFlashLogging ? Colors.grey : Colors.white,
                         child: Row(
                           children: <Widget>[
                             Text('Log to Flash',
