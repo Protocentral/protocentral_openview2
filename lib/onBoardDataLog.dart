@@ -115,7 +115,6 @@ class _FetchLogsState extends State<FetchLogs> {
   @override
   void dispose() async {
     await closeAllStreams();
-    //await _disconnect();
     super.dispose();
   }
 
@@ -213,7 +212,6 @@ class _FetchLogsState extends State<FetchLogs> {
             TextButton(
               child: Text('Close'),
               onPressed: () async{
-                //await _disconnect();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                       builder: (_) => WaveFormsPage(
@@ -273,14 +271,14 @@ class _FetchLogsState extends State<FetchLogs> {
               child: Text('End Logging'),
               onPressed: () async {
                 Navigator.pop(context);
-                _sendEndLogtoFlashCommand();
+               // _sendEndLogtoFlashCommand();
               },
             ),
             TextButton(
-              child: Text('Continue & Close'),
+              child: Text('Close'),
               onPressed: () async {
                 Navigator.pop(context);
-                closeAllStreams();
+
               },
             ),
           ],
@@ -296,8 +294,6 @@ class _FetchLogsState extends State<FetchLogs> {
         commandTxCharacteristic,
         value: hPi4Global.stopSession);
     print("end logging flash command Sent");
-    await _fetchLogCount(widget.currentDevice.id, context);
-    await _fetchLogIndex(widget.currentDevice.id, context);
   }
 
 
@@ -368,7 +364,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
     _streamDataSubscription = _streamData.listen((value) async {
       ByteData bdata = Int8List.fromList(value).buffer.asByteData();
-      print("Data Rx: " + value.toString());
+      //print("Data Rx: " + value.toString());
       int _pktType = bdata.getUint8(0);
 
       if (_pktType == hPi4Global.CES_CMDIF_TYPE_CMD_RSP) {
@@ -377,14 +373,14 @@ class _FetchLogsState extends State<FetchLogs> {
           setState(() {
             totalSessionCount = bdata.getUint8(2);
           });
-          print("Data Rx count: " + totalSessionCount.toString());
+          //print("Data Rx count: " + totalSessionCount.toString());
 
           await _streamCommandSubscription.cancel();
           await _streamDataSubscription.cancel();
         }
-        /*else{
-          _showEndFlashingDialog();
-        }*/
+        else{
+          //_showEndFlashingDialog();
+        }
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
         print("Data Rx: " + value.toString());
         /*ByteData bdata = Uint8List.fromList(value)
@@ -402,7 +398,7 @@ class _FetchLogsState extends State<FetchLogs> {
       tmSec: bdata.getUint8(10),
       );
 
-      print("Log: " + _mLog.toString());
+      //print("Log: " + _mLog.toString());
       logHeaderList.add(_mLog);
 
       //print("......"+logHeaderList[0].logFileID.toString());
@@ -416,7 +412,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
       await _streamCommandSubscription.cancel();
       await _streamDataSubscription.cancel();
-      } else {}
+      }
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
       int pktPayloadSize = value.length - 1;  //((value[1] << 8) + value[2]);
       //int numberOfWrites = 0;
@@ -511,28 +507,6 @@ class _FetchLogsState extends State<FetchLogs> {
     );
   }
 
-  Future<void> _disconnect() async {
-    try {
-      logConsole('Disconnecting ');
-      if (connectedToDevice == true) {
-        showLoadingIndicator("Disconnecting....", context);
-        await Future.delayed(Duration(seconds: 6), () async {
-          await widget.currConnection.cancel();
-          setState(() {
-            connectedToDevice = false;
-            pcCurrentDeviceID = "";
-            pcCurrentDeviceName = "";
-          });
-        });
-        //Navigator.pop(context);
-      }
-    } on Exception catch (e, _) {
-      logConsole("Error disconnecting from a device: $e");
-    } finally {
-      // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
-    }
-  }
-
   String debugText = "Console Inited...";
 
   Future<void> _fetchLogCount(String deviceID, BuildContext context) async {
@@ -556,6 +530,7 @@ class _FetchLogsState extends State<FetchLogs> {
       //await _sendCommand(hPi4Global.getSessionCount, deviceID);
     });
     Navigator.pop(context);
+    logHeaderList.clear();
   }
 
   Future<void> _deleteLogIndex(String deviceID, int sessionID, BuildContext context) async {
@@ -569,7 +544,6 @@ class _FetchLogsState extends State<FetchLogs> {
       await _sendCommand(commandFetchLogFile, deviceID);
     });
     Navigator.pop(context);
-    logHeaderList.clear();
     await _fetchLogCount(widget.currentDevice.id, context);
     await _fetchLogIndex(widget.currentDevice.id, context);
   }
@@ -583,7 +557,6 @@ class _FetchLogsState extends State<FetchLogs> {
       await _sendCommand(commandFetchAllLog, deviceID);
     });
     Navigator.pop(context);
-    logHeaderList.clear();
     await _fetchLogCount(widget.currentDevice.id, context);
     await _fetchLogIndex(widget.currentDevice.id, context);
   }
@@ -867,6 +840,7 @@ Widget GetData() {
         borderRadius: BorderRadius.circular(8.0),
       ),
       onPressed: () async {
+       // _sendEndLogtoFlashCommand();
         await _fetchLogCount(widget.currentDevice.id, context);
         await _fetchLogIndex(widget.currentDevice.id, context);
       },
@@ -963,7 +937,6 @@ Widget GetData() {
                                     padding: const EdgeInsets.all(8.0),
                                     child: MaterialButton(
                                       onPressed: () async {
-                                        //await _disconnect();
                                         await cancelAction();
                                       },
                                       child: Padding(

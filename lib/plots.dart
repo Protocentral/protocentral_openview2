@@ -848,6 +848,31 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
+  Widget displayFlashStatus() {
+    if(startFlashLogging == true){
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Column(children: [
+              Text(
+                "Status: Logging to Flash",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+              ),
+            ]),
+          ],
+        ),
+      );
+    }else{
+      return Container();
+    }
+
+  }
+
   late OverlayEntry overlayEntry1;
   bool overlayFlag = false;
 
@@ -1204,13 +1229,17 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          await Future.delayed(Duration(seconds: 1), () async {
-                            await _setMTU(widget.currentDevice.id);
-                          });
-                          await Future.delayed(Duration(seconds: 1), () async {
-                            await _startListeningData();
-                          });
-                          await _sendStartSessionCommand();
+                          if(startFlashLogging == true){
+                             null;
+                          }else{
+                            await Future.delayed(Duration(seconds: 1), () async {
+                              await _setMTU(widget.currentDevice.id);
+                            });
+                            await Future.delayed(Duration(seconds: 1), () async {
+                              await _startListeningData();
+                            });
+                            await _sendStartSessionCommand();
+                          }
 
                         },
                       ),
@@ -1485,6 +1514,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             Image.asset('assets/proto-online-white.png',
                 fit: BoxFit.fitWidth, height: 30),
             displayDeviceName(),
+            displayFlashStatus(),
           ]),
         ],
       );
