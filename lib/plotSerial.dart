@@ -131,24 +131,40 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
 
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+              for(int i = 0; i < 8; i++ ){
 
-              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
-              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[10];
-              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
-              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
+                ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
+                ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
+                //ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+                //ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
 
-              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 |
+                int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8;
+
+                setStateIfMounted(() {
+                  ecgLineData.add(FlSpot(
+                      ecgDataCounter++, ((data1.toSigned(16)).toDouble())));
+                  if (startDataLogging == true) {
+                    ecgDataLog.add((data1.toSigned(16)).toDouble());
+                  }
+
+                });
+              }
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[16];
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[17];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[18];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[19];
+
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[21]; //ir
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[22];
+              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[23];
+              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[24];
+
+              /*int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 |
                   ces_pkt_ch1_buffer[2] << 16 |
-                  ces_pkt_ch1_buffer[3] << 24;
+                  ces_pkt_ch1_buffer[3] << 24;*/
+
               int data2 = ces_pkt_ch2_buffer[0] |
                   ces_pkt_ch2_buffer[1] << 8 |
                   ces_pkt_ch2_buffer[2] << 16 |
@@ -159,34 +175,36 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   ces_pkt_ch3_buffer[3] << 24;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(
-                    ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                /*ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));*/
                 respLineData.add(
                     FlSpot(respDataCounter++, (data2.toSigned(32).toDouble())));
                 ppgLineData.add(
                     FlSpot(ppgDataCounter++, (data3.toSigned(32).toDouble())));
 
                 if (startDataLogging == true) {
-                  ecgDataLog.add((data1.toSigned(32)).toDouble());
+                  //ecgDataLog.add((data1.toSigned(32)).toDouble());
                   ppgDataLog.add(data3.toDouble());
                   respDataLog.add(data2.toDouble());
                 }
 
-                globalSpO2 = (CES_Pkt_Data_Counter[19]).toInt();
+                globalSpO2 = (CES_Pkt_Data_Counter[31]).toInt();
                 if (globalSpO2 == 25) {
                   displaySpO2 = "--";
                 } else {
                   displaySpO2 = globalSpO2.toString() + " %";
                 }
-                globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
-                globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
-                globalTemp = (((CES_Pkt_Data_Counter[17] | CES_Pkt_Data_Counter[18] << 8)
+                globalHeartRate = (CES_Pkt_Data_Counter[32]).toInt();
+                globalRespRate = (CES_Pkt_Data_Counter[33]).toInt();
+                globalTemp = (((CES_Pkt_Data_Counter[29] | CES_Pkt_Data_Counter[30] << 8)
                                 .toInt()) /
                             100.00)
                         .toDouble();
               });
               if (ecgDataCounter >= 128 * 6) {
                 ecgLineData.removeAt(0);
+                //ppgLineData.removeAt(0);
+              }
+              if (ppgDataCounter >= 128 * 6) {
                 ppgLineData.removeAt(0);
               }
               if (respDataCounter >= 256 * 6) {
