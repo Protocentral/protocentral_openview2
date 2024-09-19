@@ -14,16 +14,16 @@ Future<void> writeLogDataToFile(List<double> ecgData, List<double> ppgData, List
 
   List<String> header = [];
   header.add("ECG");
-  header.add("PPG");
   header.add("RESPIRATION");
+  header.add("PPG");
 
   dataList.add(header);
 
   for (int i = 0; i < (ecgData.length - 50); i++) {
     List<String> dataRow = [
       (ecgData[i]).toString(),
-      (ppgData[i]).toString(),
       (respData[i]).toString(),
+      (ppgData[i]).toString(),
     ];
     dataList.add(dataRow);
   }
@@ -47,7 +47,7 @@ Future<void> writeLogDataToFile(List<double> ecgData, List<double> ppgData, List
 
   final String directory = exPath;
 
-  File file = File('$directory/openview-log-$logFileTime.csv');
+  File file = File('$directory/logdatafromApp$logFileTime.csv');
   print("Save file");
 
   await file.writeAsString(csv);

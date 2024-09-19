@@ -146,8 +146,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
               ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
 
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] << 8 |
+              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 |
                   ces_pkt_ch1_buffer[2] << 16 |
                   ces_pkt_ch1_buffer[3] << 24;
               int data2 = ces_pkt_ch2_buffer[0] |
@@ -181,8 +180,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
                 globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
                 globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
-                globalTemp =
-                    (((CES_Pkt_Data_Counter[17] | CES_Pkt_Data_Counter[18] << 8)
+                globalTemp = (((CES_Pkt_Data_Counter[17] | CES_Pkt_Data_Counter[18] << 8)
                                 .toInt()) /
                             100.00)
                         .toDouble();

@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:async';
 import 'dart:typed_data';
@@ -86,6 +85,7 @@ class _FetchLogsState extends State<FetchLogs> {
   bool listeningConnectionStream = false;
   bool _listeningCommandStream = false;
 
+
   late DiscoveredDevice globalDiscoveredDevice;
 
   final _scrollController = ScrollController();
@@ -128,10 +128,7 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
   bool flagFetching = false;
-
-  bool getFetchStatus() {
-    return flagFetching;
-  }
+  bool diasbleButtonsWFetching = false;
 
   List<int> FilesList = [];
 
@@ -310,9 +307,9 @@ class _FetchLogsState extends State<FetchLogs> {
 
     List<String> header = [];
 
-    header.add("ecg");
-    header.add("resp");
-    header.add("ppg");
+    header.add("ECG");
+    header.add("RESPIRATION");
+    header.add("PPG");
     dataList.add(header);
 
     for (int i = 0; i < logNumberPoints; i++) {
@@ -415,8 +412,9 @@ class _FetchLogsState extends State<FetchLogs> {
       }
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_DATA) {
       int pktPayloadSize = value.length - 1;  //((value[1] << 8) + value[2]);
-      //int numberOfWrites = 0;
-      //int expectedLength = 0;
+      setState(() {
+      flagFetching  = true;
+      });
       if(currentFileDataCounter <=0){
       numberOfWrites = bdata.getUint16(3, Endian.little);
       logConsole("Number of writes: " + numberOfWrites.toString());
@@ -461,12 +459,11 @@ class _FetchLogsState extends State<FetchLogs> {
 
       await _writeLogDataToFile(logData, sessionID);
 
-      //Navigator.pop(context);
-
       setState(() {
       flagFetching = false;
       isTransfering = false;
       isFetchIconTap = false;
+      diasbleButtonsWFetching = false;
       });
 
       // Reset all fetch variables
@@ -585,8 +582,7 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
   Future<void> _sendCommand(List<int> commandList, String deviceID) async {
-    logConsole(
-        "Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
+    logConsole("Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
 
     await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic,
         value: commandList);
@@ -737,10 +733,9 @@ class _FetchLogsState extends State<FetchLogs> {
                                               onPressed:
                                                   () async {
                                                 setState(() {
-                                                  isFetchIconTap =
-                                                  true;
-                                                  tappedIndex =
-                                                      index;
+                                                  diasbleButtonsWFetching = true;
+                                                  isFetchIconTap = true;
+                                                  tappedIndex = index;
                                                 });
 
                                                 await _fetchLogFile(
@@ -820,59 +815,103 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
 Widget GetData() {
-  return Padding(
-    padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-    child: MaterialButton(
-      minWidth: 80.0,
-      color: hPi4Global.hpi4Color,
-      child: Row(
-        children: <Widget>[
-          Icon(
-            Icons.refresh,
-            color: Colors.white,
+    if(diasbleButtonsWFetching == false){
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        child: MaterialButton(
+          minWidth: 80.0,
+          color: hPi4Global.hpi4Color,
+          child: Row(
+            children: <Widget>[
+              Icon(
+                Icons.refresh,
+                color: Colors.white,
+              ),
+              Text('Refresh',
+                  style:
+                  new TextStyle(fontSize: 16.0, color: Colors.white)),
+            ],
           ),
-          Text('Refresh',
-              style:
-              new TextStyle(fontSize: 16.0, color: Colors.white)),
-        ],
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      onPressed: () async {
-       // _sendEndLogtoFlashCommand();
-        await _fetchLogCount(widget.currentDevice.id, context);
-        await _fetchLogIndex(widget.currentDevice.id, context);
-      },
-    ),
-  );
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            // _sendEndLogtoFlashCommand();
+            await _fetchLogCount(widget.currentDevice.id, context);
+            await _fetchLogIndex(widget.currentDevice.id, context);
+          },
+        ),
+      );
+    }else{
+      return Container();
+    }
+
 }
 
   Widget DeleteAllData() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-      child: MaterialButton(
-        minWidth: 80.0,
-        color: Colors.red,
-        child: Row(
-          children: <Widget>[
-            Icon(
-              Icons.delete,
-              color: Colors.white,
+    if(diasbleButtonsWFetching == false){
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        child: MaterialButton(
+          minWidth: 80.0,
+          color: Colors.red,
+          child: Row(
+            children: <Widget>[
+              Icon(
+                Icons.delete,
+                color: Colors.white,
+              ),
+              Text('Delete all',
+                  style:
+                  new TextStyle(fontSize: 16.0, color: Colors.white)),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            _deleteAllLog(widget.currentDevice.id, context);
+          },
+        ),
+      );
+    }else{
+      return Container();
+    }
+
+  }
+
+  Widget CancelButton(){
+    if(flagFetching == false){
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: MaterialButton(
+          onPressed: () async {
+            await cancelAction();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.cancel,
+                  color: Colors.white,
+                ),
+                const Text(
+                  'Close ',
+                  style: TextStyle(
+                      fontSize: 16, color: Colors.white),
+                ),
+              ],
             ),
-            Text('Delete all',
-                style:
-                new TextStyle(fontSize: 16.0, color: Colors.white)),
-          ],
+          ),
+          color: Colors.red,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        onPressed: () async {
-          _deleteAllLog(widget.currentDevice.id, context);
-        },
-      ),
-    );
+      );
+    }else{
+      return Container();
+    }
+
   }
 
   @override
@@ -933,32 +972,7 @@ Widget GetData() {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: MaterialButton(
-                                      onPressed: () async {
-                                        await cancelAction();
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: <Widget>[
-                                            Icon(
-                                              Icons.cancel,
-                                              color: Colors.white,
-                                            ),
-                                            const Text(
-                                              'Close ',
-                                              style: TextStyle(
-                                                  fontSize: 16, color: Colors.white),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      color: Colors.red,
-                                    ),
-                                  ),
+                                  CancelButton(),
                                 ],
                               ),
                             ],

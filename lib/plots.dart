@@ -1326,9 +1326,15 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           if (startFlashLogging == true && startAppLogging == false) {
                             startFlashLogging = false;
                             _showEndFlashingDialog();
-                          } else if (startFlashLogging == false && startAppLogging == true) {
+                          } else if (startAppLogging == true && startFlashLogging == false) {
                             startAppLogging = false;
                             writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog,context);
+                            closeAllStreams();
+                            await _disconnect();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (_) => HomePage(title: 'OpenView')),
+                            );
                           } else if (startFlashLogging == true && startAppLogging == true) {
                             startAppLogging = false;
                             startFlashLogging = false;
@@ -1442,27 +1448,32 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Widget LogToAppButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-      child: MaterialButton(
-        minWidth: 50.0,
-        color: startAppLogging ? Colors.grey : Colors.white,
-        child: Row(
-          children: <Widget>[
-            Text('Log to App',
-                style: new TextStyle(fontSize: 16.0, color: Colors.black)),
-          ],
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+        child: MaterialButton(
+          minWidth: 50.0,
+          color: startAppLogging ? Colors.grey : Colors.white,
+          child: Row(
+            children: <Widget>[
+              Text('Log to App',
+                  style: new TextStyle(fontSize: 16.0, color: Colors.black)),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            if(startStreaming == true){
+              setState(() {
+                startAppLogging = true;
+              });
+            }else{
+              _showStopStreamingDialog("Please start streaming to log to app");
+            }
+
+          },
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        onPressed: () async {
-          setState(() {
-            startAppLogging = true;
-          });
-        },
-      ),
-    );
+      );
   }
 
   Widget StartAndStopButton() {
