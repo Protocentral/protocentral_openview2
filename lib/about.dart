@@ -1,12 +1,10 @@
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'ble/ble_scanner.dart';
-import 'globals.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
+
+import 'globals.dart';
 
 class AboutUsPage extends StatefulWidget {
   @override
@@ -14,11 +12,10 @@ class AboutUsPage extends StatefulWidget {
 }
 
 class _AboutUsPageState extends State<AboutUsPage> {
-
   final _scrollController = ScrollController();
 
   @override
-  void initState(){
+  void initState() {
     parseHtml();
     super.initState();
   }
@@ -30,24 +27,24 @@ class _AboutUsPageState extends State<AboutUsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        //backgroundColor: WiserGlobal.appBackgroundColor,
+      //backgroundColor: WiserGlobal.appBackgroundColor,
       backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: hPi4Global.hpi4Color,
-          leading: new IconButton(
-              icon: new Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () async {
-                Navigator.of(context).pop();
-              }),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Image.asset('assets/proto-online-white.png',
-                  fit: BoxFit.fitWidth, height: 30),
-            ],
-          ),
+      appBar: AppBar(
+        backgroundColor: hPi4Global.hpi4Color,
+        leading: new IconButton(
+            icon: new Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () async {
+              Navigator.of(context).pop();
+            }),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Image.asset('assets/proto-online-white.png',
+                fit: BoxFit.fitWidth, height: 30),
+          ],
         ),
+      ),
       body: Scrollbar(
         controller: _scrollController,
         thumbVisibility: true,
@@ -58,13 +55,14 @@ class _AboutUsPageState extends State<AboutUsPage> {
           scrollDirection: Axis.vertical,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 //mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   FutureBuilder<dom.Document>(
                       future: parseHtml(),
-                      builder:
-                          (BuildContext context, AsyncSnapshot<dom.Document> snapshot) {
+                      builder: (BuildContext context,
+                          AsyncSnapshot<dom.Document> snapshot) {
                         if (snapshot.hasData) {
                           return Html(data: snapshot.data?.outerHtml);
                         } else {
@@ -77,7 +75,6 @@ class _AboutUsPageState extends State<AboutUsPage> {
           ),
         ),
       ),
-
     );
   }
 }

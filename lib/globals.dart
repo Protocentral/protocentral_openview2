@@ -1,8 +1,8 @@
 import 'dart:async';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class hPi4Global {
   static const String UUID_SERV_DIS = "0000180a-0000-1000-8000-00805f9b34fb";
@@ -15,8 +15,6 @@ class hPi4Global {
   static const String UUID_CHAR_HIST = "cd5c1525-4448-7db8-ae4c-d1da8cba36d0";
 
   static const String UUID_SERVICE_CMD = "01bf7492-970f-8d96-d44d-9023c47faddc";
-  //static const String UUID_CHAR_CMD = "01bf1527-970f-8d96-d44d-9023c47faddc";
-  //static const String UUID_CHAR_CMD_DATA = "01bf1528-970f-8d96-d44d-9023c47faddc";
 
   static const String UUID_SERV_CMD_DATA = "01bf7492-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_CMD = "01bf1528-970f-8d96-d44d-9023c47faddc";
@@ -32,10 +30,8 @@ class hPi4Global {
 
   static const String UUID_CHAR_HR = "00002a37-0000-1000-8000-00805f9b34fb";
   static const String UUID_SPO2_CHAR = "00002a5e-0000-1000-8000-00805f9b34fb";
-  //static const String UUID_RR_CHAR      = "00002a6e-0000-1000-8000-00805f9b34fb";
   static const String UUID_TEMP_CHAR = "00002a6e-0000-1000-8000-00805f9b34fb";
 
-  //static const String UUID_CHAR_HIST = "01bf1525-970f-8d96-d44d-9023c47faddc";
   static const String UUID_CHAR_ACT = "000000a2-0000-1000-8000-00805f9b34fb";
   static const String UUID_CHAR_BATT = "00002a19-0000-1000-8000-00805f9b34fb";
   static const String UUID_DIS_FW_REVISION =
@@ -71,14 +67,33 @@ class hPi4Global {
   static const List<int> startSession = [0x55];
   static const List<int> stopSession = [0x56];
 
-  static const List<int> setSessionOptions = [0x57];
-  static const List<int> getSessionOptions = [0x58];
-
   static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
   static const int CES_CMDIF_TYPE_DATA = 0x02;
   static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;
 
   static const List<int> WISER_CMD_SET_DEVICE_TIME = [0x41];
+
+  static int toInt16(Uint8List byteArray, int index) {
+    ByteBuffer buffer = byteArray.buffer;
+    ByteData data = new ByteData.view(buffer);
+    int short = data.getInt16(index, Endian.little);
+    return short;
+  }
+
+  void logConsole(String logString) {
+    print("AKW - " + logString);
+  }
+
+  void launchURL(String _url) async {
+    await launch(_url,
+        forceSafariVC: true, forceWebView: true, enableJavaScript: true);
+  }
+
+  FutureOr<bool> timeOutConnection(BuildContext context) {
+    Navigator.pop(context);
+    print("AKW: Connection timed out");
+    return false;
+  }
 
 }
 

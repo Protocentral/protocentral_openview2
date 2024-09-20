@@ -1,18 +1,11 @@
-import 'dart:ffi';
-import 'package:path_provider/path_provider.dart';
-import 'package:sn_progress_dialog/sn_progress_dialog.dart';
-import 'ble/ble_scanner.dart';
-import 'states/OpenViewBLEProvider.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 import 'globals.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-
-import 'dart:async';
-import 'dart:io';
-
-import 'package:progress_indicators/progress_indicators.dart';
+import 'ble/ble_scanner.dart';
+import 'states/OpenViewBLEProvider.dart';
 
 class QuickScanPage extends StatefulWidget {
   @override
@@ -20,7 +13,6 @@ class QuickScanPage extends StatefulWidget {
 }
 
 class _QuickScanPageState extends State<QuickScanPage> {
-
   final _scrollController = ScrollController();
 
   String debugOutput = "";
@@ -29,32 +21,10 @@ class _QuickScanPageState extends State<QuickScanPage> {
   bool dfuRunning = false;
 
   String displayText = "--";
-  int _selectedDeviceIndex = 0;
-
-  //PermissionStatus permStatus;
-
-  String _currentDFUDeviceID = "";
 
   @override
   void initState() {
     super.initState();
-  }
-
-  void showLoadingIndicator(String text) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0))),
-              backgroundColor: Colors.black87,
-              content: LoadingIndicator(text: text),
-            ));
-      },
-    );
   }
 
   Widget _buildDeviceList() {
@@ -146,24 +116,8 @@ class _QuickScanPageState extends State<QuickScanPage> {
                       leading: Column(children: [
                         Icon(Icons.bluetooth),
                       ]),
-                      /*trailing: BatteryIndicator(
-                        batteryFromPhone: false,
-                        batteryLevel: bleScanner
-                            .discoveredDevices[index].manufacturerData[2],
-                        style: BatteryIndicatorStyle.skeumorphism,
-                        colorful: true,
-                        showPercentNum: true,
-                        //mainColor: _color,
-                        size: 20,
-                        //ratio: _ratio,
-                        //showPercentSlide: _showPercentSlide,
-                      ),*/
-                      /*onTap: () async {
-
-                    },*/
                     );
                   }),
-              //_buildCheckforUpdatesButton(bleScanner.discoveredDevices),
             ],
           );
         }),
@@ -174,47 +128,47 @@ class _QuickScanPageState extends State<QuickScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: hPi4Global.appBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: hPi4Global.hpi4Color,
-          leading:
-              Consumer<BleScannerState>(builder: (context, bleScanner, child) {
-            return new IconButton(
-                icon: new Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () async {
-                  await Provider.of<BleScanner>(context, listen: false)
-                      .stopScan();
-                  Navigator.of(context).pop();
-                });
-          }),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Image.asset('assets/proto-online-white.png',
-                  fit: BoxFit.fitWidth, height: 30),
-            ],
-          ),
+      backgroundColor: hPi4Global.appBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: hPi4Global.hpi4Color,
+        leading:
+            Consumer<BleScannerState>(builder: (context, bleScanner, child) {
+          return new IconButton(
+              icon: new Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () async {
+                await Provider.of<BleScanner>(context, listen: false)
+                    .stopScan();
+                Navigator.of(context).pop();
+              });
+        }),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Image.asset('assets/proto-online-white.png',
+                fit: BoxFit.fitWidth, height: 30),
+          ],
         ),
-        body:Scrollbar(
+      ),
+      body: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        thickness: 10,
+        child: SingleChildScrollView(
           controller: _scrollController,
-          thumbVisibility: true,
-          trackVisibility: true,
-          thickness: 10,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            scrollDirection: Axis.vertical,
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    _buildDeviceList(),
-
-                  ]),
-            ),
+          scrollDirection: Axis.vertical,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  _buildDeviceList(),
+                ]),
           ),
         ),
+      ),
     );
   }
 }
