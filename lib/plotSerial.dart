@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +35,8 @@ class PlotSerialPage extends StatefulWidget {
 
 class _PlotSerialPageState extends State<PlotSerialPage> {
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  final _scrollController = ScrollController();
+  ScrollController _controller = new ScrollController();
   Key key = UniqueKey();
 
   final ecgLineData = <FlSpot>[];
@@ -54,6 +58,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   int globalRespRate = 0;
   double globalTemp = 0;
   String displaySpO2 = "--";
+  String displayDataPacket = "--";
+  String displayDataPacketLength = "--";
+
+  List<String> displayDataPacketArray = [];
 
   @override
   void initState() {
@@ -88,7 +96,16 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
       }
+
+      setStateIfMounted((){
+        displayDataPacket = event.toString();
+        displayDataPacketLength = event.length.toString();
+        displayDataPacketArray.add(event.toString());
+      });
+      //print("data length: " + event.length.toString());
+      //print("data packet received :"+event.toString());
     });
+
   }
 
   void pcProcessData(int rxch) async {
@@ -124,16 +141,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) //Read Data
         {
           if (CES_Pkt_PktType == 2) {
-            CES_Pkt_Data_Counter[CES_Data_Counter++] =
-                (rxch); // Buffer that assigns the data separated from the packet
+            CES_Pkt_Data_Counter[CES_Data_Counter++] = (rxch); // Buffer that assigns the data separated from the packet
           }
         } else //All data received
         {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-
               for(int i = 0; i < 8; i++ ){
-
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
                 //ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -676,13 +690,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       return Column(
         children: [
           displayHeartRateValue(),
-          buildPlots().buildChart(18, 95, ecgLineData, Colors.green),
+          buildPlots().buildChart(15, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           displaySpo2Value(),
-          buildPlots().buildChart(18, 95, ppgLineData, Colors.yellow),
+          buildPlots().buildChart(15, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
           displayRespirationRateValue(),
-          buildPlots().buildChart(18, 95, respLineData, Colors.blue),
+          buildPlots().buildChart(15, 95, respLineData, Colors.blue),
           sizedBoxForCharts(),
           displayTemperatureValue(),
         ],
@@ -847,6 +861,52 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     });
   }
 
+  Widget displayDebugLogs(){
+    /*return Align(
+      alignment: Alignment.center,
+      child: Container(
+        color: Colors.black,
+        height: SizeConfig.blockSizeVertical * 10,
+        width: SizeConfig.blockSizeVertical * 100,
+        child: _buildDebugConsole(),
+      ),
+    );*/
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        color: Colors.black,
+        height: SizeConfig.blockSizeVertical * 10,
+        width: SizeConfig.blockSizeVertical * 100,
+        child:Scrollbar(
+            thumbVisibility:true,
+            child: SingleChildScrollView(
+              child: Flexible(
+                child: _buildDebugConsole(),
+              ),
+            )
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebugConsole() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child:displayDebugText(),
+    );
+  }
+
+  displayDebugText(){
+   return Text(
+      displayDataPacketLength+"---"+displayDataPacket, style: TextStyle(fontSize: 12, color:Colors.white),
+      maxLines: 6,
+    );
+   /* return Text(
+      displayDataPacketArray.toString(), style: TextStyle(fontSize: 12, color:Colors.white),
+      maxLines: 100,
+    );*/
+  }
+
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
@@ -899,6 +959,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               _buildCharts(),
+              displayDebugLogs(),
             ],
           ),
         ),
