@@ -5,7 +5,7 @@
 # OpenView 2
 
 
-Openview 2 is designed as a companion application to receive data from various Protocentral boards. It can be used to visualize the data in real-time and also store the data in CSV format.
+Openview 2 is designed as a companion application to receive data from various Protocentral boards. It can be used to visualize the data in real-time and also store the data in CSV format. 
 
 ![Openview Desktop App](docs/images/openview-screen-desktop.png)
 
@@ -15,7 +15,7 @@ Openview 2 is designed as a companion application to receive data from various P
 
 OpenView 2 will replace the existing [OpenView app](https://github.com/Protocentral/protocentral_openview2) written in Processing and will be the primary supported app for all Protocentral boards. OpenView 2 is based on the more modern [Flutter framework](https://flutter.dev/) and is available for Windows, MacOS, Linux, Android, and iOS.
 
-The Android and iOS mobile versions use BLE to connect to the boards (when used with a microcontroller with BLE support), while the desktop version uses USB/UART to connect to the boards.
+The Android and iOS mobile versions use BLE to connect to the boards (when used with a microcontroller with BLE support), while the desktop version uses USB/UART to connect to the boards. 
 
 ## Features:
 
@@ -56,55 +56,17 @@ Download the openview app from the [Google Play](https://play.google.com/store/a
 
 Protocentral OpenView 2 is compatible with any device that can send data through Serial port over UART/USB/Bluetooth-SPP/BLE
 
-| Position      |   Value                       |
-| ------------- | ----------------------------  |
-| 0 - 7         | 0x0A (START)                  | 
-| 8 - 15        | 0xFA (Type Indicator)         |
-| 16 - 23       | Payload Length LSB            |
-| 24 - 31       | Payload Length MSB            |
-| 32 - 39       | 0x02 (Type - Data)            |
-| 40 - 55       | ECG (16-bit MSB to LSB)       |
-| 56 - 71       | ECG (16-bit MSB to LSB)       |
-| 72 - 87       | ECG (16-bit MSB to LSB)       |
-| 88 - 103      | ECG (16-bit MSB to LSB)       |
-| 104 - 119     | ECG (16-bit MSB to LSB)       |
-| 120 - 135     | ECG (16-bit MSB to LSB)       |
-| 136 - 151     | ECG (16-bit MSB to LSB)       |
-| 152 - 167     | ECG (16-bit MSB to LSB)       |
-| 168 - 183     | Resp (16-bit MSB to LSB)      |
-| 184 - 199     | Resp (16-bit MSB to LSB)      |
-| 200 - 215     | Resp (16-bit MSB to LSB)      |
-| 216 - 231     | Resp (16-bit MSB to LSB)      |
-| 232 - 239     | BioZ skip sample flag         |
-| 240 - 255     | PPG - Red (16-bit MSB to LSB) |
-| 256 - 271     | PPG - Red (16-bit MSB to LSB) |
-| 272 - 287     | PPG - Red (16-bit MSB to LSB) |
-| 288 - 303     | PPG - Red (16-bit MSB to LSB) |
-| 304 - 319     | PPG - Red (16-bit MSB to LSB) |
-| 320 - 335     | PPG - Red (16-bit MSB to LSB) |
-| 336 - 351     | PPG - Red (16-bit MSB to LSB) |
-| 352 - 367     | PPG - Red (16-bit MSB to LSB) |
-| 368 - 383     | PPG - IR (16-bit MSB to LSB)  |
-| 384 - 399     | PPG - IR (16-bit MSB to LSB)  |
-| 400 - 415     | PPG - IR (16-bit MSB to LSB)  |
-| 416 - 431     | PPG - IR (16-bit MSB to LSB)  |
-| 432 - 447     | PPG - IR (16-bit MSB to LSB)  |
-| 448 - 463     | PPG - IR (16-bit MSB to LSB)  |
-| 464 - 479     | PPG - IR (16-bit MSB to LSB)  |
-| 480 - 495     | PPG - IR (16-bit MSB to LSB)  |
-| 496 - 511     | Temperature (16-bit)          |
-| 512 - 519     | SpO2                          |
-| 520 - 527     | Heart Rate                    |
-| 528 - 535     | Resp Rate                     |
-| 536 - 543     | 0x00                          |
-| 544 - 551     | 0x0B (STOP)                   |
-
-
-
-The following diagram represents the packet format.
-
-![Openview packet format](docs/images/OpenView-packet.png)
-
+| Position      |   Value   |
+| ---------     | ----------|
+| 0             |   0x0A    | 
+| 1             |   0xFA    |
+| 2             |   Payload Length LSB  |
+| 3             |   Payload Length MSB  |
+| 4             |   0x02 (Type - Data)  |
+| 5             |   Payload 0           |
+| ..            |   Payload (...)       |
+|   n           |   Payload n+5         |
+| (PL Len + 5)  |   0x0B                |
 
 # License
 
