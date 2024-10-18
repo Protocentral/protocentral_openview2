@@ -22,14 +22,14 @@ import 'utils/showPrivacy.dart';
 import 'utils/loadingDialog.dart';
 import 'states/OpenViewBLEProvider.dart';
 
-late FlutterReactiveBle _fble;
-late StreamSubscription<ConnectionStateUpdate> _connection;
-late SerialPort _serialPort;
+late FlutterReactiveBle fble;
+late StreamSubscription<ConnectionStateUpdate> connection;
+late SerialPort serialPort;
 
 String pcCurrentDeviceID = "";
 String pcCurrentDeviceName = "";
-String _selectedBoard = 'Healthypi';
-String _selectedPort = 'Port';
+String selectedBoard = 'Healthypi';
+String selectedPort = 'Port';
 String selectedPortBoard = 'Healthypi';
 
 bool connectedToDevice = false;
@@ -44,18 +44,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _scrollController = ScrollController();
-  ScrollController _controller = new ScrollController();
+  final scrollController = ScrollController();
+  ScrollController controller = new ScrollController();
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
-    _initPackageInfo();
+    initPackageInfo();
   }
 
-  Future<void> _initPackageInfo() async {
+  Future<void> initPackageInfo() async {
     final PackageInfo info = await PackageInfo.fromPlatform();
     setState(() {
       hPi4Global.hpi4AppVersion = info.version;
@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildAppDrawer() {
+  Widget buildAppDrawer() {
     return Drawer(
       child: ListView(
         // Important: Remove any padding from the ListView.
@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
           Divider(
             color: Colors.black,
           ),
-          _getPoliciesTile(),
+          getPoliciesTile(),
           ListTile(
             title: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,7 +133,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _getPoliciesTile() {
+  Widget getPoliciesTile() {
     return ListTile(
       title: Column(
         children: [
@@ -196,10 +196,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> connectToDevice(
       BuildContext context, DiscoveredDevice currentDevice) async {
-    _fble =
+    fble =
         await Provider.of<OpenViewBLEProvider>(context, listen: false).getBLE();
 
-    _connection = _fble.connectToDevice(id: currentDevice.id).listen(
+    connection = fble.connectToDevice(id: currentDevice.id).listen(
         (connectionStateUpdate) async {
       hPi4Global()
           .logConsole("Connecting device: " + connectionStateUpdate.toString());
@@ -216,11 +216,11 @@ class _HomePageState extends State<HomePage> {
         if (connectedToDevice == true) {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
               builder: (_) => WaveFormsPage(
-                    selectedBoard: _selectedBoard,
+                    selectedBoard: selectedBoard,
                     selectedDevice: pcCurrentDeviceName,
                     currentDevice: currentDevice,
-                    fble: _fble,
-                    currConnection: _connection,
+                    fble: fble,
+                    currConnection: connection,
                   )));
         }
       } else if (connectionStateUpdate.connectionState ==
@@ -237,7 +237,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _setMTU(String deviceMAC) async {
-    int recdMTU = await _fble.requestMtu(deviceId: deviceMAC, mtu: 200);
+    int recdMTU = await fble.requestMtu(deviceId: deviceMAC, mtu: 200);
     hPi4Global().logConsole("MTU negotiated: " + recdMTU.toString());
     Navigator.pop(context);
   }
@@ -248,10 +248,10 @@ class _HomePageState extends State<HomePage> {
       child: DropdownButton(
         underline: SizedBox(),
         dropdownColor: hPi4Global.hpi4Color,
-        hint: _selectedBoard == null
+        hint: selectedBoard == null
             ? Text('Select Board')
             : Text(
-                _selectedBoard,
+                selectedBoard,
                 style: TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
               ),
         isExpanded: true,
@@ -268,7 +268,7 @@ class _HomePageState extends State<HomePage> {
         onChanged: (value) {
           setState(
             () {
-              _selectedBoard = value as String;
+              selectedBoard = value as String;
             },
           );
         },
@@ -327,7 +327,7 @@ class _HomePageState extends State<HomePage> {
             child: ListView.builder(
                 shrinkWrap: true,
                 physics: const AlwaysScrollableScrollPhysics(), // new
-                controller: _controller,
+                controller: controller,
                 padding: const EdgeInsets.all(8),
                 itemCount: bleScannerState.discoveredDevices.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -450,10 +450,10 @@ class _HomePageState extends State<HomePage> {
           DropdownButton(
             underline: SizedBox(),
             dropdownColor: hPi4Global.hpi4Color,
-            hint: _selectedPort == null
+            hint: selectedPort == null
                 ? Text('Select Serial Port')
                 : Text(
-                    _selectedPort,
+                    selectedPort,
                     style:
                         TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
                   ),
@@ -471,7 +471,7 @@ class _HomePageState extends State<HomePage> {
             onChanged: (value) {
               setState(
                 () {
-                  _selectedPort = value as String;
+                  selectedPort = value as String;
                 },
               );
             },
@@ -500,15 +500,15 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             onPressed: () async {
-              print("Opening $_selectedPort");
-              _serialPort = SerialPort(_selectedPort);
-              if (!_serialPort.openReadWrite()) {
+              print("Opening $selectedPort");
+              serialPort = SerialPort(selectedPort);
+              if (!serialPort.openReadWrite()) {
                 print(SerialPort.lastError);
               }
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (_) => PlotSerialPage(
-                        selectedPort: _serialPort,
-                        selectedSerialPort: _selectedPort,
+                        selectedPort: serialPort,
+                        selectedSerialPort: selectedPort,
                         selectedPortBoard: selectedPortBoard,
                       )));
             },
@@ -537,8 +537,8 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             onPressed: () async {
-              if (_serialPort.isOpen && _serialPort != null) {
-                _serialPort.close();
+              if (serialPort.isOpen && serialPort != null) {
+                serialPort.close();
               }
             },
           ),
@@ -587,7 +587,7 @@ class _HomePageState extends State<HomePage> {
     SizeConfig().init(context);
     return Scaffold(
       backgroundColor: hPi4Global.appBackgroundColor,
-      drawer: _buildAppDrawer(),
+      drawer: buildAppDrawer(),
       appBar: AppBar(
         backgroundColor: hPi4Global.hpi4Color,
         iconTheme: IconThemeData(color: Colors.white),
@@ -601,9 +601,9 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       body: Scrollbar(
-        controller: _scrollController,
+        controller: scrollController,
         child: SingleChildScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           scrollDirection: Axis.vertical,
           child: Padding(
             padding: const EdgeInsets.all(24.0),

@@ -14,7 +14,6 @@ import 'home.dart';
 import 'globals.dart';
 import 'utils/sizeConfig.dart';
 import 'utils/charts.dart';
-import 'utils/overlay.dart';
 import 'onBoardDataLog.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/loadingDialog.dart';
@@ -190,41 +189,41 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
   void dataFormatBasedOnBoardsSelection() async {
     if (widget.selectedBoard == 'ADS1292R Breakout/Shield') {
-      _startECG16Listening();
-      _startRESP16Listening();
-      await _startListeningHR();
-      await _startListeningHRVResp();
+      startECG16Listening();
+      startRESP16Listening();
+      await startListeningHR();
+      await startListeningHRVResp();
     } else if (widget.selectedBoard == 'ADS1293 Breakout/Shield') {
-      _startECG32Listening();
-      _startPPG16Listening();
-      _startRESP32Listening();
+      startECG32Listening();
+      startPPG16Listening();
+      startRESP32Listening();
     } else if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
-      _startPPG32Listening();
-      await _startListeningHR();
-      await _startListeningSPO2();
+      startPPG32Listening();
+      await startListeningHR();
+      await startListeningSPO2();
     } else if (widget.selectedBoard == 'MAX86150 Breakout') {
-      _startECG16Listening();
-      _startPPG16Listening();
+      startECG16Listening();
+      startPPG16Listening();
     } else if (widget.selectedBoard == 'Pulse Express') {
-      _startECG32Listening();
-      _startRESP32Listening();
+      startECG32Listening();
+      startRESP32Listening();
     } else if (widget.selectedBoard == 'tinyGSR Breakout') {
-      _startECG16Listening();
+      startECG16Listening();
     } else if (widget.selectedBoard == 'MAX30003 ECG Breakout') {
-      _startECG32Listening();
-      await _startListeningHR();
-      await _startListeningHRVResp();
+      startECG32Listening();
+      await startListeningHR();
+      await startListeningHRVResp();
     } else if (widget.selectedBoard == 'MAX30001 ECG & BioZ Breakout') {
-      _startECG32Listening();
-      _startRESP32Listening();
+      startECG32Listening();
+      startRESP32Listening();
     } else {
-      _startECG32Listening();
-      _startPPG16Listening();
-      _startRESP32Listening();
-      await _startListeningHR();
-      await _startListeningSPO2();
-      await _startListeningHRVResp();
-      await _startListeningTemp();
+      startECG32Listening();
+      startPPG16Listening();
+      startRESP32Listening();
+      await startListeningHR();
+      await startListeningSPO2();
+      await startListeningHRVResp();
+      await startListeningTemp();
     }
   }
 
@@ -266,7 +265,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     }
   }
 
-  Future<void> _startListeningHR() async {
+  Future<void> startListeningHR() async {
     print("AKW: Started listening to HR stream");
     listeningHRStream = true;
 
@@ -283,7 +282,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  Future<void> _startListeningSPO2() async {
+  Future<void> startListeningSPO2() async {
     print("AKW: Started listening to SPO2 stream");
     listeningSPO2Stream = true;
 
@@ -304,7 +303,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  Future<void> _startListeningTemp() async {
+  Future<void> startListeningTemp() async {
     print("AKW: Started listening to Temp stream");
     listeningTempStream = true;
 
@@ -321,7 +320,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  Future<void> _startListeningHRVResp() async {
+  Future<void> startListeningHRVResp() async {
     print("AKW: Started listening to HRVResp stream");
     listeningHRVRespStream = true;
 
@@ -337,7 +336,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  void _startECG16Listening() async {
+  void startECG16Listening() async {
     print("AKW: Started listening to stream");
     listeningECGStream = true;
 
@@ -372,7 +371,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startECG32Listening() async {
+  void startECG32Listening() async {
     print("AKW: Started listening to stream");
     listeningECGStream = true;
 
@@ -407,7 +406,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startPPG16Listening() async {
+  void startPPG16Listening() async {
     print("AKW: Started listening to ppg stream");
     listeningPPGStream = true;
 
@@ -443,7 +442,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startPPG32Listening() async {
+  void startPPG32Listening() async {
     print("AKW: Started listening to ppg stream");
     listeningPPGStream = true;
 
@@ -479,7 +478,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startRESP16Listening() async {
+  void startRESP16Listening() async {
     print("AKW: Started listening to respiration stream");
     listeningRESPStream = true;
     int i = 0;
@@ -513,7 +512,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  void _startRESP32Listening() async {
+  void startRESP32Listening() async {
     print("AKW: Started listening to respiration stream");
     listeningRESPStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
@@ -546,11 +545,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _startListeningData() async {
+  Future<void> startListeningData() async {
     print("AKW: Started listening to the response");
     listeningDataStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
-      _streamData = await widget.fble.subscribeToCharacteristic(dataCharacteristic);
+      _streamData =
+          await widget.fble.subscribeToCharacteristic(dataCharacteristic);
     });
 
     _streamDataSubscription = _streamData.listen((value) async {
@@ -563,20 +563,18 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           if (value[1] == 0x55) {
             if (value[2] == 0x32) {
               print("Availble memory is greater than 25%");
-             // _showOverlay(context);
-              setState((){
+              // _showOverlay(context);
+              setState(() {
                 memoryAvailable = true;
                 startFlashLogging = true;
               });
-
             } else if (value[2] == 0x31) {
               print("Availble memory is less than 25%");
-              _showInsufficientMemoryDialog();
-              setState((){
+              showInsufficientMemoryDialog();
+              setState(() {
                 memoryAvailable = false;
                 startFlashLogging = false;
               });
-
             }
           }
         }
@@ -849,7 +847,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Widget displayFlashStatus() {
-    if(startFlashLogging == true){
+    if (startFlashLogging == true) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
@@ -857,7 +855,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           children: [
             Column(children: [
               Text(
-                "Status: Logging to Flash",
+                "Status: Logging to SD card",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white,
@@ -867,51 +865,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
           ],
         ),
       );
-    }else{
+    } else {
       return Container();
     }
-
   }
 
-  late OverlayEntry overlayEntry1;
-  bool overlayFlag = false;
-
-  void _showOverlay(BuildContext context) async {
-    // Declaring and Initializing OverlayState andOverlayEntry objects
-    OverlayState overlayState = Overlay.of(context);
-    //OverlayEntry overlayEntry1;
-    overlayEntry1 = OverlayEntry(builder: (context) {
-      // You can return any widget you like here to be displayed on the Overlay
-      overlayFlag = true;
-      return Positioned(
-        left: MediaQuery.of(context).size.width * 0.3,
-        top: MediaQuery.of(context).size.height * 0.2,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: EdgeInsets.all(MediaQuery.of(context).size.height * 0.03),
-            width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.height * 0.1,
-            //color: Colors.white.withOpacity(0.3),
-            color: Colors.white,
-            child: Material(
-              color: Colors.transparent,
-              child: Text('data logging to the Flash...',
-                  style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.height * 0.03,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black)),
-            ),
-          ),
-        ),
-      );
-    });
-
-    // Inserting the OverlayEntry into the Overlay
-    overlayState.insertAll([overlayEntry1]);
-  }
-
-  Future<void> _showSetTimeDialog() async {
+  Future<void> showSetTimeDialog() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -953,7 +912,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
               child: Text('Ok'),
               onPressed: () async {
                 Navigator.pop(context);
-                _sendCurrentDateTime();
+                sendCurrentDateTime();
               },
             ),
           ],
@@ -962,7 +921,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _showInsufficientMemoryDialog() async {
+  Future<void> showInsufficientMemoryDialog() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1012,7 +971,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _showEndFlashingDialog() async {
+  Future<void> showEndFlashingDialog() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1080,7 +1039,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _showStopStreamingDialog(String displayAlert) async {
+  Future<void> showStopStreamingDialog(String displayAlert) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1097,7 +1056,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                 ),
                 Center(
                   child: Column(children: <Widget>[
-                    Text(displayAlert,
+                    Text(
+                      displayAlert,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.black,
@@ -1121,7 +1081,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
-  Future<void> _sendCurrentDateTime() async {
+  Future<void> sendCurrentDateTime() async {
     /* Send current DataTime to device - Bluetooth Packet format
      | 0 | WISER_CMD_SET_DEVICE_TIME (0x41), | 1 | sec, | 2 | min, | 3 | hour,
      | 4 | mday(day of the month), | 5 | month, | 6 | year */
@@ -1152,7 +1112,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print("DateTime Sent");
   }
 
-  Future<void> _sendStartSessionCommand() async {
+  Future<void> sendStartSessionCommand() async {
     /* Send current DataTime with start session to device - Bluetooth Packet format
      | 0 | Start Session (0x55), | 1 | sec, | 2 | min, | 3 | hour,
      | 4 | mday(day of the month), | 5 | month, | 6 | year */
@@ -1172,11 +1132,16 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     sessionParametersLength.setUint8(5, int.parse(cdate));
 
     Uint8List cmdByteList = sessionParametersLength.buffer.asUint8List(0, 6);
-    hPi4Global().logConsole("AKW: Sending datetime information with start session: " + cmdByteList.toString());
+    hPi4Global().logConsole(
+        "AKW: Sending datetime information with start session: " +
+            cmdByteList.toString());
     commandDateTimePacket.addAll(cmdByteList);
-    hPi4Global().logConsole("AKW: Sending datetime command with start session: " + commandDateTimePacket.toString());
+    hPi4Global().logConsole(
+        "AKW: Sending datetime command with start session: " +
+            commandDateTimePacket.toString());
     await widget.fble.writeCharacteristicWithoutResponse(
-        commandTxCharacteristic, value: commandDateTimePacket);
+        commandTxCharacteristic,
+        value: commandDateTimePacket);
     print("Command Sent");
   }
 
@@ -1190,12 +1155,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print("end logging flash command Sent");
   }
 
-  Future<void> _setMTU(String deviceMAC) async {
+  Future<void> setMTU(String deviceMAC) async {
     int recdMTU = await widget.fble.requestMtu(deviceId: deviceMAC, mtu: 517);
     hPi4Global().logConsole("MTU negotiated: " + recdMTU.toString());
   }
 
-  Widget _buildCharts() {
+  Widget buildCharts() {
     if (widget.currentDevice.name.contains("healthypi move") ||
         widget.currentDevice.name.contains("healthypi")) {
       return Expanded(
@@ -1217,10 +1182,12 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                       child: MaterialButton(
                         minWidth: 50.0,
                         //height: 30.0,
-                        color: startFlashLogging ? Colors.grey : Colors.white,
+                        color: startFlashLogging ? Colors.red : Colors.white,
                         child: Row(
                           children: <Widget>[
-                            Text('Log to Flash',
+                            startFlashLogging?Text('Stop Logging',
+                                style: new TextStyle(
+                                    fontSize: 16.0, color: Colors.white)):Text('Log to SD card',
                                 style: new TextStyle(
                                     fontSize: 16.0, color: Colors.black)),
                           ],
@@ -1229,18 +1196,22 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          if(startFlashLogging == true){
-                             null;
-                          }else{
-                            await Future.delayed(Duration(seconds: 1), () async {
-                              await _setMTU(widget.currentDevice.id);
+                          if (startFlashLogging == true) {
+                            _sendEndLogtoFlashCommand();
+                            setState(() {
+                              startFlashLogging = false;
                             });
-                            await Future.delayed(Duration(seconds: 1), () async {
-                              await _startListeningData();
+                          } else {
+                            await Future.delayed(Duration(seconds: 1),
+                                () async {
+                              await setMTU(widget.currentDevice.id);
                             });
-                            await _sendStartSessionCommand();
+                            await Future.delayed(Duration(seconds: 1),
+                                () async {
+                              await startListeningData();
+                            });
+                            await sendStartSessionCommand();
                           }
-
                         },
                       ),
                     ),
@@ -1260,23 +1231,24 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          if(startStreaming == false){
+                          if (startStreaming == false) {
                             Navigator.of(context)
                                 .pushReplacement(MaterialPageRoute(
-                                builder: (_) => FetchLogs(
-                                  selectedBoard: widget.selectedBoard,
-                                  selectedDevice: widget.selectedDevice,
-                                  currentDevice: widget.currentDevice,
-                                  fble: widget.fble,
-                                  currConnection: widget.currConnection,
-                                )));
-                          }else{
-                            _showStopStreamingDialog('Please stop streaming to view the logs.');
+                                    builder: (_) => FetchLogs(
+                                          selectedBoard: widget.selectedBoard,
+                                          selectedDevice: widget.selectedDevice,
+                                          currentDevice: widget.currentDevice,
+                                          fble: widget.fble,
+                                          currConnection: widget.currConnection,
+                                        )));
+                          } else {
+                            showStopStreamingDialog(
+                                'Please stop streaming to view the logs.');
                           }
                         },
                       ),
                     ),
-                    Padding(
+                    /*Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
                         minWidth: 50.0,
@@ -1301,7 +1273,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
                         },
                       ),
-                    ),
+                    ),*/
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(
@@ -1319,27 +1291,28 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         onPressed: () async {
-                          /*if (overlayFlag == true) {
-                            overlayFlag = false;
-                            overlayEntry1.remove();
-                          }*/
-                          if (startFlashLogging == true && startAppLogging == false) {
+                          if (startFlashLogging == true &&
+                              startAppLogging == false) {
                             startFlashLogging = false;
-                            _showEndFlashingDialog();
-                          } else if (startAppLogging == true && startFlashLogging == false) {
+                            showEndFlashingDialog();
+                          } else if (startAppLogging == true &&
+                              startFlashLogging == false) {
                             startAppLogging = false;
-                            writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog,context);
+                            writeLogDataToFile(
+                                ecgDataLog, ppgDataLog, respDataLog, context);
                             closeAllStreams();
                             await _disconnect();
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                   builder: (_) => HomePage(title: 'OpenView')),
                             );
-                          } else if (startFlashLogging == true && startAppLogging == true) {
+                          } else if (startFlashLogging == true &&
+                              startAppLogging == true) {
                             startAppLogging = false;
                             startFlashLogging = false;
-                            writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog,context);
-                            _showEndFlashingDialog();
+                            writeLogDataToFile(
+                                ecgDataLog, ppgDataLog, respDataLog, context);
+                            showEndFlashingDialog();
                           } else {
                             closeAllStreams();
                             await _disconnect();
@@ -1448,32 +1421,31 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Widget LogToAppButton() {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-        child: MaterialButton(
-          minWidth: 50.0,
-          color: startAppLogging ? Colors.grey : Colors.white,
-          child: Row(
-            children: <Widget>[
-              Text('Log to App',
-                  style: new TextStyle(fontSize: 16.0, color: Colors.black)),
-            ],
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          onPressed: () async {
-            if(startStreaming == true){
-              setState(() {
-                startAppLogging = true;
-              });
-            }else{
-              _showStopStreamingDialog("Please start streaming to log to app");
-            }
-
-          },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+      child: MaterialButton(
+        minWidth: 50.0,
+        color: startAppLogging ? Colors.grey : Colors.white,
+        child: Row(
+          children: <Widget>[
+            Text('Log to App',
+                style: new TextStyle(fontSize: 16.0, color: Colors.black)),
+          ],
         ),
-      );
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        onPressed: () async {
+          if (startStreaming == true) {
+            setState(() {
+              startAppLogging = true;
+            });
+          } else {
+            showStopStreamingDialog("Please start streaming to log to app");
+          }
+        },
+      ),
+    );
   }
 
   Widget StartAndStopButton() {
@@ -1564,7 +1536,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              _buildCharts(),
+              buildCharts(),
               //showPages(),
             ],
           ),

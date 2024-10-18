@@ -44,11 +44,6 @@ void main() async {
           create: (_) => _monitor.state,
           initialData: BleStatus.unknown,
         ),
-        /*StreamProvider<BleStatus>(
-          create: (_) => _monitor.state,
-          initialData: BleStatus.unknown,
-        ),
-        */
         StreamProvider<ConnectionStateUpdate>(
           create: (_) => _connector.state,
           initialData: const ConnectionStateUpdate(
@@ -73,7 +68,6 @@ void main() async {
           ),
     ),
   );
-  //runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -83,11 +77,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'OpenView',
       initialRoute: '/',
-      routes: {
-        //'/newsession': (context) => NewSessionPage(
-        //      title: "Title",
-        //    ),
-      },
+      routes: {},
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,

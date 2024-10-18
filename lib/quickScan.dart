@@ -16,18 +16,18 @@ class _QuickScanPageState extends State<QuickScanPage> {
   final _scrollController = ScrollController();
 
   String debugOutput = "";
+  String displayText = "--";
+
   int globalDFUProgress = 0;
   late ProgressDialog prDFU;
   bool dfuRunning = false;
-
-  String displayText = "--";
 
   @override
   void initState() {
     super.initState();
   }
 
-  Widget _buildDeviceList() {
+  Widget buildDeviceList() {
     return Consumer<OpenViewBLEProvider>(builder: (context, patchble, child) {
       return Card(
           child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
@@ -164,7 +164,7 @@ class _QuickScanPageState extends State<QuickScanPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 //mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
-                  _buildDeviceList(),
+                  buildDeviceList(),
                 ]),
           ),
         ),

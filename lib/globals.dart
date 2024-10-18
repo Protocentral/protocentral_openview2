@@ -174,13 +174,13 @@ class LoadingIndicator extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _getLoadingIndicator(),
-              _getHeading(context),
-              _getText(displayedText)
+              getLoadingIndicator(),
+              getHeading(context),
+              getText(displayedText)
             ]));
   }
 
-  Padding _getLoadingIndicator() {
+  Padding getLoadingIndicator() {
     return Padding(
         child: Container(
             child: SpinKitCircle(
@@ -192,7 +192,7 @@ class LoadingIndicator extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 16));
   }
 
-  Widget _getHeading(context) {
+  Widget getHeading(context) {
     return Padding(
         child: Text(
           'Please wait…',
@@ -202,7 +202,7 @@ class LoadingIndicator extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 4));
   }
 
-  Text _getText(String displayedText) {
+  Text getText(String displayedText) {
     return Text(
       displayedText,
       style: TextStyle(color: Colors.white, fontSize: 14),
