@@ -230,14 +230,14 @@ class _FetchLogsState extends State<FetchLogs> {
         print("Data Rx: " + value.toString());
 
         LogHeader _mLog = (
-          logFileID: bdata.getUint16(1, Endian.little),
-          sessionLength: bdata.getUint16(3, Endian.little),
-          tmYear: bdata.getUint8(5),
-          tmMon: bdata.getUint8(6),
-          tmMday: bdata.getUint8(7),
-          tmHour: bdata.getUint8(8),
-          tmMin: bdata.getUint8(9),
-          tmSec: bdata.getUint8(10),
+          logFileID: bdata.getUint32(1, Endian.little),
+          sessionLength: bdata.getUint32(5, Endian.little),
+          tmYear: bdata.getUint8(9),
+          tmMon: bdata.getUint8(10),
+          tmMday: bdata.getUint8(11),
+          tmHour: bdata.getUint8(12),
+          tmMin: bdata.getUint8(13),
+          tmSec: bdata.getUint8(14),
         );
 
         //print("Log: " + _mLog.toString());
