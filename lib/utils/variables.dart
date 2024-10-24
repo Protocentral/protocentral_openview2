@@ -46,6 +46,7 @@ var listOFBoards = {
 typedef LogHeader = ({
   int logFileID,
   int sessionLength,
+  int fileNo,
   int tmSec,
   int tmMin,
   int tmHour,

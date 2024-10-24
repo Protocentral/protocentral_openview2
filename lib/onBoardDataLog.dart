@@ -56,6 +56,7 @@ class _FetchLogsState extends State<FetchLogs> {
   int tappedIndex = 0;
   int totalSessionCount = 0;
   int currentFileDataCounter = 0;
+  int checkNoOfWrites = 0;
 
   StringBuffer buffer = StringBuffer();
   String result = '';
@@ -176,7 +177,7 @@ class _FetchLogsState extends State<FetchLogs> {
     );
   }
 
-  Future<void> writeLogDataToFile(List<int> fileData, int sessionID) async {
+  Future<void> writeLogDataToFile(List<int> fileData, int sessionID, int fileNum) async {
       Directory _directory = Directory("");
       String fileUTF8Data = " ";
       if (Platform.isAndroid) {
@@ -191,7 +192,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
       final String directory = exPath;
 
-      File file = File('$directory/logdata$sessionID.txt');
+      File file = File('$directory/logdata$sessionID'+'_$fileNum'+'.txt');
 
       print("Save file");
 
@@ -204,8 +205,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
   bool logIndexReceived = false;
 
-  Future<void> startListeningData(
-      String deviceID, int sessionID, int sessionSize) async {
+  Future<void> startListeningData(String deviceID, int sessionID, int sessionSize, int fileNum) async {
     listeningDataStream = true;
     await Future.delayed(Duration(seconds: 1), () async {
       streamData = widget.fble.subscribeToCharacteristic(dataCharacteristic);
@@ -232,12 +232,13 @@ class _FetchLogsState extends State<FetchLogs> {
         LogHeader _mLog = (
           logFileID: bdata.getUint32(1, Endian.little),
           sessionLength: bdata.getUint32(5, Endian.little),
-          tmYear: bdata.getUint8(9),
-          tmMon: bdata.getUint8(10),
-          tmMday: bdata.getUint8(11),
-          tmHour: bdata.getUint8(12),
-          tmMin: bdata.getUint8(13),
-          tmSec: bdata.getUint8(14),
+          fileNo: bdata.getUint8(9),
+          tmYear: bdata.getUint8(10),
+          tmMon: bdata.getUint8(11),
+          tmMday: bdata.getUint8(12),
+          tmHour: bdata.getUint8(13),
+          tmMin: bdata.getUint8(14),
+          tmSec: bdata.getUint8(15),
         );
 
         //print("Log: " + _mLog.toString());
@@ -264,10 +265,13 @@ class _FetchLogsState extends State<FetchLogs> {
 
         currentFileDataCounter += pktPayloadSize;
         globalReceivedData += pktPayloadSize;
+        checkNoOfWrites += 1;
+
+        logConsole("no of writes: " + checkNoOfWrites.toString());
 
          logData.addAll(value.sublist(1, value.length));
 
-        // logConsole("data received: " +logData.toString());
+        //logConsole("data received: " +logData.toString());
 
         setState(() {
           displayPercent = globalDisplayPercentOffset +
@@ -297,7 +301,7 @@ class _FetchLogsState extends State<FetchLogs> {
           await streamCommandSubscription.cancel();
           await streamDataSubscription.cancel();
 
-          await writeLogDataToFile(logData, sessionID);
+          await writeLogDataToFile(logData, sessionID, fileNum);
 
           setState(() {
             flagFetching = false;
@@ -341,7 +345,7 @@ class _FetchLogsState extends State<FetchLogs> {
     logConsole("Fetch log count initiated");
     showLoadingIndicator("Fetching logs count...", context);
     await startListeningCommand(deviceID);
-    await startListeningData(deviceID, 0, 0);
+    await startListeningData(deviceID, 0, 0, 0);
     await Future.delayed(Duration(seconds: 2), () async {
       await sendCommand(hPi4Global.getSessionCount, deviceID);
     });
@@ -352,7 +356,7 @@ class _FetchLogsState extends State<FetchLogs> {
     logConsole("Fetch logs initiated");
     showLoadingIndicator("Fetching logs...", context);
     await startListeningCommand(deviceID);
-    await startListeningData(deviceID, 0, 0);
+    await startListeningData(deviceID, 0, 0, 0);
     await Future.delayed(Duration(seconds: 2), () async {
       await sendCommand(hPi4Global.sessionLogIndex, deviceID);
       //await _sendCommand(hPi4Global.getSessionCount, deviceID);
@@ -362,7 +366,7 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
   Future<void> deleteLogIndex(
-      String deviceID, int sessionID, BuildContext context) async {
+      String deviceID, int sessionID, int fileNum, BuildContext context) async {
     logConsole("Deleted logs initiated");
     showLoadingIndicator("Deleting log...", context);
     await Future.delayed(Duration(seconds: 2), () async {
@@ -391,12 +395,12 @@ class _FetchLogsState extends State<FetchLogs> {
   }
 
   Future<void> fetchLogFile(
-      String deviceID, int sessionID, int sessionSize) async {
+      String deviceID, int sessionID, int sessionSize, int fileNum) async {
     logConsole("Fetch logs initiated");
     isTransfering = true;
     await startListeningCommand(deviceID);
     // Session size is in bytes, so multiply by 6 to get the number of data points, add header size
-    await startListeningData(deviceID, sessionID, (sessionSize));
+    await startListeningData(deviceID, sessionID, (sessionSize), fileNum);
 
     // Reset all fetch variables
     globalExpectedLength = sessionSize;
@@ -407,6 +411,7 @@ class _FetchLogsState extends State<FetchLogs> {
       commandFetchLogFile.addAll(hPi4Global.sessionFetchLogFile);
       commandFetchLogFile.add((sessionID >> 8) & 0xFF);
       commandFetchLogFile.add(sessionID & 0xFF);
+      commandFetchLogFile.add(fileNum);
       await sendCommand(commandFetchLogFile, deviceID);
     });
   }
@@ -456,7 +461,23 @@ class _FetchLogsState extends State<FetchLogs> {
     return formattedDate;
   }
 
-  Widget _getSessionIDList() {
+  String _getFileName(int sessionID, int extension) {
+    String ConExtension = "";
+    if(extension == 1){
+      ConExtension = "_ECG";
+    }else if(extension == 2){
+      ConExtension = "_PPG";
+    }else if(extension == 3){
+      ConExtension = "_RESP";
+    }else{
+      ConExtension = " ";
+    }
+    String formattedFileName = sessionID.toString() + ConExtension;
+
+    return formattedFileName;
+  }
+
+   Widget _getSessionIDList() {
     return (logIndexReceived == false)
         ? Padding(
             padding: const EdgeInsets.all(16.0),
@@ -524,13 +545,18 @@ class _FetchLogsState extends State<FetchLogs> {
                                           title: Column(
                                             children: [
                                               Row(children: [
-                                                Text(
+                                                /*Text(
                                                     "Session ID: " +
+                                                        logHeaderList[index].logFileID.toString(),
+                                                    style: new TextStyle(
+                                                        fontSize: 12)),*/
+                                                Text(_getFileName(
                                                         logHeaderList[index]
-                                                            .logFileID
-                                                            .toString(),
+                                                            .logFileID,
+                                                        logHeaderList[index].fileNo),
                                                     style: new TextStyle(
                                                         fontSize: 12)),
+
                                               ]),
                                               Row(
                                                   mainAxisAlignment:
@@ -581,6 +607,9 @@ class _FetchLogsState extends State<FetchLogs> {
                                                                 logHeaderList[
                                                                         index]
                                                                     .sessionLength,
+                                                                logHeaderList[
+                                                                index]
+                                                                    .fileNo,
                                                               );
                                                             },
                                                             icon: Icon(Icons
@@ -600,6 +629,9 @@ class _FetchLogsState extends State<FetchLogs> {
                                                                   logHeaderList[
                                                                           index]
                                                                       .logFileID,
+                                                                  logHeaderList[
+                                                                  index]
+                                                                      .fileNo,
                                                                   context);
                                                             },
                                                             icon: Icon(
