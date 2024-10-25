@@ -1,7 +1,7 @@
 name: OpenView2
 description: BLE companion app for use with ProtoCentral breakout boards and modules
 
-version: 2.0.32+102
+version: 2.0.33+103
 
 environment:
   sdk: ^3.3.0

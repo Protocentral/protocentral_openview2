@@ -267,7 +267,7 @@ class _FetchLogsState extends State<FetchLogs> {
         globalReceivedData += pktPayloadSize;
         checkNoOfWrites += 1;
 
-        logConsole("no of writes: " + checkNoOfWrites.toString());
+        //logConsole("no of writes: " + checkNoOfWrites.toString());
 
          logData.addAll(value.sublist(1, value.length));
 
@@ -369,11 +369,13 @@ class _FetchLogsState extends State<FetchLogs> {
       String deviceID, int sessionID, int fileNum, BuildContext context) async {
     logConsole("Deleted logs initiated");
     showLoadingIndicator("Deleting log...", context);
+
     await Future.delayed(Duration(seconds: 2), () async {
       List<int> commandFetchLogFile = List.empty(growable: true);
       commandFetchLogFile.addAll(hPi4Global.sessionLogDelete);
       commandFetchLogFile.add((sessionID >> 8) & 0xFF);
       commandFetchLogFile.add(sessionID & 0xFF);
+      commandFetchLogFile.add(fileNum);
       await sendCommand(commandFetchLogFile, deviceID);
     });
     Navigator.pop(context);
@@ -420,9 +422,7 @@ class _FetchLogsState extends State<FetchLogs> {
     logConsole(
         "Tx CMD " + commandList.toString() + " 0x" + hex.encode(commandList));
 
-    await widget.fble.writeCharacteristicWithoutResponse(
-        commandTxCharacteristic,
-        value: commandList);
+    await widget.fble.writeCharacteristicWithoutResponse(commandTxCharacteristic, value: commandList);
   }
 
   Future<void> cancelAction() async {
