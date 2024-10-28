@@ -8,28 +8,55 @@ import 'showSuccessDialog.dart';
 
 
 Future<void> writeLogDataToFile(List<double> ecgData, List<double> ppgData, List<double> respData, BuildContext context) async {
-  hPi4Global().logConsole("Log data size: " + ecgData.length.toString());
+  //hPi4Global().logConsole("Log data size: " + ecgData.length.toString());
+  //hPi4Global().logConsole("Log data size1: " + ppgData.length.toString());
+  //hPi4Global().logConsole("Log data size2: " + respData.length.toString());
 
-  List<List<String>> dataList = []; //Outter List which contains the data List
+  List<List<String>> ecgDataList = []; //Outter List which contains the data List
+  List<List<String>> ppgDataList = []; //Outter List which contains the data List
+  List<List<String>> respDataList = []; //Outter List which contains the data List
 
-  List<String> header = [];
-  header.add("ECG");
-  header.add("RESPIRATION");
-  header.add("PPG");
+  List<String> ecgHeader = [];
+  List<String> ppgHeader = [];
+  List<String> respHeader = [];
 
-  dataList.add(header);
+  ecgHeader.add("ECG");
+  respHeader.add("RESPIRATION");
+  ppgHeader.add("PPG");
 
-  for (int i = 0; i < (ecgData.length - 50); i++) {
+  ecgDataList.add(ecgHeader);
+  ppgDataList.add(ppgHeader);
+  respDataList.add(respHeader);
+
+  for (int i = 0; i < (ecgData.length)-10; i++) {
     List<String> dataRow = [
       (ecgData[i]).toString(),
-      (respData[i]).toString(),
-      (ppgData[i]).toString(),
+      //(respData[i]).toString(),
+      //(ppgData[i]).toString(),
     ];
-    dataList.add(dataRow);
+    ecgDataList.add(dataRow);
   }
 
+  for (int i = 0; i < (ppgData.length)-10; i++) {
+    List<String> dataRow = [
+      (ppgData[i]).toString(),
+    ];
+    ppgDataList.add(dataRow);
+  }
+
+  for (int i = 0; i < (respData.length)-10; i++) {
+    List<String> dataRow = [
+      (respData[i]).toString(),
+    ];
+    respDataList.add(dataRow);
+  }
+
+
   // Code to convert logData to CSV file
-  String csv = const ListToCsvConverter().convert(dataList);
+  String ecgCSV = const ListToCsvConverter().convert(ecgDataList);
+  String ppgCSV = const ListToCsvConverter().convert(ppgDataList);
+  String respCSV = const ListToCsvConverter().convert(respDataList);
+
   final String logFileTime = DateTime.now().millisecondsSinceEpoch.toString();
 
   Directory _directory = Directory("");
@@ -47,10 +74,21 @@ Future<void> writeLogDataToFile(List<double> ecgData, List<double> ppgData, List
 
   final String directory = exPath;
 
-  File file = File('$directory/logdatafromApp$logFileTime.csv');
+  File file = File('$directory/logfromAppECG$logFileTime.csv');
   print("Save file");
 
-  await file.writeAsString(csv);
+  await file.writeAsString(ecgCSV);
+
+  File file1 = File('$directory/logfromAppPPG$logFileTime.csv');
+  print("Save file 1");
+
+  await file1.writeAsString(ppgCSV);
+
+  File file2 = File('$directory/logfromAppResp$logFileTime.csv');
+  print("Save file 1");
+
+  await file2.writeAsString(respCSV);
+
 
   print("File exported successfully!");
 
