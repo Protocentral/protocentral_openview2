@@ -85,7 +85,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
     final _serialStream = SerialPortReader(widget.selectedPort);
     _serialStream.stream.listen((event) {
-      print('R: $event');
+      //print('R: $event');
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
       }
@@ -165,7 +165,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               for(int i = 0; i < 8; i++ ){
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
+                //ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[(i*4)+2];
+                //ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[(i*4)+3];
                 int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8;
+               /* int data1 = ces_pkt_ch1_buffer[0] |
+                ces_pkt_ch1_buffer[1] << 8 |
+                ces_pkt_ch1_buffer[2] << 16 |
+                ces_pkt_ch1_buffer[3] << 24;*/
                 //print("ecg data receiving:"+data1.toString());
                 setStateIfMounted(() {
                   ecgLineData.add(FlSpot(
@@ -174,9 +180,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                     ecgDataLog.add((data1.toSigned(16)).toDouble());
                   }
                 });
+                if (ecgDataCounter >= 128 * 6) {
+                  ecgLineData.removeAt(0);
+                  //ppgLineData.removeAt(0);
+                }
               }
 
-              for(int i = 0; i < 8; i++ ){
+              /*for(int i = 0; i < 8; i++ ){
                 ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[(i*2)+25];
                 ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[(i*2)+26];
                 int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
@@ -218,14 +228,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                     .toInt()) /
                     100.00)
                     .toDouble();
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                ppgLineData.removeAt(0);
-              }
-              if (respDataCounter >= 256 * 6) {
+              });*/
+
+             /* if (respDataCounter >= 256 * 6) {
                 respLineData.removeAt(0);
-              }
+              }*/
               pc_rx_state = CESState_Init;
             } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
