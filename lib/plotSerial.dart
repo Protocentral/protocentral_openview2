@@ -134,45 +134,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-             // print("data receiving inside packet:"+rxch.toString());
-              /*ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
-              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[10];
-              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
-              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
-
-              int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8 |
-              ces_pkt_ch1_buffer[2] << 16 |
-              ces_pkt_ch1_buffer[3] << 24;
-              int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] << 8 |
-              ces_pkt_ch2_buffer[2] << 16 |
-              ces_pkt_ch2_buffer[3] << 24;
-              int data3 = ces_pkt_ch3_buffer[0] |
-              ces_pkt_ch3_buffer[1] << 8 |
-              ces_pkt_ch3_buffer[2] << 16 |
-              ces_pkt_ch3_buffer[3] << 24; */
 
               for(int i = 0; i < 8; i++ ){
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
-                //ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[(i*4)+2];
-                //ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[(i*4)+3];
                 int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8;
-               /* int data1 = ces_pkt_ch1_buffer[0] |
-                ces_pkt_ch1_buffer[1] << 8 |
-                ces_pkt_ch1_buffer[2] << 16 |
-                ces_pkt_ch1_buffer[3] << 24;*/
-                //print("ecg data receiving:"+data1.toString());
                 setStateIfMounted(() {
                   ecgLineData.add(FlSpot(
                       ecgDataCounter++, ((data1.toSigned(16)).toDouble())));
@@ -182,7 +148,24 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 });
                 if (ecgDataCounter >= 128 * 6) {
                   ecgLineData.removeAt(0);
-                  //ppgLineData.removeAt(0);
+                }
+              }
+
+              for(int i = 0; i < 4; i++ ){
+                ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[(i*2)+16];
+                ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[(i*2)+17];
+                int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1] << 8;
+
+                setStateIfMounted(() {
+                  respLineData.add(FlSpot(
+                      respDataCounter++, ((data2.toSigned(16)).toDouble())));
+                  if (startDataLogging == true) {
+                    respDataLog.add((data2.toSigned(16)).toDouble());
+                  }
+
+                });
+                if (respDataCounter >= 256 * 6) {
+                  respLineData.removeAt(0);
                 }
               }
 
@@ -200,20 +183,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 });
               }
 
-              for(int i = 0; i < 4; i++ ){
-                ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[(i*2)+16];
-                ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[(i*2)+17];
-                int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1] << 8;
 
-                setStateIfMounted(() {
-                  respLineData.add(FlSpot(
-                      respDataCounter++, ((data2.toSigned(16)).toDouble())));
-                  if (startDataLogging == true) {
-                    respDataLog.add((data2.toSigned(16)).toDouble());
-                  }
-
-                });
-              }
 
               setStateIfMounted(() {
                 globalSpO2 = (CES_Pkt_Data_Counter[59]).toInt();
