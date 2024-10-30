@@ -169,9 +169,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
               }
 
-              /*for(int i = 0; i < 8; i++ ){
-                ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[(i*2)+25];
-                ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[(i*2)+26];
+              for(int i = 0; i < 8; i++ ){
+                ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[(i*2)+24];
+                ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[(i*2)+25];
                 int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
 
                 setStateIfMounted(() {
@@ -181,11 +181,30 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                     ppgDataLog.add((data3.toSigned(16)).toDouble());
                   }
                 });
+                if (ppgDataCounter >= 128 * 6) {
+                  ppgLineData.removeAt(0);
+                }
               }
 
+              /*for(int i = 0; i < 8; i++ ){
+                ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[(i*2)+16];
+                ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[(i*2)+17];
+                int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
+
+                setStateIfMounted(() {
+                  ppgLineData.add(FlSpot(
+                      ppgDataCounter++, ((data3).toDouble())));
+                  if (startDataLogging == true) {
+                    ppgDataLog.add((data3.toSigned(16)).toDouble());
+                  }
+                });
+                if (ppgDataCounter >= 128 * 6) {
+                  ppgLineData.removeAt(0);
+                }
+              }*/
 
 
-              setStateIfMounted(() {
+              /*setStateIfMounted(() {
                 globalSpO2 = (CES_Pkt_Data_Counter[59]).toInt();
                 if (globalSpO2 == 25) {
                   displaySpO2 = "--";
@@ -200,9 +219,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                     .toDouble();
               });*/
 
-             /* if (respDataCounter >= 256 * 6) {
-                respLineData.removeAt(0);
-              }*/
               pc_rx_state = CESState_Init;
             } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
