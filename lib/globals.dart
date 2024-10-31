@@ -67,6 +67,8 @@ class hPi4Global {
   static const List<int> startSession = [0x55];
   static const List<int> stopSession = [0x56];
 
+  static const List<int> sdCardStatusCheck = [0x58];
+
   static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
   static const int CES_CMDIF_TYPE_DATA = 0x02;
   static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;

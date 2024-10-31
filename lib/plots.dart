@@ -105,6 +105,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   bool memoryAvailable = false;
   bool startStreaming = false;
   bool endFlashLoggingResponse = false;
+  bool sdCardStatusCheck = false;
 
   int globalHeartRate = 0;
   int globalSpO2 = 0;
@@ -554,7 +555,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
 
     _streamDataSubscription = _streamData.listen((value) async {
-      print("DataChar Rx: " + value.length.toString());
+      //print("DataChar Rx: " + value.length.toString());
 
       if (value.length > 2) {
         print("Data Rx: " + value.toString());
@@ -562,16 +563,29 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
         if (value[0] == 0x03) {
           if (value[1] == 0x55) {
             if (value[2] == 0x32) {
-              print("Availble memory is greater than 25%");
+              //print("Availble memory is greater than 25%");
               // _showOverlay(context);
               setState(() {
                 memoryAvailable = true;
                 startFlashLogging = true;
               });
             } else if (value[2] == 0x31) {
-              print("Availble memory is less than 25%");
+              //print("Availble memory is less than 25%");
               showInsufficientMemoryDialog();
               setState(() {
+                memoryAvailable = false;
+                startFlashLogging = false;
+              });
+            }else if(value[2] == 0x58){
+              showSDCardNotFoundDialog();
+              setState(() {
+                sdCardStatusCheck = true;
+                memoryAvailable = false;
+                startFlashLogging = false;
+              });
+            }else if(value[2] == 0x59){
+              setState(() {
+                sdCardStatusCheck = false;
                 memoryAvailable = false;
                 startFlashLogging = false;
               });
@@ -1039,6 +1053,49 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     );
   }
 
+
+  Future<void> showSDCardNotFoundDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.red,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(children: <Widget>[
+                    Text(
+                      'SD card is not found.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> showStopStreamingDialog(String displayAlert) async {
     return showDialog<void>(
       context: context,
@@ -1155,6 +1212,17 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     print("end logging flash command Sent");
   }
 
+  Future<void> _sendSDCardStatusCheckCommand() async {
+    hPi4Global().logConsole("AKW: Sending sd card status check Command: " +
+        hPi4Global.sdCardStatusCheck.toString());
+    await widget.fble.writeCharacteristicWithoutResponse(
+        commandTxCharacteristic,
+        value: hPi4Global.sdCardStatusCheck);
+
+    print("sd card staus command Sent");
+  }
+
+
   Future<void> setMTU(String deviceMAC) async {
     int recdMTU = await widget.fble.requestMtu(deviceId: deviceMAC, mtu: 517);
     hPi4Global().logConsole("MTU negotiated: " + recdMTU.toString());
@@ -1211,6 +1279,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                               await startListeningData();
                             });
                             await sendStartSessionCommand();
+
                           }
                         },
                       ),
@@ -1232,18 +1301,31 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         ),
                         onPressed: () async {
                           if (startStreaming == false) {
-                            Navigator.of(context)
-                                .pushReplacement(MaterialPageRoute(
-                                    builder: (_) => FetchLogs(
-                                          selectedBoard: widget.selectedBoard,
-                                          selectedDevice: widget.selectedDevice,
-                                          currentDevice: widget.currentDevice,
-                                          fble: widget.fble,
-                                          currConnection: widget.currConnection,
-                                        )));
+                            await Future.delayed(Duration(seconds: 1),
+                                    () async {
+                                  await setMTU(widget.currentDevice.id);
+                                });
+                            _sendSDCardStatusCheckCommand();
+                            await Future.delayed(Duration(seconds: 1),
+                                    () async {
+                                  await startListeningData();
+                                });
+                            if(sdCardStatusCheck == true){
+                              showSDCardNotFoundDialog();
+                            }else{
+                              Navigator.of(context)
+                                  .pushReplacement(MaterialPageRoute(
+                                  builder: (_) => FetchLogs(
+                                    selectedBoard: widget.selectedBoard,
+                                    selectedDevice: widget.selectedDevice,
+                                    currentDevice: widget.currentDevice,
+                                    fble: widget.fble,
+                                    currConnection: widget.currConnection,
+                                  )));
+                            }
+
                           } else {
-                            showStopStreamingDialog(
-                                'Please stop streaming to view the logs.');
+                            showStopStreamingDialog('Please stop streaming to view the logs.');
                           }
                         },
                       ),

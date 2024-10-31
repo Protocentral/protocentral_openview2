@@ -225,7 +225,9 @@ class _FetchLogsState extends State<FetchLogs> {
 
           await streamCommandSubscription.cancel();
           await streamDataSubscription.cancel();
-        } else {}
+        } else {
+
+        }
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
         print("Data Rx: " + value.toString());
 
