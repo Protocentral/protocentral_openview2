@@ -138,6 +138,8 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     ppgLineData.clear();
     respLineData.clear();
 
+    closeAllStreams();
+
     super.dispose();
   }
 
@@ -1228,6 +1230,41 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     hPi4Global().logConsole("MTU negotiated: " + recdMTU.toString());
   }
 
+
+   Widget showSetTime(){
+    if(widget.currentDevice.name.contains("healthypi move")){
+     return Padding(
+       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+       child: MaterialButton(
+         minWidth: 50.0,
+         color: Colors.white,
+         child: Row(
+           children: <Widget>[
+             Text('Set Time',
+                 style: new TextStyle(
+                     fontSize: 16.0, color: Colors.black)),
+           ],
+         ),
+         shape: RoundedRectangleBorder(
+           borderRadius: BorderRadius.circular(8.0),
+         ),
+         onPressed: () async {
+           // _sendCurrentDateTime();
+           if(startStreaming == false){
+             showSetTimeDialog();
+           }else{
+             showStopStreamingDialog( 'Please stop streaming to set device time.');
+           }
+
+         },
+       ),
+     );
+    }else{
+      return Container();
+    }
+
+  }
+
   Widget buildCharts() {
     if (widget.currentDevice.name.contains("healthypi move") ||
         widget.currentDevice.name.contains("healthypi")) {
@@ -1330,32 +1367,7 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
                         },
                       ),
                     ),
-                    /*Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-                      child: MaterialButton(
-                        minWidth: 50.0,
-                        color: Colors.white,
-                        child: Row(
-                          children: <Widget>[
-                            Text('Set Time',
-                                style: new TextStyle(
-                                    fontSize: 16.0, color: Colors.black)),
-                          ],
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        onPressed: () async {
-                          // _sendCurrentDateTime();
-                          if(startStreaming == false){
-                            _showSetTimeDialog();
-                          }else{
-                            _showStopStreamingDialog( 'Please stop streaming to set device time.');
-                          }
-
-                        },
-                      ),
-                    ),*/
+                    showSetTime(),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                       child: MaterialButton(

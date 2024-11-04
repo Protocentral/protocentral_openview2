@@ -213,7 +213,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
     streamDataSubscription = streamData.listen((value) async {
       ByteData bdata = Int8List.fromList(value).buffer.asByteData();
-      // print("Data Rx: " + value.toString());
+       print("Data Rx: " + value.toString());
       int _pktType = bdata.getUint8(0);
 
       if (_pktType == hPi4Global.CES_CMDIF_TYPE_CMD_RSP) {
@@ -229,7 +229,7 @@ class _FetchLogsState extends State<FetchLogs> {
 
         }
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
-        print("Data Rx: " + value.toString());
+        //print("Data Rx: " + value.toString());
 
         LogHeader _mLog = (
           logFileID: bdata.getUint32(1, Endian.little),
@@ -262,8 +262,8 @@ class _FetchLogsState extends State<FetchLogs> {
           flagFetching = true;
         });
 
-        logConsole("Data execpted length: " + sessionSize.toString());
-        logConsole("Data Rx length: " +value.length.toString() +" | Actual Payload: " +pktPayloadSize.toString());
+        //logConsole("Data execpted length: " + sessionSize.toString());
+        //logConsole("Data Rx length: " +value.length.toString() +" | Actual Payload: " +pktPayloadSize.toString());
 
         currentFileDataCounter += pktPayloadSize;
         globalReceivedData += pktPayloadSize;
