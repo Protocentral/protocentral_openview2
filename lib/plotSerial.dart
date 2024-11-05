@@ -94,7 +94,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   void pcProcessData(int rxch) async {
-    //print("data receiving:"+rxch.toString());
+   // print("data receiving:"+rxch.toString());
     switch (pc_rx_state) {
       case CESState_Init:
         if (rxch == CES_CMDIF_PKT_START_1) {
@@ -135,7 +135,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
              // print("packet length: " + CES_Pkt_Len.toString());
-              if(CES_Pkt_Len == 40){
+              if(CES_Pkt_Len == 45){
                 for(int i = 0; i < 8; i++ ){
                   ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
                   ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
@@ -188,20 +188,20 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
 
-                /*setStateIfMounted(() {
-                globalSpO2 = (CES_Pkt_Data_Counter[59]).toInt();
+                setStateIfMounted(() {
+                globalSpO2 = (CES_Pkt_Data_Counter[42]).toInt();
                 if (globalSpO2 == 25) {
                   displaySpO2 = "--";
                 } else {
                   displaySpO2 = globalSpO2.toString() + " %";
                 }
-                globalHeartRate = (CES_Pkt_Data_Counter[60]).toInt();
-                globalRespRate = (CES_Pkt_Data_Counter[61]).toInt();
-                globalTemp = (((CES_Pkt_Data_Counter[57] | CES_Pkt_Data_Counter[58] << 8)
+                globalHeartRate = (CES_Pkt_Data_Counter[43]).toInt();
+                globalRespRate = (CES_Pkt_Data_Counter[44]).toInt();
+                globalTemp = (((CES_Pkt_Data_Counter[40] | CES_Pkt_Data_Counter[41] << 8)
                     .toInt()) /
                     100.00)
                     .toDouble();
-              });*/
+              });
 
               }else{
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
