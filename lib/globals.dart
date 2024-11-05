@@ -67,6 +67,8 @@ class hPi4Global {
   static const List<int> startSession = [0x55];
   static const List<int> stopSession = [0x56];
 
+  static const List<int> sdCardStatusCheck = [0x58];
+
   static const int CES_CMDIF_TYPE_LOG_IDX = 0x05;
   static const int CES_CMDIF_TYPE_DATA = 0x02;
   static const int CES_CMDIF_TYPE_CMD_RSP = 0x06;
@@ -174,13 +176,13 @@ class LoadingIndicator extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _getLoadingIndicator(),
-              _getHeading(context),
-              _getText(displayedText)
+              getLoadingIndicator(),
+              getHeading(context),
+              getText(displayedText)
             ]));
   }
 
-  Padding _getLoadingIndicator() {
+  Padding getLoadingIndicator() {
     return Padding(
         child: Container(
             child: SpinKitCircle(
@@ -192,7 +194,7 @@ class LoadingIndicator extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 16));
   }
 
-  Widget _getHeading(context) {
+  Widget getHeading(context) {
     return Padding(
         child: Text(
           'Please wait…',
@@ -202,7 +204,7 @@ class LoadingIndicator extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 4));
   }
 
-  Text _getText(String displayedText) {
+  Text getText(String displayedText) {
     return Text(
       displayedText,
       style: TextStyle(color: Colors.white, fontSize: 14),

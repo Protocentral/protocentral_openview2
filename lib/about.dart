@@ -12,7 +12,7 @@ class AboutUsPage extends StatefulWidget {
 }
 
 class _AboutUsPageState extends State<AboutUsPage> {
-  final _scrollController = ScrollController();
+  final scrollController = ScrollController();
 
   @override
   void initState() {
@@ -46,12 +46,12 @@ class _AboutUsPageState extends State<AboutUsPage> {
         ),
       ),
       body: Scrollbar(
-        controller: _scrollController,
+        controller: scrollController,
         thumbVisibility: true,
         trackVisibility: true,
         thickness: 10,
         child: SingleChildScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           scrollDirection: Axis.vertical,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
