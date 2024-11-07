@@ -1,7 +1,7 @@
 name: OpenView2
 description: BLE companion app for use with ProtoCentral breakout boards and modules
 
-version: 2.0.37+107
+version: 2.0.38+108
 
 environment:
   sdk: ^3.3.0
@@ -77,4 +77,3 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
   - assets/
-
