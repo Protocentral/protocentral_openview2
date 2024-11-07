@@ -85,7 +85,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
     final _serialStream = SerialPortReader(widget.selectedPort);
     _serialStream.stream.listen((event) {
-      //print('R: $event');
+     print('R: $event');
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
       }
@@ -112,6 +112,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         CES_Pkt_Len = rxch;
         CES_Pkt_Pos_Counter = CES_CMDIF_IND_LEN;
         CES_Data_Counter = 0;
+        CES_ECG_RESP_Data_Counter = 0;
+        CES_PPG_Data_Counter = 0;
         break;
       case CESState_PktLen_Found:
         CES_Pkt_Pos_Counter++;
@@ -122,24 +124,24 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           else if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_PKTTYPE)
             CES_Pkt_PktType = rxch;
         } else if ((CES_Pkt_Pos_Counter >= CES_CMDIF_PKT_OVERHEAD) &&
-            (CES_Pkt_Pos_Counter <
-                CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) //Read Data
+            (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) //Read Data
         {
           if (CES_Pkt_PktType == 2) {
-            CES_Pkt_Data_Counter[CES_Data_Counter++] =
-                (rxch); // Buffer that assigns the data separated from the packet
+            CES_Pkt_Data_Counter[CES_Data_Counter++] = (rxch); // Buffer that assigns the data separated from the packet
           } else if (CES_Pkt_PktType == 3) {
-            CES_Pkt_ECG_RESP_Data_Counter[CES_Data_Counter++] = (rxch);
-          } else if (CES_Pkt_PktType == 3) {
-            CES_Pkt_PPG_Data_Counter[CES_Data_Counter++] = (rxch);
+            CES_Pkt_ECG_RESP_Data_Counter[CES_ECG_RESP_Data_Counter++] = (rxch);
+          } else if (CES_Pkt_PktType == 4) {
+            CES_Pkt_PPG_Data_Counter[CES_PPG_Data_Counter++] = (rxch);
+          }else{
+
           }
         } else //All data received
         {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-              // print("packet length: " + CES_Pkt_Len.toString());
+              //print("packet length: " + CES_Pkt_Len.toString());
               //if(CES_Pkt_Len == 69){
-              if (CES_Pkt_PktType == 3) {
+              if (CES_Pkt_PktType == 4) {
                 for (int i = 0; i < 8; i++) {
                   ces_pkt_ch1_buffer[0] =
                       CES_Pkt_ECG_RESP_Data_Counter[(i * 4)];
@@ -194,16 +196,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   }
                 }
 
-                setStateIfMounted(() {
-                  globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[48]).toInt();
-                  globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
-                });
-              } else if (CES_Pkt_PktType == 4) {
                 for (int i = 0; i < 8; i++) {
                   ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
                   ces_pkt_ch3_buffer[1] = CES_Pkt_PPG_Data_Counter[(i * 2) + 1];
                   int data3 =
-                      ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
+                  ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
 
                   setStateIfMounted(() {
                     ppgLineData
@@ -218,17 +215,19 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 }
 
                 setStateIfMounted(() {
-                  globalSpO2 = (CES_Pkt_Data_Counter[16]).toInt();
+                  globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[48]).toInt();
+                  globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
+                  globalSpO2 = (CES_Pkt_PPG_Data_Counter[16]).toInt();
                   if (globalSpO2 == 25) {
                     displaySpO2 = "--";
                   } else {
                     displaySpO2 = globalSpO2.toString() + " %";
                   }
 
-                  globalTemp = (((CES_Pkt_Data_Counter[17] |
-                                  CES_Pkt_Data_Counter[18] << 8)
-                              .toInt()) /
-                          100.00)
+                  globalTemp = (((CES_Pkt_PPG_Data_Counter[17] |
+                  CES_Pkt_PPG_Data_Counter[18] << 8)
+                      .toInt()) /
+                      100.00)
                       .toDouble();
                 });
               }
