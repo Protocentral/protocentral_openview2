@@ -85,7 +85,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
     final _serialStream = SerialPortReader(widget.selectedPort);
     _serialStream.stream.listen((event) {
-     print('R: $event');
+     //print('R: $event');
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
       }
