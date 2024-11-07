@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="efa1097f-5f84-43ba-91da-1f6b19e2922b" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/lib/utils/showAlertDialog.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/protocentral_openview2.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/protocentral_openview2.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/home.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/home.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/plotSerial.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/plotSerial.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/utils/variables.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/utils/variables.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
