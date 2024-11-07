@@ -143,6 +143,41 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               //if(CES_Pkt_Len == 69){
               if (CES_Pkt_PktType == 4) {
                 for (int i = 0; i < 8; i++) {
+                  ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
+                  ces_pkt_ch3_buffer[1] = CES_Pkt_PPG_Data_Counter[(i * 2) + 1];
+                  int data3 =
+                  ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
+
+                  setStateIfMounted(() {
+                    ppgLineData
+                        .add(FlSpot(ppgDataCounter++, ((data3).toDouble())));
+                    if (startDataLogging == true) {
+                      ppgDataLog.add((data3.toSigned(16)).toDouble());
+                    }
+                  });
+                  if (ppgDataCounter >= 128 * 6) {
+                    ppgLineData.removeAt(0);
+                  }
+                }
+
+                setStateIfMounted(() {
+                  globalSpO2 = (CES_Pkt_PPG_Data_Counter[16]).toInt();
+                  if (globalSpO2 == 25) {
+                    displaySpO2 = "--";
+                  } else {
+                    displaySpO2 = globalSpO2.toString() + " %";
+                  }
+
+                  globalTemp = (((CES_Pkt_PPG_Data_Counter[17] |
+                  CES_Pkt_PPG_Data_Counter[18] << 8)
+                      .toInt()) /
+                      100.00)
+                      .toDouble();
+                });
+
+              }
+              if (CES_Pkt_PktType == 3) {
+                for (int i = 0; i < 8; i++) {
                   ces_pkt_ch1_buffer[0] =
                       CES_Pkt_ECG_RESP_Data_Counter[(i * 4)];
                   ces_pkt_ch1_buffer[1] =
@@ -196,39 +231,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   }
                 }
 
-                for (int i = 0; i < 8; i++) {
-                  ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
-                  ces_pkt_ch3_buffer[1] = CES_Pkt_PPG_Data_Counter[(i * 2) + 1];
-                  int data3 =
-                  ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
-
-                  setStateIfMounted(() {
-                    ppgLineData
-                        .add(FlSpot(ppgDataCounter++, ((data3).toDouble())));
-                    if (startDataLogging == true) {
-                      ppgDataLog.add((data3.toSigned(16)).toDouble());
-                    }
-                  });
-                  if (ppgDataCounter >= 128 * 6) {
-                    ppgLineData.removeAt(0);
-                  }
-                }
-
                 setStateIfMounted(() {
                   globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[48]).toInt();
                   globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
-                  globalSpO2 = (CES_Pkt_PPG_Data_Counter[16]).toInt();
-                  if (globalSpO2 == 25) {
-                    displaySpO2 = "--";
-                  } else {
-                    displaySpO2 = globalSpO2.toString() + " %";
-                  }
-
-                  globalTemp = (((CES_Pkt_PPG_Data_Counter[17] |
-                  CES_Pkt_PPG_Data_Counter[18] << 8)
-                      .toInt()) /
-                      100.00)
-                      .toDouble();
                 });
               }
               //else if(CES_Pkt_Len == 20) {
