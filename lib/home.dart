@@ -504,6 +504,8 @@ class _HomePageState extends State<HomePage> {
               serialPort = SerialPort(selectedPort);
               if (!serialPort.openReadWrite()) {
                 print(SerialPort.lastError);
+              }else{
+                serialPort.config.baudRate = 115200;
               }
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (_) => PlotSerialPage(

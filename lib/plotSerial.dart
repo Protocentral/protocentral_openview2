@@ -90,11 +90,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         pcProcessData(event[i]);
       }
     });
-
   }
 
   void pcProcessData(int rxch) async {
-   // print("data receiving:"+rxch.toString());
+    // print("data receiving:"+rxch.toString());
     switch (pc_rx_state) {
       case CESState_Init:
         if (rxch == CES_CMDIF_PKT_START_1) {
@@ -117,7 +116,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       case CESState_PktLen_Found:
         CES_Pkt_Pos_Counter++;
         if (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD) //Read Header
-            {
+        {
           if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_LEN_MSB)
             CES_Pkt_Len = ((rxch << 8) | CES_Pkt_Len);
           else if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_PKTTYPE)
@@ -125,26 +124,42 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         } else if ((CES_Pkt_Pos_Counter >= CES_CMDIF_PKT_OVERHEAD) &&
             (CES_Pkt_Pos_Counter <
                 CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) //Read Data
-            {
+        {
           if (CES_Pkt_PktType == 2) {
             CES_Pkt_Data_Counter[CES_Data_Counter++] =
-            (rxch); // Buffer that assigns the data separated from the packet
+                (rxch); // Buffer that assigns the data separated from the packet
+          } else if (CES_Pkt_PktType == 3) {
+            CES_Pkt_ECG_RESP_Data_Counter[CES_Data_Counter++] = (rxch);
+          } else if (CES_Pkt_PktType == 3) {
+            CES_Pkt_PPG_Data_Counter[CES_Data_Counter++] = (rxch);
           }
         } else //All data received
-            {
+        {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-             // print("packet length: " + CES_Pkt_Len.toString());
-              if(CES_Pkt_Len == 45){
-                for(int i = 0; i < 8; i++ ){
-                  ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[(i*2)];
-                  ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[(i*2)+1];
-                  int data1 = ces_pkt_ch1_buffer[0] | ces_pkt_ch1_buffer[1] << 8;
+              // print("packet length: " + CES_Pkt_Len.toString());
+              //if(CES_Pkt_Len == 69){
+              if (CES_Pkt_PktType == 3) {
+                for (int i = 0; i < 8; i++) {
+                  ces_pkt_ch1_buffer[0] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4)];
+                  ces_pkt_ch1_buffer[1] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 1];
+                  ces_pkt_ch1_buffer[2] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 2];
+                  ces_pkt_ch1_buffer[3] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 3];
+
+                  int data1 = ces_pkt_ch1_buffer[0] |
+                      ces_pkt_ch1_buffer[1] << 8 |
+                      ces_pkt_ch1_buffer[2] << 16 |
+                      ces_pkt_ch1_buffer[3] << 24;
+
                   setStateIfMounted(() {
                     ecgLineData.add(FlSpot(
-                        ecgDataCounter++, ((data1.toSigned(16)).toDouble())));
+                        ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
                     if (startDataLogging == true) {
-                      ecgDataLog.add((data1.toSigned(16)).toDouble());
+                      ecgDataLog.add((data1.toSigned(32)).toDouble());
                     }
                   });
                   if (ecgDataCounter >= 128 * 6) {
@@ -152,32 +167,47 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   }
                 }
 
-                for(int i = 0; i < 4; i++ ){
-                  ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[(i*2)+16];
-                  ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[(i*2)+17];
-                  int data2 = ces_pkt_ch2_buffer[0] | ces_pkt_ch2_buffer[1] << 8;
+                for (int i = 0; i < 4; i++) {
+                  ces_pkt_ch2_buffer[0] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 32];
+                  ces_pkt_ch2_buffer[1] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 33];
+                  ces_pkt_ch2_buffer[2] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 34];
+                  ces_pkt_ch2_buffer[3] =
+                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 35];
+
+                  int data2 = ces_pkt_ch2_buffer[0] |
+                      ces_pkt_ch2_buffer[1] << 8 |
+                      ces_pkt_ch2_buffer[2] << 16 |
+                      ces_pkt_ch2_buffer[3] << 24;
 
                   setStateIfMounted(() {
                     respLineData.add(FlSpot(
-                        respDataCounter++, ((data2.toSigned(16)).toDouble())));
+                        respDataCounter++, ((data2.toSigned(32)).toDouble())));
                     if (startDataLogging == true) {
-                      respDataLog.add((data2.toSigned(16)).toDouble());
+                      respDataLog.add((data2.toSigned(32)).toDouble());
                     }
-
                   });
                   if (respDataCounter >= 256 * 6) {
                     respLineData.removeAt(0);
                   }
                 }
 
-                for(int i = 0; i < 8; i++ ){
-                  ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[(i*2)+24];
-                  ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[(i*2)+25];
-                  int data3 = ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
+                setStateIfMounted(() {
+                  globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[48]).toInt();
+                  globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
+                });
+              } else if (CES_Pkt_PktType == 4) {
+                for (int i = 0; i < 8; i++) {
+                  ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
+                  ces_pkt_ch3_buffer[1] = CES_Pkt_PPG_Data_Counter[(i * 2) + 1];
+                  int data3 =
+                      ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
 
                   setStateIfMounted(() {
-                    ppgLineData.add(FlSpot(
-                        ppgDataCounter++, ((data3).toDouble())));
+                    ppgLineData
+                        .add(FlSpot(ppgDataCounter++, ((data3).toDouble())));
                     if (startDataLogging == true) {
                       ppgDataLog.add((data3.toSigned(16)).toDouble());
                     }
@@ -187,23 +217,23 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   }
                 }
 
-
                 setStateIfMounted(() {
-                globalSpO2 = (CES_Pkt_Data_Counter[42]).toInt();
-                if (globalSpO2 == 25) {
-                  displaySpO2 = "--";
-                } else {
-                  displaySpO2 = globalSpO2.toString() + " %";
-                }
-                globalHeartRate = (CES_Pkt_Data_Counter[43]).toInt();
-                globalRespRate = (CES_Pkt_Data_Counter[44]).toInt();
-                globalTemp = (((CES_Pkt_Data_Counter[40] | CES_Pkt_Data_Counter[41] << 8)
-                    .toInt()) /
-                    100.00)
-                    .toDouble();
-              });
+                  globalSpO2 = (CES_Pkt_Data_Counter[16]).toInt();
+                  if (globalSpO2 == 25) {
+                    displaySpO2 = "--";
+                  } else {
+                    displaySpO2 = globalSpO2.toString() + " %";
+                  }
 
-              }else{
+                  globalTemp = (((CES_Pkt_Data_Counter[17] |
+                                  CES_Pkt_Data_Counter[18] << 8)
+                              .toInt()) /
+                          100.00)
+                      .toDouble();
+                });
+              }
+              //else if(CES_Pkt_Len == 20) {
+              else if (CES_Pkt_PktType == 2) {
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
                 ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -220,25 +250,25 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
 
                 int data1 = ces_pkt_ch1_buffer[0] |
-                ces_pkt_ch1_buffer[1] << 8 |
-                ces_pkt_ch1_buffer[2] << 16 |
-                ces_pkt_ch1_buffer[3] << 24;
+                    ces_pkt_ch1_buffer[1] << 8 |
+                    ces_pkt_ch1_buffer[2] << 16 |
+                    ces_pkt_ch1_buffer[3] << 24;
                 int data2 = ces_pkt_ch2_buffer[0] |
-                ces_pkt_ch2_buffer[1] << 8 |
-                ces_pkt_ch2_buffer[2] << 16 |
-                ces_pkt_ch2_buffer[3] << 24;
+                    ces_pkt_ch2_buffer[1] << 8 |
+                    ces_pkt_ch2_buffer[2] << 16 |
+                    ces_pkt_ch2_buffer[3] << 24;
                 int data3 = ces_pkt_ch3_buffer[0] |
-                ces_pkt_ch3_buffer[1] << 8 |
-                ces_pkt_ch3_buffer[2] << 16 |
-                ces_pkt_ch3_buffer[3] << 24;
+                    ces_pkt_ch3_buffer[1] << 8 |
+                    ces_pkt_ch3_buffer[2] << 16 |
+                    ces_pkt_ch3_buffer[3] << 24;
 
                 setStateIfMounted(() {
                   ecgLineData.add(FlSpot(
                       ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                  respLineData.add(
-                      FlSpot(respDataCounter++, (data2.toSigned(32).toDouble())));
-                  ppgLineData.add(
-                      FlSpot(ppgDataCounter++, (data3.toSigned(32).toDouble())));
+                  respLineData.add(FlSpot(
+                      respDataCounter++, (data2.toSigned(32).toDouble())));
+                  ppgLineData.add(FlSpot(
+                      ppgDataCounter++, (data3.toSigned(32).toDouble())));
 
                   if (startDataLogging == true) {
                     ecgDataLog.add((data1.toSigned(32)).toDouble());
@@ -254,11 +284,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   }
                   globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
                   globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
-                  globalTemp =
-                      (((CES_Pkt_Data_Counter[17] | CES_Pkt_Data_Counter[18] << 8)
-                          .toInt()) /
+                  globalTemp = (((CES_Pkt_Data_Counter[17] |
+                                  CES_Pkt_Data_Counter[18] << 8)
+                              .toInt()) /
                           100.00)
-                          .toDouble();
+                      .toDouble();
                 });
                 if (ecgDataCounter >= 128 * 6) {
                   ecgLineData.removeAt(0);
@@ -267,10 +297,24 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 if (respDataCounter >= 256 * 6) {
                   respLineData.removeAt(0);
                 }
+              } else {
+                //showAlertDialog(context, "Invalid packet length");
+                /*showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text('Alert'),
+                    content: const Text('AlertDialog description'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, 'OK'),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );*/
               }
 
               pc_rx_state = CESState_Init;
-
             } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
@@ -279,26 +323,26 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch1_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               data1 <<= 16;
               data1 >>= 16;
 
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch2_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               data2 <<= 16;
               data2 >>= 16;
 
               computed_val1 = CES_Pkt_Data_Counter[4] |
-              CES_Pkt_Data_Counter[5] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  CES_Pkt_Data_Counter[5] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               computed_val1 <<= 16;
               computed_val1 >>= 16;
 
               computed_val2 = CES_Pkt_Data_Counter[6] |
-              CES_Pkt_Data_Counter[7] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  CES_Pkt_Data_Counter[7] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               computed_val2 <<= 16;
               computed_val2 >>= 16;
 
@@ -321,7 +365,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
+            }
+            else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -338,19 +383,19 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] << 8 |
-              ces_pkt_ch1_buffer[2] << 16 |
-              ces_pkt_ch1_buffer[3] << 24;
+                  ces_pkt_ch1_buffer[1] << 8 |
+                  ces_pkt_ch1_buffer[2] << 16 |
+                  ces_pkt_ch1_buffer[3] << 24;
 
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] << 8 |
-              ces_pkt_ch2_buffer[2] << 16 |
-              ces_pkt_ch2_buffer[3] << 24;
+                  ces_pkt_ch2_buffer[1] << 8 |
+                  ces_pkt_ch2_buffer[2] << 16 |
+                  ces_pkt_ch2_buffer[3] << 24;
 
               int data3 = ces_pkt_ch3_buffer[0] |
-              ces_pkt_ch3_buffer[1] << 8 |
-              ces_pkt_ch3_buffer[2] << 16 |
-              ces_pkt_ch3_buffer[3] << 24;
+                  ces_pkt_ch3_buffer[1] << 8 |
+                  ces_pkt_ch3_buffer[2] << 16 |
+                  ces_pkt_ch3_buffer[3] << 24;
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(
                     ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
@@ -383,14 +428,14 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] << 8 |
-              ces_pkt_ch1_buffer[2] << 16 |
-              ces_pkt_ch1_buffer[3] << 24;
+                  ces_pkt_ch1_buffer[1] << 8 |
+                  ces_pkt_ch1_buffer[2] << 16 |
+                  ces_pkt_ch1_buffer[3] << 24;
 
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] << 8 |
-              ces_pkt_ch2_buffer[2] << 16 |
-              ces_pkt_ch2_buffer[3] << 24;
+                  ces_pkt_ch2_buffer[1] << 8 |
+                  ces_pkt_ch2_buffer[2] << 16 |
+                  ces_pkt_ch2_buffer[3] << 24;
 
               computed_val1 = CES_Pkt_Data_Counter[8];
               computed_val2 = CES_Pkt_Data_Counter[9];
@@ -417,7 +462,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ppgLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "MAX86150 Breakout") {
+            }
+            else if (widget.selectedPortBoard == "MAX86150 Breakout") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -428,20 +474,20 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[5];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch1_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               data1 <<= 16;
               data1 >>= 16;
 
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch2_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               data2 <<= 16;
               data2 >>= 16;
 
               int data3 = ces_pkt_ch3_buffer[0] |
-              ces_pkt_ch3_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch3_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               data3 <<= 16;
               data3 >>= 16;
 
@@ -463,7 +509,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
 
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "Pulse Express") {
+            }
+            else if (widget.selectedPortBoard == "Pulse Express") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -471,11 +518,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch1_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch2_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
 
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
@@ -491,13 +538,14 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "tinyGSR Breakout") {
+            }
+            else if (widget.selectedPortBoard == "tinyGSR Breakout") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] <<
-                  8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
+                  ces_pkt_ch1_buffer[1] <<
+                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
 
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
@@ -511,7 +559,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
 
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
+            }
+            else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -528,18 +577,18 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] << 8 |
-              ces_pkt_ch1_buffer[2] << 16 |
-              ces_pkt_ch1_buffer[3] << 24;
+                  ces_pkt_ch1_buffer[1] << 8 |
+                  ces_pkt_ch1_buffer[2] << 16 |
+                  ces_pkt_ch1_buffer[3] << 24;
 
               int computed_val1 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] << 8 |
-              ces_pkt_ch2_buffer[2] << 16 |
-              ces_pkt_ch2_buffer[3] << 24;
+                  ces_pkt_ch2_buffer[1] << 8 |
+                  ces_pkt_ch2_buffer[2] << 16 |
+                  ces_pkt_ch2_buffer[3] << 24;
               int computed_val2 = ces_pkt_ch3_buffer[0] |
-              ces_pkt_ch3_buffer[1] << 8 |
-              ces_pkt_ch3_buffer[2] << 16 |
-              ces_pkt_ch3_buffer[3] << 24;
+                  ces_pkt_ch3_buffer[1] << 8 |
+                  ces_pkt_ch3_buffer[2] << 16 |
+                  ces_pkt_ch3_buffer[3] << 24;
 
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(
@@ -555,7 +604,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ecgLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard ==
+            }
+            else if (widget.selectedPortBoard ==
                 "MAX30001 ECG & BioZ Breakout") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
@@ -568,13 +618,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
 
               int data1 = ces_pkt_ch1_buffer[0] |
-              ces_pkt_ch1_buffer[1] << 8 |
-              ces_pkt_ch1_buffer[2] << 16 |
-              ces_pkt_ch1_buffer[3] << 24;
+                  ces_pkt_ch1_buffer[1] << 8 |
+                  ces_pkt_ch1_buffer[2] << 16 |
+                  ces_pkt_ch1_buffer[3] << 24;
               int data2 = ces_pkt_ch2_buffer[0] |
-              ces_pkt_ch2_buffer[1] << 8 |
-              ces_pkt_ch2_buffer[2] << 16 |
-              ces_pkt_ch2_buffer[3] << 24;
+                  ces_pkt_ch2_buffer[1] << 8 |
+                  ces_pkt_ch2_buffer[2] << 16 |
+                  ces_pkt_ch2_buffer[3] << 24;
 
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
@@ -875,36 +925,36 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   Widget displayDisconnectButton() {
     return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
         builder: (context, bleScannerState, bleScanner, wiserBle, child) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: MaterialButton(
-              minWidth: 100.0,
-              color: Colors.red,
-              child: Row(
-                children: <Widget>[
-                  Text('Stop',
-                      style: new TextStyle(fontSize: 18.0, color: Colors.white)),
-                ],
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              onPressed: () async {
-                if (widget.selectedPort.isOpen) {
-                  widget.selectedPort.close();
-                }
-                if (startDataLogging == true) {
-                  startDataLogging = false;
-                  writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog, context);
-                } else {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
-                  );
-                }
-              },
-            ),
-          );
-        });
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: MaterialButton(
+          minWidth: 100.0,
+          color: Colors.red,
+          child: Row(
+            children: <Widget>[
+              Text('Stop',
+                  style: new TextStyle(fontSize: 18.0, color: Colors.white)),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          onPressed: () async {
+            if (widget.selectedPort.isOpen) {
+              widget.selectedPort.close();
+            }
+            if (startDataLogging == true) {
+              startDataLogging = false;
+              writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog, context);
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+              );
+            }
+          },
+        ),
+      );
+    });
   }
 
   Widget build(BuildContext context) {
