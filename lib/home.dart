@@ -505,7 +505,14 @@ class _HomePageState extends State<HomePage> {
               if (!serialPort.openReadWrite()) {
                 print(SerialPort.lastError);
               }else{
-                serialPort.config.baudRate = 115200;
+                if(selectedPortBoard == "Healthypi"){
+                  serialPort.config.baudRate = 115200;
+                }else if(selectedPortBoard == "MAX86150 Breakout"){
+                  serialPort.config.baudRate = 57600;
+                }else{
+                  serialPort.config.baudRate = 115200;
+                }
+
               }
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (_) => PlotSerialPage(

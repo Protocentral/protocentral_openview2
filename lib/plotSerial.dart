@@ -80,6 +80,51 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     super.dispose();
   }
 
+  void _showAlertDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.info,
+                  color: Colors.red,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(children: <Widget>[
+                    Text(
+                      'Invalid Packet Length.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () async {
+                //Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _startSerialListening() async {
     print("AKW: Started listening to stream");
 
@@ -133,14 +178,12 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           } else if (CES_Pkt_PktType == 4) {
             CES_Pkt_PPG_Data_Counter[CES_PPG_Data_Counter++] = (rxch);
           }else{
-
+           // Do nothing
           }
         } else //All data received
         {
           if (rxch == CES_CMDIF_PKT_STOP) {
             if (widget.selectedPortBoard == "Healthypi") {
-              //print("packet length: " + CES_Pkt_Len.toString());
-              //if(CES_Pkt_Len == 69){
               if (CES_Pkt_PktType == 4) {
                 for (int i = 0; i < 8; i++) {
                   ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
@@ -236,7 +279,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
                 });
               }
-              //else if(CES_Pkt_Len == 20) {
               else if (CES_Pkt_PktType == 2) {
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
@@ -302,20 +344,15 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   respLineData.removeAt(0);
                 }
               } else {
-                //showAlertDialog(context, "Invalid packet length");
-                /*showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => AlertDialog(
-                    title: const Text('Alert'),
-                    content: const Text('AlertDialog description'),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, 'OK'),
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );*/
+                if(CES_Pkt_PktType == 2 || CES_Pkt_PktType == 3 || CES_Pkt_PktType == 4){
+                  // Do nothing
+                }else{
+                  if (widget.selectedPort.isOpen) {
+                    widget.selectedPort.close();
+                    _showAlertDialog();
+                  }
+                }
+
               }
 
               pc_rx_state = CESState_Init;
@@ -420,7 +457,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 respLineData.removeAt(0);
               }
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
+            }
+            else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
