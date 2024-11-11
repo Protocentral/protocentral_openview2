@@ -68,6 +68,56 @@ Protocentral OpenView 2 is compatible with any device that can send data through
 |   n           |   Payload n+5         |
 | (PL Len + 5)  |   0x0B                |
 
+For Healthypi 5 firmware version 1.0.0 and above, the data (ECG, Bioz and PPG) are sent as seperate packets. Below are the respective packet formats
+
+```mermaid
+  packet-beta
+  title Openview ECG & Bioz Packet
+   0-7: "0x0A (START)"
+   8-15: "0xFA (Type Indicator)"
+   16-23: "Payload Length LSB"
+   24-31: "Payload Length MSB"
+   32-39: "0x03 (Type - Data)"
+   40-71: "ECG (32-bit MSB to LSB)"
+   72-103: "ECG (32-bit MSB to LSB)"
+   104-135: "ECG (32-bit MSB to LSB)"
+   136-167: "ECG (32-bit MSB to LSB)"
+   168-199: "ECG (32-bit MSB to LSB)"
+   200-231: "ECG (32-bit MSB to LSB)"
+   232-263: "ECG (32-bit MSB to LSB)"
+   264-295: "ECG (32-bit MSB to LSB)"
+   296-327: "Resp (32-bit MSB to LSB )"
+   328-359: "Resp (32-bit MSB to LSB )"
+   360-391: "Resp (32-bit MSB to LSB )"
+   392-423: "Resp (32-bit MSB to LSB )"
+   424-431: "Heart Rate"
+   432-439: "Resp Rate"
+   440-447: "0x00"
+   448-455: "0x0B (STOP)"
+```
+
+```mermaid
+  packet-beta
+  title Openview PPG Packet
+    0-7: "0x0A (START)"
+    8-15: "0xFA (Type Indicator)"
+    16-23: "Payload Length LSB"
+    24-31: "Payload Length MSB"
+    32-39: "0x04 (Type - Data)"
+    40-55: "PPG - Red (16-bit MSB to LSB)"
+    56-71: "PPG - Red (16-bit MSB to LSB)"
+    72-87: "PPG - Red (16-bit MSB to LSB)"
+    88-103: "PPG - Red (16-bit MSB to LSB)"
+    104-119: "PPG - Red (16-bit MSB to LSB)"
+    120-135: "PPG - Red (16-bit MSB to LSB)"
+    136-151: "PPG - Red (16-bit MSB to LSB)"
+    152-167: "PPG - Red (16-bit MSB to LSB)"
+    168-183: "Temperature (16-bit)"
+    184-191: "SpO2"
+    192-199: "0x00"
+    200-207: "0x0B (STOP)"
+```
+
 # License
 
 This software is open source and licensed under the following license:
