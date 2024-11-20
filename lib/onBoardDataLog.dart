@@ -50,6 +50,7 @@ class _FetchLogsState extends State<FetchLogs> {
   double globalDisplayPercentOffset = 0;
 
   List<int> logData = [];
+  List<LogHeader> logHeaderList = List.empty(growable: true);
 
   int globalReceivedData = 0;
   int globalExpectedLength = 1;
@@ -104,10 +105,12 @@ class _FetchLogsState extends State<FetchLogs> {
     }
   }
 
+  void setStateIfMounted(f) {
+    if (mounted) setState(f);
+  }
+
   bool flagFetching = false;
   bool diasbleButtonsWFetching = false;
-
-  List<LogHeader> logHeaderList = List.empty(growable: true);
 
   Future<void> startListeningCommand(String deviceID) async {
     listeningCommandStream = true;
@@ -231,9 +234,10 @@ class _FetchLogsState extends State<FetchLogs> {
       } else if (_pktType == hPi4Global.CES_CMDIF_TYPE_LOG_IDX) {
         //print("Data Rx: " + value.toString());
 
-        LogHeader _mLog = (
-          logFileID: bdata.getUint32(1, Endian.little),
-          sessionLength: bdata.getUint32(5, Endian.little),
+        setStateIfMounted(() {
+          LogHeader _mLog = (
+              logFileID: bdata.getUint32(1, Endian.little),
+              sessionLength: bdata.getUint32(5, Endian.little),
           fileNo: bdata.getUint8(9),
           tmYear: bdata.getUint8(10),
           tmMon: bdata.getUint8(11),
@@ -241,10 +245,10 @@ class _FetchLogsState extends State<FetchLogs> {
           tmHour: bdata.getUint8(13),
           tmMin: bdata.getUint8(14),
           tmSec: bdata.getUint8(15),
-        );
+          );
 
-        //print("Log: " + _mLog.toString());
-        logHeaderList.add(_mLog);
+          logHeaderList.add(_mLog);
+        });
 
         if (logHeaderList.length == totalSessionCount) {
           setState(() {
@@ -262,18 +266,11 @@ class _FetchLogsState extends State<FetchLogs> {
           flagFetching = true;
         });
 
-        //logConsole("Data execpted length: " + sessionSize.toString());
-        //logConsole("Data Rx length: " +value.length.toString() +" | Actual Payload: " +pktPayloadSize.toString());
-
         currentFileDataCounter += pktPayloadSize;
         globalReceivedData += pktPayloadSize;
         checkNoOfWrites += 1;
 
-        //logConsole("no of writes: " + checkNoOfWrites.toString());
-
          logData.addAll(value.sublist(1, value.length));
-
-        //logConsole("data received: " +logData.toString());
 
         setState(() {
           displayPercent = globalDisplayPercentOffset +
@@ -283,21 +280,11 @@ class _FetchLogsState extends State<FetchLogs> {
           }
         });
 
-        /*logConsole("File data counter: " +
-            currentFileDataCounter.toString() +
-            " | Received: " +
-            displayPercent.toString() +
-            "%");*/
 
         if (currentFileDataCounter >= (sessionSize)) {
-          //logConsole("All data " + currentFileDataCounter.toString() + " received");
 
           if (currentFileDataCounter > sessionSize) {
             int diffData = currentFileDataCounter - sessionSize;
-            /*logConsole("Data received more than expected by: " +
-                diffData.toString() +
-                " bytes");*/
-            //logData.removeRange(expectedLength, currentFileDataCounter);
           }
 
           await streamCommandSubscription.cancel();
