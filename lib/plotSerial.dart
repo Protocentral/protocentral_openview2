@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -130,7 +133,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
     final _serialStream = SerialPortReader(widget.selectedPort);
     _serialStream.stream.listen((event) {
-     //print('R: $event');
+      //print('R: $event');
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
       }
@@ -138,7 +141,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   void pcProcessData(int rxch) async {
-    // print("data receiving:"+rxch.toString());
     switch (pc_rx_state) {
       case CESState_Init:
         if (rxch == CES_CMDIF_PKT_START_1) {
