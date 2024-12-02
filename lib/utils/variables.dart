@@ -34,9 +34,19 @@ var ces_pkt_ch1_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch2_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch3_buffer = new List.filled(4, 0, growable: false);
 
+var ces_pkt_eeg1_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg2_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg3_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg4_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg5_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg6_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg7_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_eeg8_buffer = new List.filled(4, 0, growable: false);
+
 
 var listOFBoards = {
   'Healthypi',
+  'Healthypi EEG',
   'ADS1292R Breakout/Shield',
   'ADS1293 Breakout/Shield',
   'AFE4490 Breakout/Shield',

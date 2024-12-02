@@ -509,7 +509,8 @@ class _HomePageState extends State<HomePage> {
                   serialPort.config.baudRate = 115200;
                 }else if(selectedPortBoard == "MAX86150 Breakout"){
                   serialPort.config.baudRate = 57600;
-                }else{
+                }
+                else{
                   setState((){
                     serialPort.config.baudRate = 57600;
                   });
