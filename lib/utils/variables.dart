@@ -46,7 +46,7 @@ var ces_pkt_eeg8_buffer = new List.filled(4, 0, growable: false);
 
 var listOFBoards = {
   'Healthypi',
-  'Healthypi EEG',
+  //'Healthypi EEG',
   'ADS1292R Breakout/Shield',
   'ADS1293 Breakout/Shield',
   'AFE4490 Breakout/Shield',
