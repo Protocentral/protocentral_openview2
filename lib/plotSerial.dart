@@ -58,6 +58,24 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   double globalTemp = 0;
   String displaySpO2 = "--";
 
+  final eeg1LineData = <FlSpot>[];
+  final eeg2LineData = <FlSpot>[];
+  final eeg3LineData = <FlSpot>[];
+  final eeg4LineData = <FlSpot>[];
+  final eeg5LineData = <FlSpot>[];
+  final eeg6LineData = <FlSpot>[];
+  final eeg7LineData = <FlSpot>[];
+  final eeg8LineData = <FlSpot>[];
+
+  double eeg1DataCounter = 0;
+  double eeg2DataCounter = 0;
+  double eeg3DataCounter = 0;
+  double eeg4DataCounter = 0;
+  double eeg5DataCounter = 0;
+  double eeg6DataCounter = 0;
+  double eeg7DataCounter = 0;
+  double eeg8DataCounter = 0;
+
   @override
   void initState() {
     super.initState();
@@ -358,7 +376,94 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
 
               pc_rx_state = CESState_Init;
-            } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
+            }else if(widget.selectedPortBoard == "Healthypi EEG"){
+              ces_pkt_eeg1_buffer[0] = CES_Pkt_Data_Counter[3];
+              ces_pkt_eeg1_buffer[1] = CES_Pkt_Data_Counter[4];
+              ces_pkt_eeg1_buffer[2] = CES_Pkt_Data_Counter[5];
+
+              ces_pkt_eeg2_buffer[0] = CES_Pkt_Data_Counter[6];
+              ces_pkt_eeg2_buffer[1] = CES_Pkt_Data_Counter[7];
+              ces_pkt_eeg2_buffer[2] = CES_Pkt_Data_Counter[8];
+
+              ces_pkt_eeg3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
+              ces_pkt_eeg3_buffer[1] = CES_Pkt_Data_Counter[10];
+              ces_pkt_eeg3_buffer[2] = CES_Pkt_Data_Counter[11];
+
+              ces_pkt_eeg4_buffer[0] = CES_Pkt_Data_Counter[12]; //ir
+              ces_pkt_eeg4_buffer[1] = CES_Pkt_Data_Counter[13];
+              ces_pkt_eeg4_buffer[2] = CES_Pkt_Data_Counter[14];
+
+              ces_pkt_eeg5_buffer[0] = CES_Pkt_Data_Counter[15]; //ir
+              ces_pkt_eeg5_buffer[1] = CES_Pkt_Data_Counter[16];
+              ces_pkt_eeg5_buffer[2] = CES_Pkt_Data_Counter[17];
+
+              ces_pkt_eeg6_buffer[0] = CES_Pkt_Data_Counter[18]; //ir
+              ces_pkt_eeg6_buffer[1] = CES_Pkt_Data_Counter[19];
+              ces_pkt_eeg6_buffer[2] = CES_Pkt_Data_Counter[20];
+
+              ces_pkt_eeg7_buffer[0] = CES_Pkt_Data_Counter[21]; //ir
+              ces_pkt_eeg7_buffer[1] = CES_Pkt_Data_Counter[22];
+              ces_pkt_eeg7_buffer[2] = CES_Pkt_Data_Counter[23];
+
+              ces_pkt_eeg8_buffer[0] = CES_Pkt_Data_Counter[24]; //ir
+              ces_pkt_eeg8_buffer[1] = CES_Pkt_Data_Counter[25];
+              ces_pkt_eeg8_buffer[2] = CES_Pkt_Data_Counter[26];
+
+              int data1 = ces_pkt_eeg1_buffer[0] |
+              ces_pkt_eeg1_buffer[1] << 8 |
+              ces_pkt_eeg1_buffer[2] << 16 ;
+
+              int data2 = ces_pkt_eeg2_buffer[0] |
+              ces_pkt_eeg2_buffer[1] << 8 |
+              ces_pkt_eeg2_buffer[2] << 16 ;
+
+              int data3 = ces_pkt_eeg3_buffer[0] |
+              ces_pkt_eeg3_buffer[1] << 8 |
+              ces_pkt_eeg3_buffer[2] << 16 ;
+
+              int data4 = ces_pkt_eeg4_buffer[0] |
+              ces_pkt_eeg4_buffer[1] << 8 |
+              ces_pkt_eeg4_buffer[2] << 16 ;
+
+              int data5 = ces_pkt_eeg5_buffer[0] |
+              ces_pkt_eeg5_buffer[1] << 8 |
+              ces_pkt_eeg5_buffer[2] << 16 ;
+
+              int data6 = ces_pkt_eeg6_buffer[0] |
+              ces_pkt_eeg6_buffer[1] << 8 |
+              ces_pkt_eeg6_buffer[2] << 16 ;
+
+              int data7 = ces_pkt_eeg7_buffer[0] |
+              ces_pkt_eeg7_buffer[1] << 8 |
+              ces_pkt_eeg7_buffer[2] << 16 ;
+
+              int data8 = ces_pkt_eeg8_buffer[0] |
+              ces_pkt_eeg8_buffer[1] << 8 |
+              ces_pkt_eeg8_buffer[2] << 16 ;
+
+              setStateIfMounted(() {
+                eeg1LineData.add(FlSpot(eeg1DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg2LineData.add(FlSpot(eeg2DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg3LineData.add(FlSpot(eeg3DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg4LineData.add(FlSpot(eeg4DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg5LineData.add(FlSpot(eeg5DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg6LineData.add(FlSpot(eeg6DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg7LineData.add(FlSpot(eeg7DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg8LineData.add(FlSpot(eeg8DataCounter++, (data1.toSigned(32).toDouble())));
+
+              });
+              if (eeg1DataCounter >= 128 * 6) {
+                eeg1LineData.removeAt(0);
+                eeg2LineData.removeAt(0);
+                eeg3LineData.removeAt(0);
+                eeg4LineData.removeAt(0);
+                eeg5LineData.removeAt(0);
+                eeg6LineData.removeAt(0);
+                eeg7LineData.removeAt(0);
+                eeg8LineData.removeAt(0);
+              }
+    }
+            else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -390,8 +495,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               computed_val2 >>= 16;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toSigned(16).toDouble())));
 
                 if (startDataLogging == true) {
                   ecgDataLog.add(data1.toDouble());
@@ -440,10 +545,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   ces_pkt_ch3_buffer[2] << 16 |
                   ces_pkt_ch3_buffer[3] << 24;
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(
-                    ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                respLineData.add(FlSpot(respDataCounter++, (data2.toSigned(32).toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toSigned(32).toDouble())));
 
                 if (startDataLogging == true) {
                   ecgDataLog.add((data1.toSigned(32) / 1000.00).toDouble());
@@ -536,7 +640,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               data3 >>= 16;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
                 respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
                 ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
 
@@ -592,7 +696,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                       8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
 
                 if (startDataLogging == true) {
                   ecgDataLog.add(data1.toDouble());
@@ -635,8 +739,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   ces_pkt_ch3_buffer[3] << 24;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(
-                    ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
 
                 if (startDataLogging == true) {
                   ecgDataLog.add((data1.toSigned(32) / 1000.00).toDouble());
@@ -649,8 +752,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard ==
-                "MAX30001 ECG & BioZ Breakout") {
+            else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -665,14 +767,15 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   ces_pkt_ch1_buffer[1] << 8 |
                   ces_pkt_ch1_buffer[2] << 16 |
                   ces_pkt_ch1_buffer[3] << 24;
+
               int data2 = ces_pkt_ch2_buffer[0] |
                   ces_pkt_ch2_buffer[1] << 8 |
                   ces_pkt_ch2_buffer[2] << 16 |
                   ces_pkt_ch2_buffer[3] << 24;
 
               setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(32).toDouble())));
+                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toSigned(32).toDouble())));
 
                 if (startDataLogging == true) {
                   ecgDataLog.add(data1.toDouble());
@@ -841,7 +944,28 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           displayTemperatureValue(),
         ],
       );
-    } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
+    }else if (widget.selectedPortBoard == "Healthypi EEG") {
+      return Column(
+        children: [
+          buildPlots().buildChart(8, 95, eeg1LineData, Colors.green),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg2LineData, Colors.blue),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg3LineData, Colors.yellow),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(9, 95, eeg4LineData, Colors.green),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg5LineData, Colors.blue),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg6LineData, Colors.yellow),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg7LineData, Colors.green),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(8, 95, eeg8LineData, Colors.blue),
+        ],
+      );
+    }
+    else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
       return Column(
         children: [
           displayHeartRateValue(),
