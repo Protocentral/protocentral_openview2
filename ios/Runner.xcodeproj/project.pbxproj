@@ -237,10 +237,12 @@
 				"${BUILT_PRODUCTS_DIR}/SwiftProtobuf/SwiftProtobuf.framework",
 				"${BUILT_PRODUCTS_DIR}/bluetooth_enable_fork/bluetooth_enable_fork.framework",
 				"${BUILT_PRODUCTS_DIR}/connectivity/connectivity.framework",
+				"${BUILT_PRODUCTS_DIR}/file_saver/file_saver.framework",
 				"${BUILT_PRODUCTS_DIR}/geolocator_apple/geolocator_apple.framework",
 				"${BUILT_PRODUCTS_DIR}/package_info_plus/package_info_plus.framework",
 				"${BUILT_PRODUCTS_DIR}/path_provider_foundation/path_provider_foundation.framework",
 				"${BUILT_PRODUCTS_DIR}/reactive_ble_mobile/reactive_ble_mobile.framework",
+				"${BUILT_PRODUCTS_DIR}/share_plus/share_plus.framework",
 				"${BUILT_PRODUCTS_DIR}/url_launcher_ios/url_launcher_ios.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -250,10 +252,12 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftProtobuf.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/bluetooth_enable_fork.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/connectivity.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/file_saver.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/geolocator_apple.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/package_info_plus.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/path_provider_foundation.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/reactive_ble_mobile.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/share_plus.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/url_launcher_ios.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

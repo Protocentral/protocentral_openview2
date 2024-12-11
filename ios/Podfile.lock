@@ -4,6 +4,8 @@ PODS:
   - connectivity (0.0.1):
     - Flutter
     - Reachability
+  - file_saver (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
   - geolocator_apple (1.2.0):
     - Flutter
@@ -14,25 +16,29 @@ PODS:
     - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
-  - Protobuf (3.27.2)
+  - Protobuf (3.28.3)
   - Reachability (3.7.6)
   - reactive_ble_mobile (0.0.1):
     - Flutter
     - Protobuf (~> 3.5)
     - SwiftProtobuf (~> 1.0)
-  - SwiftProtobuf (1.27.0)
+  - share_plus (0.0.1):
+    - Flutter
+  - SwiftProtobuf (1.28.2)
   - url_launcher_ios (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - bluetooth_enable_fork (from `.symlinks/plugins/bluetooth_enable_fork/ios`)
   - connectivity (from `.symlinks/plugins/connectivity/ios`)
+  - file_saver (from `.symlinks/plugins/file_saver/ios`)
   - Flutter (from `Flutter`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - reactive_ble_mobile (from `.symlinks/plugins/reactive_ble_mobile/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
@@ -46,6 +52,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/bluetooth_enable_fork/ios"
   connectivity:
     :path: ".symlinks/plugins/connectivity/ios"
+  file_saver:
+    :path: ".symlinks/plugins/file_saver/ios"
   Flutter:
     :path: Flutter
   geolocator_apple:
@@ -58,21 +66,25 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   reactive_ble_mobile:
     :path: ".symlinks/plugins/reactive_ble_mobile/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   bluetooth_enable_fork: 73b8ca6e67230a9baa04010cd5c1e824e00d2797
   connectivity: c4130b2985d4ef6fd26f9702e886bd5260681467
+  file_saver: 503e386464dbe118f630e17b4c2e1190fa0cf808
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
+  geolocator_apple: 9bcea1918ff7f0062d98345d238ae12718acfbc1
   package_info_plus: 115f4ad11e0698c8c1c5d8a689390df880f47e85
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
-  Protobuf: fb2c13674723f76ff6eede14f78847a776455fa2
+  Protobuf: 5a8a7781d8e1004302f108977ac2d5b99323146f
   Reachability: fd0ecd23705e2599e4cceeb943222ae02296cbc6
   reactive_ble_mobile: 9ce6723d37ccf701dbffd202d487f23f5de03b4c
-  SwiftProtobuf: 07b360b482e7015be5add8475cbe314853516814
+  share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
+  SwiftProtobuf: 4dbaffec76a39a8dc5da23b40af1a5dc01a4c02d
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
 
 PODFILE CHECKSUM: 26fd562d5c28ae6e736cd3e282e3cab582e4b629
