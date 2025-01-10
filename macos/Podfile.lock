@@ -18,9 +18,16 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - Protobuf (3.29.1)
   - Reachability (3.2)
+  - reactive_ble_mobile (0.0.1):
+    - Flutter
+    - FlutterMacOS
+    - Protobuf (~> 3.5)
+    - SwiftProtobuf (~> 1.0)
   - share_plus (0.0.1):
     - FlutterMacOS
+  - SwiftProtobuf (1.28.2)
   - url_launcher_macos (0.0.1):
     - FlutterMacOS
 
@@ -33,13 +40,16 @@ DEPENDENCIES:
   - geolocator_apple (from `Flutter/ephemeral/.symlinks/plugins/geolocator_apple/macos`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - reactive_ble_mobile (from `Flutter/ephemeral/.symlinks/plugins/reactive_ble_mobile/darwin`)
   - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
 
 SPEC REPOS:
   trunk:
     - libserialport
+    - Protobuf
     - Reachability
+    - SwiftProtobuf
 
 EXTERNAL SOURCES:
   connectivity_macos:
@@ -58,6 +68,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  reactive_ble_mobile:
+    :path: Flutter/ephemeral/.symlinks/plugins/reactive_ble_mobile/darwin
   share_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   url_launcher_macos:
@@ -73,8 +85,11 @@ SPEC CHECKSUMS:
   libserialport: 1cb25e66ef3c92a8e59c2ea3820302c3fa2268cd
   package_info_plus: 02d7a575e80f194102bef286361c6c326e4c29ce
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  Protobuf: 0c5a9e64f38aed73b5d1ff88a20112ce195cf909
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
+  reactive_ble_mobile: 856183aeda09f2a676bbaecbea8915c3cb1d33df
   share_plus: 76dd39142738f7a68dd57b05093b5e8193f220f7
+  SwiftProtobuf: 4dbaffec76a39a8dc5da23b40af1a5dc01a4c02d
   url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
 
 PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7

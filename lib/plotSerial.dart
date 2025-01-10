@@ -1248,7 +1248,23 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     }else{
       return Container();
     }
+  }
 
+  Widget ChannelStatus(int vertical, int horizontal, int channel){
+    return Container(
+        height: SizeConfig.blockSizeVertical * vertical,
+        width: SizeConfig.blockSizeHorizontal * horizontal,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+              children: <Widget>[
+                Text("Gain:   ",
+                    style: new TextStyle(fontSize: 12.0, color: Colors.white)),
+                gainDropdown(channel)
+              ]
+          ),
+        )
+    );
   }
 
   Widget gainOption(int vertical, int horizontal, int channel){
