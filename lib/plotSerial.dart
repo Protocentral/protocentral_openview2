@@ -17,6 +17,7 @@ import 'utils/sizeConfig.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/logDataToFile.dart';
 import 'states/OpenViewBLEProvider.dart';
+import 'package:flutter_switch/flutter_switch.dart';
 
 class PlotSerialPage extends StatefulWidget {
   PlotSerialPage({
@@ -86,6 +87,15 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   String _selectedY6Scale = '10mm/mV';
   String _selectedY7Scale = '10mm/mV';
   String _selectedY8Scale = '10mm/mV';
+
+  bool selectedCH1 = false;
+  bool selectedCH2 = false;
+  bool selectedCH3 = false;
+  bool selectedCH4 = false;
+  bool selectedCH5 = false;
+  bool selectedCH6 = false;
+  bool selectedCH7 = false;
+  bool selectedCH8 = false;
 
   List<String> _selectChannel = ['Ch1', 'Ch2', 'Ch3', 'Ch4', 'Ch5', 'Ch6', 'Ch7', 'Ch8'];
   String _selectedChannel = 'Ch1';
@@ -997,49 +1007,57 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           children: [
             Row(
                 children: [
-                  gainOption(8, 15, 1),
+                  gainOption(9, 15, 1),
+                  ChannelStatus(9, 15, 1)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 2),
+                  gainOption(9, 15, 2),
+                  ChannelStatus(9, 15, 2)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 3),
+                  gainOption(9, 15, 3),
+                  ChannelStatus(9, 15, 3)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 4),
+                  gainOption(9, 15, 4),
+                  ChannelStatus(9, 15, 4)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 5),
+                  gainOption(9, 15, 5),
+                  ChannelStatus(9, 15, 5)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 6),
+                  gainOption(9, 15, 6),
+                  ChannelStatus(9, 15, 6)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 7),
+                  gainOption(9, 15, 7),
+                  ChannelStatus(9, 15, 7)
                 ]
             ),
             sizedBoxForCharts(),
             Row(
                 children: [
-                  gainOption(8, 15, 8),
+                  gainOption(9, 15, 8),
+                  ChannelStatus(9, 15, 8)
                 ]
             ),
           ],
@@ -1258,9 +1276,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
               children: <Widget>[
-                Text("Gain:   ",
+                Text("CH$channel",
                     style: new TextStyle(fontSize: 12.0, color: Colors.white)),
-                gainDropdown(channel)
+                channelSwitch(channel)
               ]
           ),
         )
@@ -1429,6 +1447,213 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           );
         }).toList(),
       );
+    }
+
+  }
+
+  Widget channelSwitch(int channel){
+    if(channel == 1){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH1,
+            onToggle: (value) {
+              setState(() {
+                selectedCH1 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH1', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 2){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 2.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH2,
+            onToggle: (value) {
+              setState(() {
+                selectedCH2 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH2', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 3){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH3,
+            onToggle: (value) {
+              setState(() {
+                selectedCH3 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH3', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 4){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH4,
+            onToggle: (value) {
+              setState(() {
+                selectedCH4 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH4', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 5){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH5,
+            onToggle: (value) {
+              setState(() {
+                selectedCH5 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH5', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 6){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH6,
+            onToggle: (value) {
+              setState(() {
+                selectedCH6 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH6', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 7){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH7,
+            onToggle: (value) {
+              setState(() {
+                selectedCH7 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH7', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 8){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH8,
+            onToggle: (value) {
+              setState(() {
+                selectedCH8 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH8', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else{
+      return Container();
     }
 
   }
