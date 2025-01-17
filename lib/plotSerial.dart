@@ -17,6 +17,7 @@ import 'utils/sizeConfig.dart';
 import 'ble/ble_scanner.dart';
 import 'utils/logDataToFile.dart';
 import 'states/OpenViewBLEProvider.dart';
+import 'package:flutter_switch/flutter_switch.dart';
 
 class PlotSerialPage extends StatefulWidget {
   PlotSerialPage({
@@ -51,6 +52,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   double respDataCounter = 0;
 
   bool startDataLogging = false;
+  bool startEEGStreaming = false;
 
   int globalHeartRate = 0;
   int globalSpO2 = 0;
@@ -76,13 +78,36 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   double eeg7DataCounter = 0;
   double eeg8DataCounter = 0;
 
+  List<String> _selectY1Scale = ['10mm/mV', '5mm/mV', '20mm/mV'];
+  String _selectedY1Scale = '10mm/mV';
+  String _selectedY2Scale = '10mm/mV';
+  String _selectedY3Scale = '10mm/mV';
+  String _selectedY4Scale = '10mm/mV';
+  String _selectedY5Scale = '10mm/mV';
+  String _selectedY6Scale = '10mm/mV';
+  String _selectedY7Scale = '10mm/mV';
+  String _selectedY8Scale = '10mm/mV';
+
+  bool selectedCH1 = false;
+  bool selectedCH2 = false;
+  bool selectedCH3 = false;
+  bool selectedCH4 = false;
+  bool selectedCH5 = false;
+  bool selectedCH6 = false;
+  bool selectedCH7 = false;
+  bool selectedCH8 = false;
+
+  List<String> _selectChannel = ['Ch1', 'Ch2', 'Ch3', 'Ch4', 'Ch5', 'Ch6', 'Ch7', 'Ch8'];
+  String _selectedChannel = 'Ch1';
+
   @override
   void initState() {
     super.initState();
 
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-    _startSerialListening();
+    //_startSerialListening();
+    startStreaming();
   }
 
   @override
@@ -144,6 +169,18 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         );
       },
     );
+  }
+
+  void startStreaming(){
+    if (widget.selectedPortBoard == "Healthypi EEG") {
+      if(startEEGStreaming == true){
+      _startSerialListening();
+      }else{
+        //Do Nothing;
+      }
+    }else{
+      _startSerialListening();
+    }
   }
 
   void _startSerialListening() async {
@@ -385,27 +422,27 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_eeg2_buffer[1] = CES_Pkt_Data_Counter[7];
               ces_pkt_eeg2_buffer[2] = CES_Pkt_Data_Counter[8];
 
-              ces_pkt_eeg3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
+              ces_pkt_eeg3_buffer[0] = CES_Pkt_Data_Counter[9];
               ces_pkt_eeg3_buffer[1] = CES_Pkt_Data_Counter[10];
               ces_pkt_eeg3_buffer[2] = CES_Pkt_Data_Counter[11];
 
-              ces_pkt_eeg4_buffer[0] = CES_Pkt_Data_Counter[12]; //ir
+              ces_pkt_eeg4_buffer[0] = CES_Pkt_Data_Counter[12];
               ces_pkt_eeg4_buffer[1] = CES_Pkt_Data_Counter[13];
               ces_pkt_eeg4_buffer[2] = CES_Pkt_Data_Counter[14];
 
-              ces_pkt_eeg5_buffer[0] = CES_Pkt_Data_Counter[15]; //ir
+              ces_pkt_eeg5_buffer[0] = CES_Pkt_Data_Counter[15];
               ces_pkt_eeg5_buffer[1] = CES_Pkt_Data_Counter[16];
               ces_pkt_eeg5_buffer[2] = CES_Pkt_Data_Counter[17];
 
-              ces_pkt_eeg6_buffer[0] = CES_Pkt_Data_Counter[18]; //ir
+              ces_pkt_eeg6_buffer[0] = CES_Pkt_Data_Counter[18];
               ces_pkt_eeg6_buffer[1] = CES_Pkt_Data_Counter[19];
               ces_pkt_eeg6_buffer[2] = CES_Pkt_Data_Counter[20];
 
-              ces_pkt_eeg7_buffer[0] = CES_Pkt_Data_Counter[21]; //ir
+              ces_pkt_eeg7_buffer[0] = CES_Pkt_Data_Counter[21];
               ces_pkt_eeg7_buffer[1] = CES_Pkt_Data_Counter[22];
               ces_pkt_eeg7_buffer[2] = CES_Pkt_Data_Counter[23];
 
-              ces_pkt_eeg8_buffer[0] = CES_Pkt_Data_Counter[24]; //ir
+              ces_pkt_eeg8_buffer[0] = CES_Pkt_Data_Counter[24];
               ces_pkt_eeg8_buffer[1] = CES_Pkt_Data_Counter[25];
               ces_pkt_eeg8_buffer[2] = CES_Pkt_Data_Counter[26];
 
@@ -443,13 +480,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               setStateIfMounted(() {
                 eeg1LineData.add(FlSpot(eeg1DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg2LineData.add(FlSpot(eeg2DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg3LineData.add(FlSpot(eeg3DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg4LineData.add(FlSpot(eeg4DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg5LineData.add(FlSpot(eeg5DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg6LineData.add(FlSpot(eeg6DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg7LineData.add(FlSpot(eeg7DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg8LineData.add(FlSpot(eeg8DataCounter++, (data1.toSigned(32).toDouble())));
+                eeg2LineData.add(FlSpot(eeg2DataCounter++, (data2.toSigned(32).toDouble())));
+                eeg3LineData.add(FlSpot(eeg3DataCounter++, (data3.toSigned(32).toDouble())));
+                eeg4LineData.add(FlSpot(eeg4DataCounter++, (data4.toSigned(32).toDouble())));
+                eeg5LineData.add(FlSpot(eeg5DataCounter++, (data5.toSigned(32).toDouble())));
+                eeg6LineData.add(FlSpot(eeg6DataCounter++, (data6.toSigned(32).toDouble())));
+                eeg7LineData.add(FlSpot(eeg7DataCounter++, (data7.toSigned(32).toDouble())));
+                eeg8LineData.add(FlSpot(eeg8DataCounter++, (data8.toSigned(32).toDouble())));
 
               });
               if (eeg1DataCounter >= 128 * 6) {
@@ -891,7 +928,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     ]);
   }
 
-  Widget displayTemperatureValue() {
+  Widget displayTemperatureValue(){
     return Column(children: [
       Align(
         alignment: Alignment.centerRight,
@@ -945,25 +982,88 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }else if (widget.selectedPortBoard == "Healthypi EEG") {
-      return Column(
-        children: [
-          buildPlots().buildChart(8, 95, eeg1LineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg2LineData, Colors.blue),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg3LineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(9, 95, eeg4LineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg5LineData, Colors.blue),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg6LineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg7LineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(8, 95, eeg8LineData, Colors.blue),
-        ],
-      );
+      if(startEEGStreaming == true){
+        return Column(
+          children: [
+            buildPlots().buildChart(8, 95, eeg1LineData, Colors.green),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg2LineData, Colors.blue),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg3LineData, Colors.yellow),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(9, 95, eeg4LineData, Colors.green),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg5LineData, Colors.blue),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg6LineData, Colors.yellow),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg7LineData, Colors.green),
+            sizedBoxForCharts(),
+            buildPlots().buildChart(8, 95, eeg8LineData, Colors.blue),
+          ],
+        );
+      }else{
+        return Column(
+          children: [
+            Row(
+                children: [
+                  gainOption(9, 15, 1),
+                  ChannelStatus(9, 15, 1)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 2),
+                  ChannelStatus(9, 15, 2)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 3),
+                  ChannelStatus(9, 15, 3)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 4),
+                  ChannelStatus(9, 15, 4)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 5),
+                  ChannelStatus(9, 15, 5)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 6),
+                  ChannelStatus(9, 15, 6)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 7),
+                  ChannelStatus(9, 15, 7)
+                ]
+            ),
+            sizedBoxForCharts(),
+            Row(
+                children: [
+                  gainOption(9, 15, 8),
+                  ChannelStatus(9, 15, 8)
+                ]
+            ),
+          ],
+        );
+      }
+
     }
     else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
       return Column(
@@ -975,7 +1075,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           buildPlots().buildChart(28, 95, respLineData, Colors.blue),
         ],
       );
-    } else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
+    }
+    else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -986,7 +1087,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
+    }
+    else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -996,7 +1098,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
         ],
       );
-    } else if (widget.selectedPortBoard == "MAX86150 Breakout") {
+    }
+    else if (widget.selectedPortBoard == "MAX86150 Breakout") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -1007,7 +1110,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "Pulse Express") {
+    }
+    else if (widget.selectedPortBoard == "Pulse Express") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
@@ -1016,14 +1120,16 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "tinyGSR Breakout") {
+    }
+    else if (widget.selectedPortBoard == "tinyGSR Breakout") {
       return Column(
         children: [
           buildPlots().buildChart(65, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
+    }
+    else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1032,7 +1138,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           displayRespirationRateValue(),
         ],
       );
-    } else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
+    }
+    else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
@@ -1041,7 +1148,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else {
+    }
+    else {
       return Container();
     }
   }
@@ -1113,6 +1221,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             }
             if (startDataLogging == true) {
               startDataLogging = false;
+              startEEGStreaming = false;
               writeLogDataToFile(ecgDataLog, ppgDataLog, respDataLog, context);
             } else {
               Navigator.of(context).pushReplacement(
@@ -1123,6 +1232,458 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ),
       );
     });
+  }
+
+  Widget displayStartEEGButton() {
+    if (widget.selectedPortBoard == "Healthypi EEG") {
+      return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
+          builder: (context, bleScannerState, bleScanner, wiserBle, child) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: MaterialButton(
+                minWidth: 100.0,
+                color: Colors.green,
+                child: Row(
+                  children: <Widget>[
+                    Text('Start',
+                        style: new TextStyle(fontSize: 18.0, color: Colors.white)),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                onPressed: () async {
+                  if (widget.selectedPort.isOpen) {
+                    setState((){
+                      startEEGStreaming = true;
+                    });
+                    startStreaming();
+                  }
+                },
+              ),
+            );
+          });
+    }else{
+      return Container();
+    }
+  }
+
+  Widget ChannelStatus(int vertical, int horizontal, int channel){
+    return Container(
+        height: SizeConfig.blockSizeVertical * vertical,
+        width: SizeConfig.blockSizeHorizontal * horizontal,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+              children: <Widget>[
+                Text("CH$channel",
+                    style: new TextStyle(fontSize: 12.0, color: Colors.white)),
+                channelSwitch(channel)
+              ]
+          ),
+        )
+    );
+  }
+
+  Widget gainOption(int vertical, int horizontal, int channel){
+    return Container(
+      height: SizeConfig.blockSizeVertical * vertical,
+      width: SizeConfig.blockSizeHorizontal * horizontal,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+            children: <Widget>[
+              Text("Gain:   ",
+                  style: new TextStyle(fontSize: 12.0, color: Colors.white)),
+              gainDropdown(channel)
+            ]
+        ),
+      )
+    );
+  }
+
+  Widget gainDropdown(int channel){
+    if(channel == 1){
+      return DropdownButton(
+        value: _selectedY1Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY1Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 2){
+      return DropdownButton(
+        value: _selectedY2Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY2Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 3){
+      return DropdownButton(
+        value: _selectedY3Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY3Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 4){
+      return DropdownButton(
+        value: _selectedY4Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY4Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 5){
+      return DropdownButton(
+        value: _selectedY5Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY5Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 6){
+      return DropdownButton(
+        value: _selectedY6Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY6Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 7){
+      return DropdownButton(
+        value: _selectedY7Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY7Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else if(channel == 8){
+      return DropdownButton(
+        value: _selectedY8Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY8Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }else{
+      return DropdownButton(
+        value: _selectedY1Scale,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedY1Scale = newValue!;
+          });
+        },
+        items: _selectY1Scale.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location,
+                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            value: location,
+          );
+        }).toList(),
+      );
+    }
+
+  }
+
+  Widget channelSwitch(int channel){
+    if(channel == 1){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH1,
+            onToggle: (value) {
+              setState(() {
+                selectedCH1 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH1', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 2){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 2.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH2,
+            onToggle: (value) {
+              setState(() {
+                selectedCH2 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH2', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 3){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH3,
+            onToggle: (value) {
+              setState(() {
+                selectedCH3 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH3', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 4){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH4,
+            onToggle: (value) {
+              setState(() {
+                selectedCH4 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH4', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 5){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH5,
+            onToggle: (value) {
+              setState(() {
+                selectedCH5 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH5', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 6){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH6,
+            onToggle: (value) {
+              setState(() {
+                selectedCH6 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH6', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 7){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH7,
+            onToggle: (value) {
+              setState(() {
+                selectedCH7 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH7', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else if(channel == 8){
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          FlutterSwitch(
+            height: 20.0,
+            width: 40.0,
+            padding: 4.0,
+            toggleSize: 15.0,
+            borderRadius: 10.0,
+            activeColor: Colors.green,
+            value: selectedCH8,
+            onToggle: (value) {
+              setState(() {
+                selectedCH8 = value;
+              });
+            },
+          ),
+          //SizedBox(height: 12.0,),
+          Text('Value : $selectedCH8', style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0
+          ),)
+        ],
+      );
+    }else{
+      return Container();
+    }
+
+  }
+
+  Widget selectChannelOption(){
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+          children: <Widget>[
+            Text("Channel:   ",
+                style: new TextStyle(fontSize: 12.0, color: Colors.white)),
+            DropdownButton(
+              value: _selectedChannel,
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedChannel = newValue!;
+                });
+              },
+              items: _selectChannel.map((location) {
+                return DropdownMenuItem(
+                  child: new Text(location,
+                      style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+                  value: location,
+                );
+              }).toList(),
+            ),
+          ]
+      ),
+    );
+
   }
 
   Widget build(BuildContext context) {
@@ -1165,6 +1726,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ),
             ),
             displayDeviceName(),
+            displayStartEEGButton(),
             displayDisconnectButton(),
           ],
         ),

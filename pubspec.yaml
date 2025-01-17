@@ -40,6 +40,7 @@ dependencies:
   url_launcher: ^6.2.6
   to_csv: ^2.1.0
   #mcumgr_flutter: 0.1.1+1
+  flutter_switch: ^0.3.2
 
 dependency_overrides:
   csv: ^5.0.2
