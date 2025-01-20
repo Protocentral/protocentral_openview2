@@ -45,7 +45,9 @@ class buildPlots {
             currentLine(source, plotColor),
           ],
         ),
-        swapAnimationDuration: Duration.zero,
+        //swapAnimationDuration: Duration.zero,
+        duration: Duration.zero,
+
       ),
     );
   }

@@ -400,7 +400,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget showSerialPortResult() {
-    if (Platform.isMacOS || Platform.isWindows) {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
