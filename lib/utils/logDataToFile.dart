@@ -59,18 +59,21 @@ Future<void> writeLogDataToFile(List<double> ecgData, List<double> ppgData, List
 
   final String logFileTime = DateTime.now().millisecondsSinceEpoch.toString();
 
-  Directory _directory = Directory("");
+  Directory? _directory = Directory("");
 
   if (Platform.isAndroid) {
     // Redirects it to download folder in android
     _directory = Directory("/storage/emulated/0/Download");
   } else {
-    _directory = await getApplicationDocumentsDirectory();
+    //_directory = await getApplicationDocumentsDirectory();
+    //_directory = await getTemporaryDirectory();
+     _directory = await getDownloadsDirectory();
   }
 
-  final exPath = _directory.path;
+  final exPath = _directory?.path;
   print("Saved Path: $exPath");
-  await Directory(exPath).create(recursive: true);
+  await Directory(exPath!).create(recursive: true);
+
 
   final String directory = exPath;
 
