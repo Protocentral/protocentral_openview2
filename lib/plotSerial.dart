@@ -240,7 +240,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         } else //All data received
         {
           if (rxch == CES_CMDIF_PKT_STOP) {
-            if (widget.selectedPortBoard == "Healthypi") {
+            if (widget.selectedPortBoard == "Healthypi (USB)") {
               if (CES_Pkt_PktType == 4) {
                 for (int i = 0; i < 8; i++) {
                   ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
@@ -500,7 +500,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 eeg8LineData.removeAt(0);
               }
     }
-            else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
+            else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -551,7 +551,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
+            else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -601,7 +601,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
+            else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield (USB)" ||
+                widget.selectedPortBoard == "Sensything Ox (USB)" ) {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -648,7 +649,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "MAX86150 Breakout") {
+            else if (widget.selectedPortBoard == "MAX86150 Breakout (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -695,7 +696,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "Pulse Express") {
+            else if (widget.selectedPortBoard == "Pulse Express (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -724,7 +725,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "tinyGSR Breakout") {
+            else if (widget.selectedPortBoard == "tinyGSR Breakout (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
 
@@ -745,7 +746,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
+            else if (widget.selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -789,7 +790,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
               pc_rx_state = CESState_Init;
             }
-            else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
+            else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
               ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -966,7 +967,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   Widget displayCharts() {
-    if (widget.selectedPortBoard == "Healthypi") {
+    if (widget.selectedPortBoard == "Healthypi (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1065,7 +1066,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       }
 
     }
-    else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield") {
+    else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1076,7 +1077,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield") {
+    else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -1088,7 +1089,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield") {
+    else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1099,7 +1100,18 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "MAX86150 Breakout") {
+    else if (widget.selectedPortBoard == "Sensything Ox (USB)") {
+      return Column(
+        children: [
+          displayHeartRateValue(),
+          buildPlots().buildChart(30, 95, ecgLineData, Colors.red),
+          sizedBoxForCharts(),
+          displaySpo2Value(),
+          buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
+        ],
+      );
+    }
+    else if (widget.selectedPortBoard == "MAX86150 Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -1111,7 +1123,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "Pulse Express") {
+    else if (widget.selectedPortBoard == "Pulse Express (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
@@ -1121,7 +1133,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "tinyGSR Breakout") {
+    else if (widget.selectedPortBoard == "tinyGSR Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(65, 95, ecgLineData, Colors.green),
@@ -1129,7 +1141,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "MAX30003 ECG Breakout") {
+    else if (widget.selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1139,7 +1151,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ],
       );
     }
-    else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout") {
+    else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),

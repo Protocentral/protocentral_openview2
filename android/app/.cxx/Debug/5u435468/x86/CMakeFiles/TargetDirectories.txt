@@ -1,0 +1,2 @@
+/Users/suvarnavadla/AndroidStudioProjects/protocentral_openview2/android/app/.cxx/Debug/5u435468/x86/CMakeFiles/edit_cache.dir
+/Users/suvarnavadla/AndroidStudioProjects/protocentral_openview2/android/app/.cxx/Debug/5u435468/x86/CMakeFiles/rebuild_cache.dir

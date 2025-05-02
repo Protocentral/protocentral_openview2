@@ -44,17 +44,23 @@ var ces_pkt_eeg7_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_eeg8_buffer = new List.filled(4, 0, growable: false);
 
 
-var listOFBoards = {
-  'Healthypi',
+var listOFUSBBoards = {
+  'Healthypi (USB)',
+  'Sensything Ox (USB)',
   //'Healthypi EEG',
-  'ADS1292R Breakout/Shield',
-  'ADS1293 Breakout/Shield',
-  'AFE4490 Breakout/Shield',
-  'MAX86150 Breakout',
-  'Pulse Express',
-  'tinyGSR Breakout',
-  'MAX30003 ECG Breakout',
-  'MAX30001 ECG & BioZ Breakout'
+  'ADS1292R Breakout/Shield (USB)',
+  'ADS1293 Breakout/Shield (USB)',
+  'AFE4490 Breakout/Shield (USB)',
+  'MAX86150 Breakout (USB)',
+  'Pulse Express (USB)',
+  'tinyGSR Breakout (USB)',
+  'MAX30003 ECG Breakout (USB)',
+  'MAX30001 ECG & BioZ Breakout (USB)'
+};
+
+var listOFBLEBoards = {
+  'Healthypi (BLE)',
+  'Sensything Ox (BLE)'
 };
 
 typedef LogHeader = ({

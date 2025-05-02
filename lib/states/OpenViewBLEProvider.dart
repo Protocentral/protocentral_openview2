@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../globals.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:bluetooth_enable_fork/bluetooth_enable_fork.dart';
+//import 'package:bluetooth_enable_fork/bluetooth_enable_fork.dart';
 
 class OpenViewBLEProvider extends ChangeNotifier {
   OpenViewBLEProvider({required FlutterReactiveBle ble}) : _ble = ble;
@@ -214,7 +214,7 @@ class OpenViewBLEProvider extends ChangeNotifier {
     if (bleStatusFlag) {
       print('bluetooth is OFF');
       //_bluetoothServiceEnabled = false;
-      BluetoothEnable.enableBluetooth;
+     // BluetoothEnable.enableBluetooth;
     } else {
       print('bluetooth is ON');
       _bluetoothServiceEnabled = true;

@@ -191,34 +191,10 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   void dataFormatBasedOnBoardsSelection() async {
-    if (widget.selectedBoard == 'ADS1292R Breakout/Shield') {
-      startECG16Listening();
-      startRESP16Listening();
-      await startListeningHR();
-      await startListeningHRVResp();
-    } else if (widget.selectedBoard == 'ADS1293 Breakout/Shield') {
-      startECG32Listening();
+    if (widget.selectedBoard == 'Sensything Ox (BLE)') {
       startPPG16Listening();
-      startRESP32Listening();
-    } else if (widget.selectedBoard == 'AFE4490 Breakout/Shield') {
-      startPPG32Listening();
       await startListeningHR();
       await startListeningSPO2();
-    } else if (widget.selectedBoard == 'MAX86150 Breakout') {
-      startECG16Listening();
-      startPPG16Listening();
-    } else if (widget.selectedBoard == 'Pulse Express') {
-      startECG32Listening();
-      startRESP32Listening();
-    } else if (widget.selectedBoard == 'tinyGSR Breakout') {
-      startECG16Listening();
-    } else if (widget.selectedBoard == 'MAX30003 ECG Breakout') {
-      startECG32Listening();
-      await startListeningHR();
-      await startListeningHRVResp();
-    } else if (widget.selectedBoard == 'MAX30001 ECG & BioZ Breakout') {
-      startECG32Listening();
-      startRESP32Listening();
     } else {
       startECG32Listening();
       startPPG16Listening();
@@ -339,41 +315,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
     });
   }
 
-  void startECG16Listening() async {
-    print("AKW: Started listening to stream");
-    listeningECGStream = true;
-
-    await Future.delayed(Duration(seconds: 1), () async {
-      _streamECG =
-          await widget.fble.subscribeToCharacteristic(ECGCharacteristic);
-    });
-
-    streamECGSubscription = _streamECG.listen(
-      (event) {
-        ByteData ecgByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        Int16List ecgList = ecgByteData.buffer.asInt16List();
-
-        ecgList.forEach((element) {
-          setStateIfMounted(() {
-            ecgLineData.add(FlSpot(ecgDataCounter++, (element.toDouble())));
-            if (startAppLogging == true) {
-              ecgDataLog.add(element.toDouble());
-            }
-          });
-
-          if (ecgDataCounter >= 128 * 6) {
-            ecgLineData.removeAt(0);
-          }
-        });
-      },
-      onError: (Object error) {
-        // Handle a possible error
-        print("Error while monitoring data characteristic \n$error");
-      },
-      cancelOnError: true,
-    );
-  }
-
   void startECG32Listening() async {
     print("AKW: Started listening to stream");
     listeningECGStream = true;
@@ -434,76 +375,6 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
 
           if (ppgDataCounter >= 128 * 3) {
             ppgLineData.removeAt(0);
-          }
-        });
-      },
-      onError: (Object error) {
-        // Handle a possible error
-        print("Error while monitoring data characteristic \n$error");
-      },
-      cancelOnError: true,
-    );
-  }
-
-  void startPPG32Listening() async {
-    print("AKW: Started listening to ppg stream");
-    listeningPPGStream = true;
-
-    await Future.delayed(Duration(seconds: 1), () async {
-      _streamPPG =
-          await widget.fble.subscribeToCharacteristic(PPGCharacteristic);
-    });
-
-    streamPPGSubscription = _streamPPG.listen(
-      (event) {
-        // print("AKW: Rx PPG: " + event.length.toString());
-        ByteData ppgByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        Int32List ppgList = ppgByteData.buffer.asInt32List();
-
-        ppgList.forEach((element) {
-          setStateIfMounted(() {
-            ppgLineData.add(FlSpot(ppgDataCounter++, (element.toDouble())));
-            if (startAppLogging == true) {
-              ppgDataLog.add(element.toDouble());
-            }
-          });
-
-          if (ppgDataCounter >= 128 * 6) {
-            ppgLineData.removeAt(0);
-          }
-        });
-      },
-      onError: (Object error) {
-        // Handle a possible error
-        print("Error while monitoring data characteristic \n$error");
-      },
-      cancelOnError: true,
-    );
-  }
-
-  void startRESP16Listening() async {
-    print("AKW: Started listening to respiration stream");
-    listeningRESPStream = true;
-    int i = 0;
-    await Future.delayed(Duration(seconds: 1), () async {
-      _streamRESP =
-          await widget.fble.subscribeToCharacteristic(RESPCharacteristic);
-    });
-
-    streamRESPSubscription = _streamRESP.listen(
-      (event) {
-        ByteData respByteData = Uint8List.fromList(event).buffer.asByteData(0);
-        Int16List respList = respByteData.buffer.asInt16List();
-        respList.forEach((element) {
-          setStateIfMounted(() {
-            respLineData.add(FlSpot(respDataCounter++, (element.toDouble())));
-            if (startAppLogging == true) {
-              respDataLog.add(element.toDouble());
-            }
-          });
-
-          if (respDataCounter >= 256 * 6) {
-            respLineData.removeAt(0);
           }
         });
       },
@@ -737,79 +608,13 @@ class _WaveFormsPageState extends State<WaveFormsPage> {
   }
 
   Widget displayHealthyPiCharts() {
-    if (widget.selectedBoard == "ADS1292R Breakout/Shield") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(25, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displayRespirationRateValue(),
-          buildPlots().buildChart(25, 95, respLineData, Colors.blue),
-        ],
-      );
-    } else if (widget.selectedBoard == "ADS1293 Breakout/Shield") {
-      return Column(
-        children: [
-          buildPlots().buildChart(15, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(15, 95, ppgLineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(15, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    } else if (widget.selectedBoard == "AFE4490 Breakout/Shield") {
+    if (widget.selectedBoard == "Sensything Ox (BLE)") {
       return Column(
         children: [
           displayHeartRateValue(),
           buildPlots().buildChart(50, 95, ppgLineData, Colors.yellow),
           sizedBoxForCharts(),
           displaySpo2Value(),
-        ],
-      );
-    } else if (widget.selectedBoard == "MAX86150 Breakout") {
-      return Column(
-        children: [
-          buildPlots().buildChart(15, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(15, 95, ppgLineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(15, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    } else if (widget.selectedBoard == "Pulse Express") {
-      return Column(
-        children: [
-          buildPlots().buildChart(27, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(27, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    } else if (widget.selectedBoard == "tinyGSR Breakout") {
-      return Column(
-        children: [
-          buildPlots().buildChart(54, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-        ],
-      );
-    } else if (widget.selectedBoard == "MAX30003 ECG Breakout") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(50, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displayRespirationRateValue(),
-        ],
-      );
-    } else if (widget.selectedBoard == "MAX30001 ECG & BioZ Breakout") {
-      return Column(
-        children: [
-          buildPlots().buildChart(27, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(27, 95, ppgLineData, Colors.blue),
-          sizedBoxForCharts(),
         ],
       );
     } else {

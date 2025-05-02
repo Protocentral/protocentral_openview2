@@ -28,9 +28,12 @@ late SerialPort serialPort;
 
 String pcCurrentDeviceID = "";
 String pcCurrentDeviceName = "";
-String selectedBoard = 'Healthypi';
-String selectedPort = 'Port';
-String selectedPortBoard = 'Healthypi';
+String selectedBLEBoard = 'Healthypi (BLE)';
+String selectedBLEPortBoard = 'Healthypi (BLE)';
+
+String selectedUSBBoard = 'Healthypi (USB)';
+String selectedUSBPort = 'Port';
+String selectedUSBPortBoard = 'Healthypi (USB)';
 
 bool connectedToDevice = false;
 
@@ -216,7 +219,7 @@ class _HomePageState extends State<HomePage> {
         if (connectedToDevice == true) {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
               builder: (_) => WaveFormsPage(
-                    selectedBoard: selectedBoard,
+                    selectedBoard: selectedBLEBoard,
                     selectedDevice: pcCurrentDeviceName,
                     currentDevice: currentDevice,
                     fble: fble,
@@ -248,16 +251,16 @@ class _HomePageState extends State<HomePage> {
       child: DropdownButton(
         underline: SizedBox(),
         dropdownColor: hPi4Global.hpi4Color,
-        hint: selectedBoard == null
+        hint: selectedBLEBoard == null
             ? Text('Select Board')
             : Text(
-                selectedBoard,
+                selectedBLEBoard,
                 style: TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
               ),
         isExpanded: true,
         iconSize: 30.0,
         style: TextStyle(color: Colors.white, fontSize: 16.0),
-        items: listOFBoards.map(
+        items: listOFBLEBoards.map(
           (val) {
             return DropdownMenuItem<String>(
               value: val,
@@ -268,7 +271,7 @@ class _HomePageState extends State<HomePage> {
         onChanged: (value) {
           setState(
             () {
-              selectedBoard = value as String;
+              selectedBLEBoard = value as String;
             },
           );
         },
@@ -413,17 +416,17 @@ class _HomePageState extends State<HomePage> {
           DropdownButton(
             underline: SizedBox(),
             dropdownColor: hPi4Global.hpi4Color,
-            hint: selectedPortBoard == null
+            hint: selectedUSBPortBoard == null
                 ? Text('Select Board')
                 : Text(
-                    selectedPortBoard,
+                    selectedUSBPortBoard,
                     style:
                         TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
                   ),
             //isExpanded: true,
             iconSize: 50.0,
             style: TextStyle(color: Colors.white, fontSize: 16.0),
-            items: listOFBoards.map(
+            items: listOFUSBBoards.map(
               (val) {
                 return DropdownMenuItem<String>(
                   value: val,
@@ -434,7 +437,7 @@ class _HomePageState extends State<HomePage> {
             onChanged: (value) {
               setState(
                 () {
-                  selectedPortBoard = value as String;
+                  selectedUSBPortBoard = value as String;
                 },
               );
             },
@@ -450,10 +453,10 @@ class _HomePageState extends State<HomePage> {
           DropdownButton(
             underline: SizedBox(),
             dropdownColor: hPi4Global.hpi4Color,
-            hint: selectedPort == null
+            hint: selectedUSBPort == null
                 ? Text('Select Serial Port')
                 : Text(
-                    selectedPort,
+                  selectedUSBPort,
                     style:
                         TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
                   ),
@@ -471,7 +474,7 @@ class _HomePageState extends State<HomePage> {
             onChanged: (value) {
               setState(
                 () {
-                  selectedPort = value as String;
+                 selectedUSBPort = value as String;
                 },
               );
             },
@@ -500,14 +503,14 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             onPressed: () async {
-              print("Opening $selectedPort");
-              serialPort = SerialPort(selectedPort);
+              print("Opening $selectedUSBPort");
+              serialPort = SerialPort(selectedUSBPort);
               if (!serialPort.openReadWrite()) {
                 print(SerialPort.lastError);
               }else{
-                if(selectedPortBoard == "Healthypi"){
+                if(selectedUSBPortBoard == "Healthypi (USB)"){
                   serialPort.config.baudRate = 115200;
-                }else if(selectedPortBoard == "MAX86150 Breakout"){
+                }else if(selectedUSBPortBoard == "MAX86150 Breakout"){
                   serialPort.config.baudRate = 57600;
                 }
                 else{
@@ -521,8 +524,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (_) => PlotSerialPage(
                         selectedPort: serialPort,
-                        selectedSerialPort: selectedPort,
-                        selectedPortBoard: selectedPortBoard,
+                        selectedSerialPort: selectedUSBPort,
+                        selectedPortBoard: selectedUSBPortBoard,
                       )));
             },
           ),

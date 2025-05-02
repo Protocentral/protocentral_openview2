@@ -1,7 +1,7 @@
 name: OpenView2
 description: BLE companion app for use with ProtoCentral breakout boards and modules
 
-version: 2.1.5+116
+version: 2.1.6+117
 
 environment:
   sdk: ^3.3.0
@@ -14,37 +14,42 @@ dependencies:
   http: ^1.2.1
   path_provider: ^2.0.11
   flutter_reactive_ble: ^5.3.1
-  bluetooth_enable_fork: ^0.1.4
-  geolocator: ^11.0.0
+  #bluetooth_enable_fork: ^0.1.4
+  geolocator: ^14.0.0
   intl: ^0.20.1
 
-  connectivity: ^3.0.6
-  permission_handler: ^11.3.1
-  flutter_form_builder: ^9.2.1
-  form_builder_validators: ^9.1.0
+  #connectivity: ^3.0.6
+  permission_handler: ^12.0.0+1
+  flutter_form_builder: ^10.0.1
+  form_builder_validators: ^11.1.2
   progress_indicators: ^1.0.0
   sn_progress_dialog: ^1.0.8
   provider: ^6.0.3
   convert: ^3.0.2
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.3
 
   flutter_spinkit: ^5.1.0
   signal_strength_indicator: ^0.4.1
-  flutter_libserialport: ^0.4.0
-  fl_chart: 0.69.2
-  package_info_plus: ^4.1.0
+  flutter_libserialport: ^0.5.0
+  fl_chart: ^0.71.0
+  package_info_plus: ^8.3.0
   csv: ^6.0.0
   desktop_window: ^0.4.0
   simple_html_css: ^5.0.0
   flutter_html: ^3.0.0-beta.2
   url_launcher: ^6.2.6
-  to_csv: ^2.1.0
+  to_csv: ^5.0.4
   #mcumgr_flutter: 0.1.1+1
   flutter_switch: ^0.3.2
 
 dependency_overrides:
   csv: ^5.0.2
   intl: ^0.18.1
+    # because of https://github.com/jpnurmi/flutter_libserialport/issues/128
+  flutter_libserialport:
+    git:
+      url: https://github.com/NeariX67/flutter_libserialport
+      ref: main
 
 
 dev_dependencies:
