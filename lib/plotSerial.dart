@@ -9,6 +9,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
+import 'board_handlers/board_handler.dart';
+import 'board_handlers/board_registry.dart';
 import 'home.dart';
 import 'globals.dart';
 import 'utils/charts.dart';
@@ -97,7 +99,16 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   bool selectedCH7 = false;
   bool selectedCH8 = false;
 
-  List<String> _selectChannel = ['Ch1', 'Ch2', 'Ch3', 'Ch4', 'Ch5', 'Ch6', 'Ch7', 'Ch8'];
+  List<String> _selectChannel = [
+    'Ch1',
+    'Ch2',
+    'Ch3',
+    'Ch4',
+    'Ch5',
+    'Ch6',
+    'Ch7',
+    'Ch8'
+  ];
   String _selectedChannel = 'Ch1';
 
   @override
@@ -132,8 +143,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Alert'),
-          content: SingleChildScrollView(
+          title: const Text('Alert'),
+          content: const SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 Icon(
@@ -157,11 +168,12 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Ok'),
+              child: const Text('Ok'),
               onPressed: () async {
                 //Navigator.pop(context);
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                  MaterialPageRoute(
+                      builder: (_) => HomePage(title: 'OpenView')),
                 );
               },
             ),
@@ -171,14 +183,14 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     );
   }
 
-  void startStreaming(){
+  void startStreaming() {
     if (widget.selectedPortBoard == "Healthypi EEG") {
-      if(startEEGStreaming == true){
-      _startSerialListening();
-      }else{
+      if (startEEGStreaming == true) {
+        _startSerialListening();
+      } else {
         //Do Nothing;
       }
-    }else{
+    } else {
       _startSerialListening();
     }
   }
@@ -186,8 +198,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   void _startSerialListening() async {
     print("AKW: Started listening to stream");
 
-    final _serialStream = SerialPortReader(widget.selectedPort);
-    _serialStream.stream.listen((event) {
+    final serialStream = SerialPortReader(widget.selectedPort);
+    serialStream.stream.listen((event) {
       //print('R: $event');
       for (int i = 0; i < event.length; i++) {
         pcProcessData(event[i]);
@@ -206,7 +218,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         if (rxch == CES_CMDIF_PKT_START_2) {
           pc_rx_state = CESState_SOF2_Found;
         } else {
-          pc_rx_state = CESState_Init; //Invalid Packet, reset state to init
+          pc_rx_state = CESState_Init;
         }
         break;
       case CESState_SOF2_Found:
@@ -219,613 +231,25 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         break;
       case CESState_PktLen_Found:
         CES_Pkt_Pos_Counter++;
-        if (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD) //Read Header
-        {
-          if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_LEN_MSB)
+        if (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD) {
+          if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_LEN_MSB) {
             CES_Pkt_Len = ((rxch << 8) | CES_Pkt_Len);
-          else if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_PKTTYPE)
+          } else if (CES_Pkt_Pos_Counter == CES_CMDIF_IND_PKTTYPE) {
             CES_Pkt_PktType = rxch;
+          }
         } else if ((CES_Pkt_Pos_Counter >= CES_CMDIF_PKT_OVERHEAD) &&
-            (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) //Read Data
-        {
+            (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD + CES_Pkt_Len + 1)) {
           if (CES_Pkt_PktType == 2) {
-            CES_Pkt_Data_Counter[CES_Data_Counter++] = (rxch); // Buffer that assigns the data separated from the packet
+            CES_Pkt_Data_Counter[CES_Data_Counter++] = (rxch);
           } else if (CES_Pkt_PktType == 3) {
             CES_Pkt_ECG_RESP_Data_Counter[CES_ECG_RESP_Data_Counter++] = (rxch);
           } else if (CES_Pkt_PktType == 4) {
             CES_Pkt_PPG_Data_Counter[CES_PPG_Data_Counter++] = (rxch);
-          }else{
-           // Do nothing
           }
-        } else //All data received
-        {
+        } else {
           if (rxch == CES_CMDIF_PKT_STOP) {
-            if (widget.selectedPortBoard == "Healthypi (USB)") {
-              if (CES_Pkt_PktType == 4) {
-                for (int i = 0; i < 8; i++) {
-                  ces_pkt_ch3_buffer[0] = CES_Pkt_PPG_Data_Counter[(i * 2) ];
-                  ces_pkt_ch3_buffer[1] = CES_Pkt_PPG_Data_Counter[(i * 2) + 1];
-                  int data3 =
-                  ces_pkt_ch3_buffer[0] | ces_pkt_ch3_buffer[1] << 8;
-
-                  setStateIfMounted(() {
-                    ppgLineData
-                        .add(FlSpot(ppgDataCounter++, ((data3).toDouble())));
-                    if (startDataLogging == true) {
-                      ppgDataLog.add((data3.toSigned(16)).toDouble());
-                    }
-                  });
-                  if (ppgDataCounter >= 128 * 6) {
-                    ppgLineData.removeAt(0);
-                  }
-                }
-
-                setStateIfMounted(() {
-                  globalSpO2 = (CES_Pkt_PPG_Data_Counter[16]).toInt();
-                  if (globalSpO2 == 25) {
-                    displaySpO2 = "--";
-                  } else {
-                    displaySpO2 = globalSpO2.toString() + " %";
-                  }
-
-                  globalTemp = (((CES_Pkt_PPG_Data_Counter[17] |
-                  CES_Pkt_PPG_Data_Counter[18] << 8)
-                      .toInt()) /
-                      100.00)
-                      .toDouble();
-                });
-
-              }
-              if (CES_Pkt_PktType == 3) {
-                for (int i = 0; i < 8; i++) {
-                  ces_pkt_ch1_buffer[0] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4)];
-                  ces_pkt_ch1_buffer[1] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 1];
-                  ces_pkt_ch1_buffer[2] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 2];
-                  ces_pkt_ch1_buffer[3] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 3];
-
-                  int data1 = ces_pkt_ch1_buffer[0] |
-                      ces_pkt_ch1_buffer[1] << 8 |
-                      ces_pkt_ch1_buffer[2] << 16 |
-                      ces_pkt_ch1_buffer[3] << 24;
-
-                  setStateIfMounted(() {
-                    ecgLineData.add(FlSpot(
-                        ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                    if (startDataLogging == true) {
-                      ecgDataLog.add((data1.toSigned(32)).toDouble());
-                    }
-                  });
-                  if (ecgDataCounter >= 128 * 6) {
-                    ecgLineData.removeAt(0);
-                  }
-                }
-
-                for (int i = 0; i < 4; i++) {
-                  ces_pkt_ch2_buffer[0] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 32];
-                  ces_pkt_ch2_buffer[1] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 33];
-                  ces_pkt_ch2_buffer[2] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 34];
-                  ces_pkt_ch2_buffer[3] =
-                      CES_Pkt_ECG_RESP_Data_Counter[(i * 4) + 35];
-
-                  int data2 = ces_pkt_ch2_buffer[0] |
-                      ces_pkt_ch2_buffer[1] << 8 |
-                      ces_pkt_ch2_buffer[2] << 16 |
-                      ces_pkt_ch2_buffer[3] << 24;
-
-                  setStateIfMounted(() {
-                    respLineData.add(FlSpot(
-                        respDataCounter++, ((data2.toSigned(32)).toDouble())));
-                    if (startDataLogging == true) {
-                      respDataLog.add((data2.toSigned(32)).toDouble());
-                    }
-                  });
-                  if (respDataCounter >= 256 * 6) {
-                    respLineData.removeAt(0);
-                  }
-                }
-
-                setStateIfMounted(() {
-                  globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[48]).toInt();
-                  globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[49]).toInt();
-                });
-              }
-              else if (CES_Pkt_PktType == 2) {
-                ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-                ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-                ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-                ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-                ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-                ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-                ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-                ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-                ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[9]; //ir
-                ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[10];
-                ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[11];
-                ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[12];
-
-                int data1 = ces_pkt_ch1_buffer[0] |
-                    ces_pkt_ch1_buffer[1] << 8 |
-                    ces_pkt_ch1_buffer[2] << 16 |
-                    ces_pkt_ch1_buffer[3] << 24;
-                int data2 = ces_pkt_ch2_buffer[0] |
-                    ces_pkt_ch2_buffer[1] << 8 |
-                    ces_pkt_ch2_buffer[2] << 16 |
-                    ces_pkt_ch2_buffer[3] << 24;
-                int data3 = ces_pkt_ch3_buffer[0] |
-                    ces_pkt_ch3_buffer[1] << 8 |
-                    ces_pkt_ch3_buffer[2] << 16 |
-                    ces_pkt_ch3_buffer[3] << 24;
-
-                setStateIfMounted(() {
-                  ecgLineData.add(FlSpot(
-                      ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                  respLineData.add(FlSpot(
-                      respDataCounter++, (data2.toSigned(32).toDouble())));
-                  ppgLineData.add(FlSpot(
-                      ppgDataCounter++, (data3.toSigned(32).toDouble())));
-
-                  if (startDataLogging == true) {
-                    ecgDataLog.add((data1.toSigned(32)).toDouble());
-                    ppgDataLog.add(data3.toDouble());
-                    respDataLog.add(data2.toDouble());
-                  }
-
-                  globalSpO2 = (CES_Pkt_Data_Counter[19]).toInt();
-                  if (globalSpO2 == 25) {
-                    displaySpO2 = "--";
-                  } else {
-                    displaySpO2 = globalSpO2.toString() + " %";
-                  }
-                  globalHeartRate = (CES_Pkt_Data_Counter[20]).toInt();
-                  globalRespRate = (CES_Pkt_Data_Counter[21]).toInt();
-                  globalTemp = (((CES_Pkt_Data_Counter[17] |
-                                  CES_Pkt_Data_Counter[18] << 8)
-                              .toInt()) /
-                          100.00)
-                      .toDouble();
-                });
-                if (ecgDataCounter >= 128 * 6) {
-                  ecgLineData.removeAt(0);
-                  ppgLineData.removeAt(0);
-                }
-                if (respDataCounter >= 256 * 6) {
-                  respLineData.removeAt(0);
-                }
-              } else {
-                if(CES_Pkt_PktType == 2 || CES_Pkt_PktType == 3 || CES_Pkt_PktType == 4){
-                  // Do nothing
-                }else{
-                  if (widget.selectedPort.isOpen) {
-                    widget.selectedPort.close();
-                    _showAlertDialog();
-                  }
-                }
-
-              }
-
-              pc_rx_state = CESState_Init;
-            }else if(widget.selectedPortBoard == "Healthypi EEG"){
-              ces_pkt_eeg1_buffer[0] = CES_Pkt_Data_Counter[3];
-              ces_pkt_eeg1_buffer[1] = CES_Pkt_Data_Counter[4];
-              ces_pkt_eeg1_buffer[2] = CES_Pkt_Data_Counter[5];
-
-              ces_pkt_eeg2_buffer[0] = CES_Pkt_Data_Counter[6];
-              ces_pkt_eeg2_buffer[1] = CES_Pkt_Data_Counter[7];
-              ces_pkt_eeg2_buffer[2] = CES_Pkt_Data_Counter[8];
-
-              ces_pkt_eeg3_buffer[0] = CES_Pkt_Data_Counter[9];
-              ces_pkt_eeg3_buffer[1] = CES_Pkt_Data_Counter[10];
-              ces_pkt_eeg3_buffer[2] = CES_Pkt_Data_Counter[11];
-
-              ces_pkt_eeg4_buffer[0] = CES_Pkt_Data_Counter[12];
-              ces_pkt_eeg4_buffer[1] = CES_Pkt_Data_Counter[13];
-              ces_pkt_eeg4_buffer[2] = CES_Pkt_Data_Counter[14];
-
-              ces_pkt_eeg5_buffer[0] = CES_Pkt_Data_Counter[15];
-              ces_pkt_eeg5_buffer[1] = CES_Pkt_Data_Counter[16];
-              ces_pkt_eeg5_buffer[2] = CES_Pkt_Data_Counter[17];
-
-              ces_pkt_eeg6_buffer[0] = CES_Pkt_Data_Counter[18];
-              ces_pkt_eeg6_buffer[1] = CES_Pkt_Data_Counter[19];
-              ces_pkt_eeg6_buffer[2] = CES_Pkt_Data_Counter[20];
-
-              ces_pkt_eeg7_buffer[0] = CES_Pkt_Data_Counter[21];
-              ces_pkt_eeg7_buffer[1] = CES_Pkt_Data_Counter[22];
-              ces_pkt_eeg7_buffer[2] = CES_Pkt_Data_Counter[23];
-
-              ces_pkt_eeg8_buffer[0] = CES_Pkt_Data_Counter[24];
-              ces_pkt_eeg8_buffer[1] = CES_Pkt_Data_Counter[25];
-              ces_pkt_eeg8_buffer[2] = CES_Pkt_Data_Counter[26];
-
-              int data1 = ces_pkt_eeg1_buffer[0] |
-              ces_pkt_eeg1_buffer[1] << 8 |
-              ces_pkt_eeg1_buffer[2] << 16 ;
-
-              int data2 = ces_pkt_eeg2_buffer[0] |
-              ces_pkt_eeg2_buffer[1] << 8 |
-              ces_pkt_eeg2_buffer[2] << 16 ;
-
-              int data3 = ces_pkt_eeg3_buffer[0] |
-              ces_pkt_eeg3_buffer[1] << 8 |
-              ces_pkt_eeg3_buffer[2] << 16 ;
-
-              int data4 = ces_pkt_eeg4_buffer[0] |
-              ces_pkt_eeg4_buffer[1] << 8 |
-              ces_pkt_eeg4_buffer[2] << 16 ;
-
-              int data5 = ces_pkt_eeg5_buffer[0] |
-              ces_pkt_eeg5_buffer[1] << 8 |
-              ces_pkt_eeg5_buffer[2] << 16 ;
-
-              int data6 = ces_pkt_eeg6_buffer[0] |
-              ces_pkt_eeg6_buffer[1] << 8 |
-              ces_pkt_eeg6_buffer[2] << 16 ;
-
-              int data7 = ces_pkt_eeg7_buffer[0] |
-              ces_pkt_eeg7_buffer[1] << 8 |
-              ces_pkt_eeg7_buffer[2] << 16 ;
-
-              int data8 = ces_pkt_eeg8_buffer[0] |
-              ces_pkt_eeg8_buffer[1] << 8 |
-              ces_pkt_eeg8_buffer[2] << 16 ;
-
-              setStateIfMounted(() {
-                eeg1LineData.add(FlSpot(eeg1DataCounter++, (data1.toSigned(32).toDouble())));
-                eeg2LineData.add(FlSpot(eeg2DataCounter++, (data2.toSigned(32).toDouble())));
-                eeg3LineData.add(FlSpot(eeg3DataCounter++, (data3.toSigned(32).toDouble())));
-                eeg4LineData.add(FlSpot(eeg4DataCounter++, (data4.toSigned(32).toDouble())));
-                eeg5LineData.add(FlSpot(eeg5DataCounter++, (data5.toSigned(32).toDouble())));
-                eeg6LineData.add(FlSpot(eeg6DataCounter++, (data6.toSigned(32).toDouble())));
-                eeg7LineData.add(FlSpot(eeg7DataCounter++, (data7.toSigned(32).toDouble())));
-                eeg8LineData.add(FlSpot(eeg8DataCounter++, (data8.toSigned(32).toDouble())));
-
-              });
-              if (eeg1DataCounter >= 128 * 6) {
-                eeg1LineData.removeAt(0);
-                eeg2LineData.removeAt(0);
-                eeg3LineData.removeAt(0);
-                eeg4LineData.removeAt(0);
-                eeg5LineData.removeAt(0);
-                eeg6LineData.removeAt(0);
-                eeg7LineData.removeAt(0);
-                eeg8LineData.removeAt(0);
-              }
-    }
-            else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data1 <<= 16;
-              data1 >>= 16;
-
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data2 <<= 16;
-              data2 >>= 16;
-
-              computed_val1 = CES_Pkt_Data_Counter[4] |
-                  CES_Pkt_Data_Counter[5] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              computed_val1 <<= 16;
-              computed_val1 >>= 16;
-
-              computed_val2 = CES_Pkt_Data_Counter[6] |
-                  CES_Pkt_Data_Counter[7] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              computed_val2 <<= 16;
-              computed_val2 >>= 16;
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toSigned(16).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  respDataLog.add(data2.toDouble());
-                }
-
-                globalHeartRate = (computed_val1).toInt();
-                globalRespRate = (computed_val2).toInt();
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-              }
-              if (respDataCounter >= 256 * 6) {
-                respLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[8];
-              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[9];
-              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[10];
-              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] << 8 |
-                  ces_pkt_ch1_buffer[2] << 16 |
-                  ces_pkt_ch1_buffer[3] << 24;
-
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] << 8 |
-                  ces_pkt_ch2_buffer[2] << 16 |
-                  ces_pkt_ch2_buffer[3] << 24;
-
-              int data3 = ces_pkt_ch3_buffer[0] |
-                  ces_pkt_ch3_buffer[1] << 8 |
-                  ces_pkt_ch3_buffer[2] << 16 |
-                  ces_pkt_ch3_buffer[3] << 24;
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toSigned(32).toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toSigned(32).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add((data1.toSigned(32) / 1000.00).toDouble());
-                  ppgDataLog.add(data3.toDouble());
-                  respDataLog.add(data2.toDouble());
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                ppgLineData.removeAt(0);
-              }
-              if (respDataCounter >= 256 * 6) {
-                respLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield (USB)" ||
-                widget.selectedPortBoard == "Sensything Ox (USB)" ) {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] << 8 |
-                  ces_pkt_ch1_buffer[2] << 16 |
-                  ces_pkt_ch1_buffer[3] << 24;
-
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] << 8 |
-                  ces_pkt_ch2_buffer[2] << 16 |
-                  ces_pkt_ch2_buffer[3] << 24;
-
-              computed_val1 = CES_Pkt_Data_Counter[8];
-              computed_val2 = CES_Pkt_Data_Counter[9];
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  ppgDataLog.add(data2.toDouble());
-                }
-
-                globalHeartRate = (computed_val2).toInt();
-                globalSpO2 = (computed_val1).toInt();
-                if (globalSpO2 == 25) {
-                  displaySpO2 = "--";
-                } else {
-                  displaySpO2 = globalSpO2.toString() + " %";
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                ppgLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "MAX86150 Breakout (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[5];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data1 <<= 16;
-              data1 >>= 16;
-
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data2 <<= 16;
-              data2 >>= 16;
-
-              int data3 = ces_pkt_ch3_buffer[0] |
-                  ces_pkt_ch3_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data3 <<= 16;
-              data3 >>= 16;
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  ppgDataLog.add(data3.toDouble());
-                  respDataLog.add(data2.toDouble());
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                ppgLineData.removeAt(0);
-                respLineData.removeAt(0);
-              }
-
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "Pulse Express (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  respDataLog.add(data2.toDouble());
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                respLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "tinyGSR Breakout (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] <<
-                      8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-              }
-
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[8];
-              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[9];
-              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[10];
-              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] << 8 |
-                  ces_pkt_ch1_buffer[2] << 16 |
-                  ces_pkt_ch1_buffer[3] << 24;
-
-              int computed_val1 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] << 8 |
-                  ces_pkt_ch2_buffer[2] << 16 |
-                  ces_pkt_ch2_buffer[3] << 24;
-              int computed_val2 = ces_pkt_ch3_buffer[0] |
-                  ces_pkt_ch3_buffer[1] << 8 |
-                  ces_pkt_ch3_buffer[2] << 16 |
-                  ces_pkt_ch3_buffer[3] << 24;
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add((data1.toSigned(32) / 1000.00).toDouble());
-                }
-                globalHeartRate = (computed_val2).toInt();
-                globalRespRate = (computed_val1).toInt();
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
-            else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout (USB)") {
-              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
-              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
-              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
-              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
-
-              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4];
-              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
-              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
-              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
-
-              int data1 = ces_pkt_ch1_buffer[0] |
-                  ces_pkt_ch1_buffer[1] << 8 |
-                  ces_pkt_ch1_buffer[2] << 16 |
-                  ces_pkt_ch1_buffer[3] << 24;
-
-              int data2 = ces_pkt_ch2_buffer[0] |
-                  ces_pkt_ch2_buffer[1] << 8 |
-                  ces_pkt_ch2_buffer[2] << 16 |
-                  ces_pkt_ch2_buffer[3] << 24;
-
-              setStateIfMounted(() {
-                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(32).toDouble())));
-                ppgLineData.add(FlSpot(ppgDataCounter++, (data2.toSigned(32).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  ppgDataLog.add(data2.toDouble());
-                }
-              });
-              if (ecgDataCounter >= 128 * 6) {
-                ecgLineData.removeAt(0);
-                ppgLineData.removeAt(0);
-              }
-              pc_rx_state = CESState_Init;
-            }
+            _processBoardData();
+            pc_rx_state = CESState_Init;
           } else {
             pc_rx_state = CESState_Init;
           }
@@ -836,13 +260,91 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     }
   }
 
+  void _processBoardData() {
+    final handler = BoardRegistry.getHandler(widget.selectedPortBoard);
+    if (handler != null) {
+      handler.processPacketData(
+        packetData: CES_Pkt_Data_Counter,
+        ecgRespData: CES_Pkt_ECG_RESP_Data_Counter,
+        ppgData: CES_Pkt_PPG_Data_Counter,
+        packetType: CES_Pkt_PktType,
+        onDataUpdate: _handleBoardDataUpdate,
+      );
+    } else {
+      // Handle unknown board or show error
+      if (widget.selectedPort.isOpen) {
+        widget.selectedPort.close();
+        _showAlertDialog();
+      }
+    }
+  }
+
+  void _handleBoardDataUpdate(BoardDataUpdate update) {
+    setStateIfMounted(() {
+      if (update.ecgData != null) {
+        ecgLineData.addAll(update.ecgData!);
+        if (startDataLogging) {
+          ecgDataLog.addAll(update.ecgData!.map((spot) => spot.y));
+        }
+        while (ecgLineData.length > 128 * 6) {
+          ecgLineData.removeAt(0);
+        }
+      }
+
+      if (update.ppgData != null) {
+        ppgLineData.addAll(update.ppgData!);
+        if (startDataLogging) {
+          ppgDataLog.addAll(update.ppgData!.map((spot) => spot.y));
+        }
+        while (ppgLineData.length > 128 * 6) {
+          ppgLineData.removeAt(0);
+        }
+      }
+
+      // Handle other data types...
+
+      if (update.heartRate != null) globalHeartRate = update.heartRate!;
+      if (update.spO2 != null) globalSpO2 = update.spO2!;
+      if (update.respRate != null) globalRespRate = update.respRate!;
+      if (update.temperature != null) globalTemp = update.temperature!;
+      if (update.displaySpO2 != null) displaySpO2 = update.displaySpO2!;
+    });
+  }
+
+  Widget displayCharts() {
+    final handler = BoardRegistry.getHandler(widget.selectedPortBoard);
+    if (handler != null) {
+      return handler.buildChartLayout(
+        ecgData: ecgLineData,
+        ppgData: ppgLineData,
+        respData: respLineData,
+        eegData: [
+          eeg1LineData,
+          eeg2LineData,
+          eeg3LineData,
+          eeg4LineData,
+          eeg5LineData,
+          eeg6LineData,
+          eeg7LineData,
+          eeg8LineData
+        ],
+        heartRate: globalHeartRate,
+        spO2: globalSpO2,
+        respRate: globalRespRate,
+        temperature: globalTemp,
+        displaySpO2: displaySpO2,
+      );
+    }
+    return Container();
+  }
+
   Widget displayHeartRateValue() {
     return Column(children: [
       Align(
         alignment: Alignment.centerRight,
         child: Container(
           color: Colors.transparent,
-          child: Text(
+          child: const Text(
             "HEART RATE ",
             style: TextStyle(
               fontSize: 12,
@@ -857,7 +359,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           color: Colors.transparent,
           child: Text(
             globalHeartRate.toString() + " bpm",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Colors.white,
             ),
@@ -873,7 +375,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         alignment: Alignment.centerRight,
         child: Container(
           color: Colors.transparent,
-          child: Text(
+          child: const Text(
             "RESPIRATION RATE ",
             style: TextStyle(
               fontSize: 12,
@@ -888,7 +390,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           color: Colors.transparent,
           child: Text(
             globalRespRate.toString() + " rpm",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Colors.white,
             ),
@@ -904,7 +406,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         alignment: Alignment.centerRight,
         child: Container(
           color: Colors.transparent,
-          child: Text(
+          child: const Text(
             "SPO2 ",
             style: TextStyle(
               fontSize: 12,
@@ -919,7 +421,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           color: Colors.transparent,
           child: Text(
             displaySpO2,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Colors.white,
             ),
@@ -929,13 +431,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     ]);
   }
 
-  Widget displayTemperatureValue(){
+  Widget displayTemperatureValue() {
     return Column(children: [
       Align(
         alignment: Alignment.centerRight,
         child: Container(
           color: Colors.transparent,
-          child: Text(
+          child: const Text(
             "TEMPERATURE ",
             style: TextStyle(
               fontSize: 12,
@@ -950,7 +452,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           color: Colors.transparent,
           child: Text(
             globalTemp.toStringAsPrecision(3) + "\u00b0 C",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Colors.white,
             ),
@@ -966,206 +468,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     );
   }
 
-  Widget displayCharts() {
-    if (widget.selectedPortBoard == "Healthypi (USB)") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(18, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displaySpo2Value(),
-          buildPlots().buildChart(18, 95, ppgLineData, Colors.yellow),
-          sizedBoxForCharts(),
-          displayRespirationRateValue(),
-          buildPlots().buildChart(18, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-          displayTemperatureValue(),
-        ],
-      );
-    }else if (widget.selectedPortBoard == "Healthypi EEG") {
-      if(startEEGStreaming == true){
-        return Column(
-          children: [
-            buildPlots().buildChart(8, 95, eeg1LineData, Colors.green),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg2LineData, Colors.blue),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg3LineData, Colors.yellow),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(9, 95, eeg4LineData, Colors.green),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg5LineData, Colors.blue),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg6LineData, Colors.yellow),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg7LineData, Colors.green),
-            sizedBoxForCharts(),
-            buildPlots().buildChart(8, 95, eeg8LineData, Colors.blue),
-          ],
-        );
-      }else{
-        return Column(
-          children: [
-            Row(
-                children: [
-                  gainOption(9, 15, 1),
-                  ChannelStatus(9, 15, 1)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 2),
-                  ChannelStatus(9, 15, 2)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 3),
-                  ChannelStatus(9, 15, 3)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 4),
-                  ChannelStatus(9, 15, 4)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 5),
-                  ChannelStatus(9, 15, 5)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 6),
-                  ChannelStatus(9, 15, 6)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 7),
-                  ChannelStatus(9, 15, 7)
-                ]
-            ),
-            sizedBoxForCharts(),
-            Row(
-                children: [
-                  gainOption(9, 15, 8),
-                  ChannelStatus(9, 15, 8)
-                ]
-            ),
-          ],
-        );
-      }
-
-    }
-    else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(29, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displayRespirationRateValue(),
-          buildPlots().buildChart(28, 95, respLineData, Colors.blue),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
-      return Column(
-        children: [
-          buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(23, 95, ppgLineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(23, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield (USB)") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(30, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displaySpo2Value(),
-          buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "Sensything Ox (USB)") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(30, 95, ecgLineData, Colors.red),
-          sizedBoxForCharts(),
-          displaySpo2Value(),
-          buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "MAX86150 Breakout (USB)") {
-      return Column(
-        children: [
-          buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(23, 95, ppgLineData, Colors.yellow),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(23, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "Pulse Express (USB)") {
-      return Column(
-        children: [
-          buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(32, 95, respLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "tinyGSR Breakout (USB)") {
-      return Column(
-        children: [
-          buildPlots().buildChart(65, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
-      return Column(
-        children: [
-          displayHeartRateValue(),
-          buildPlots().buildChart(54, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          displayRespirationRateValue(),
-        ],
-      );
-    }
-    else if (widget.selectedPortBoard == "MAX30001 ECG & BioZ Breakout (USB)") {
-      return Column(
-        children: [
-          buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
-          sizedBoxForCharts(),
-          buildPlots().buildChart(32, 95, ppgLineData, Colors.blue),
-          sizedBoxForCharts(),
-        ],
-      );
-    }
-    else {
-      return Container();
-    }
-  }
-
   Widget displayDeviceName() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -1173,11 +475,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "Connected To:    " +
-                widget.selectedSerialPort +
-                "/ " +
-                widget.selectedPortBoard,
-            style: TextStyle(
+            "Connected To:    ${widget.selectedSerialPort}/ ${widget.selectedPortBoard}",
+            style: const TextStyle(
               fontSize: 12,
               color: Colors.white,
             ),
@@ -1218,12 +517,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         child: MaterialButton(
           minWidth: 100.0,
           color: Colors.red,
-          child: Row(
-            children: <Widget>[
-              Text('Stop',
-                  style: new TextStyle(fontSize: 18.0, color: Colors.white)),
-            ],
-          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
           ),
@@ -1241,6 +534,12 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               );
             }
           },
+          child: const Row(
+            children: <Widget>[
+              Text('Stop',
+                  style: TextStyle(fontSize: 18.0, color: Colors.white)),
+            ],
+          ),
         ),
       );
     });
@@ -1250,72 +549,66 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     if (widget.selectedPortBoard == "Healthypi EEG") {
       return Consumer3<BleScannerState, BleScanner, OpenViewBLEProvider>(
           builder: (context, bleScannerState, bleScanner, wiserBle, child) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: MaterialButton(
-                minWidth: 100.0,
-                color: Colors.green,
-                child: Row(
-                  children: <Widget>[
-                    Text('Start',
-                        style: new TextStyle(fontSize: 18.0, color: Colors.white)),
-                  ],
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                onPressed: () async {
-                  if (widget.selectedPort.isOpen) {
-                    setState((){
-                      startEEGStreaming = true;
-                    });
-                    startStreaming();
-                  }
-                },
-              ),
-            );
-          });
-    }else{
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: MaterialButton(
+            minWidth: 100.0,
+            color: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            onPressed: () async {
+              if (widget.selectedPort.isOpen) {
+                setState(() {
+                  startEEGStreaming = true;
+                });
+                startStreaming();
+              }
+            },
+            child: const Row(
+              children: <Widget>[
+                Text('Start',
+                    style: TextStyle(fontSize: 18.0, color: Colors.white)),
+              ],
+            ),
+          ),
+        );
+      });
+    } else {
       return Container();
     }
   }
 
-  Widget ChannelStatus(int vertical, int horizontal, int channel){
+  Widget ChannelStatus(int vertical, int horizontal, int channel) {
     return Container(
         height: SizeConfig.blockSizeVertical * vertical,
         width: SizeConfig.blockSizeHorizontal * horizontal,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
-              children: <Widget>[
-                Text("CH$channel",
-                    style: new TextStyle(fontSize: 12.0, color: Colors.white)),
-                channelSwitch(channel)
-              ]
-          ),
-        )
-    );
+          child: Row(children: <Widget>[
+            Text("CH$channel",
+                style: const TextStyle(fontSize: 12.0, color: Colors.white)),
+            channelSwitch(channel)
+          ]),
+        ));
   }
 
-  Widget gainOption(int vertical, int horizontal, int channel){
+  Widget gainOption(int vertical, int horizontal, int channel) {
     return Container(
-      height: SizeConfig.blockSizeVertical * vertical,
-      width: SizeConfig.blockSizeHorizontal * horizontal,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-            children: <Widget>[
-              Text("Gain:   ",
-                  style: new TextStyle(fontSize: 12.0, color: Colors.white)),
-              gainDropdown(channel)
-            ]
-        ),
-      )
-    );
+        height: SizeConfig.blockSizeVertical * vertical,
+        width: SizeConfig.blockSizeHorizontal * horizontal,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(children: <Widget>[
+            const Text("Gain:   ",
+                style: TextStyle(fontSize: 12.0, color: Colors.white)),
+            gainDropdown(channel)
+          ]),
+        ));
   }
 
-  Widget gainDropdown(int channel){
-    if(channel == 1){
+  Widget gainDropdown(int channel) {
+    if (channel == 1) {
       return DropdownButton(
         value: _selectedY1Scale,
         onChanged: (newValue) {
@@ -1325,13 +618,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 2){
+    } else if (channel == 2) {
       return DropdownButton(
         value: _selectedY2Scale,
         onChanged: (newValue) {
@@ -1341,13 +634,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 3){
+    } else if (channel == 3) {
       return DropdownButton(
         value: _selectedY3Scale,
         onChanged: (newValue) {
@@ -1357,13 +650,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 4){
+    } else if (channel == 4) {
       return DropdownButton(
         value: _selectedY4Scale,
         onChanged: (newValue) {
@@ -1373,13 +666,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 5){
+    } else if (channel == 5) {
       return DropdownButton(
         value: _selectedY5Scale,
         onChanged: (newValue) {
@@ -1389,13 +682,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 6){
+    } else if (channel == 6) {
       return DropdownButton(
         value: _selectedY6Scale,
         onChanged: (newValue) {
@@ -1405,13 +698,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 7){
+    } else if (channel == 7) {
       return DropdownButton(
         value: _selectedY7Scale,
         onChanged: (newValue) {
@@ -1421,13 +714,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else if(channel == 8){
+    } else if (channel == 8) {
       return DropdownButton(
         value: _selectedY8Scale,
         onChanged: (newValue) {
@@ -1437,13 +730,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
-    }else{
+    } else {
       return DropdownButton(
         value: _selectedY1Scale,
         onChanged: (newValue) {
@@ -1453,18 +746,17 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         },
         items: _selectY1Scale.map((location) {
           return DropdownMenuItem(
-            child: new Text(location,
-                style: new TextStyle(fontSize: 14.0, color: Colors.white)),
+            child: Text(location,
+                style: const TextStyle(fontSize: 14.0, color: Colors.white)),
             value: location,
           );
         }).toList(),
       );
     }
-
   }
 
-  Widget channelSwitch(int channel){
-    if(channel == 1){
+  Widget channelSwitch(int channel) {
+    if (channel == 1) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1483,13 +775,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH1', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH1',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 2){
+    } else if (channel == 2) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1508,13 +800,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH2', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH2',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 3){
+    } else if (channel == 3) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1533,13 +825,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH3', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH3',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 4){
+    } else if (channel == 4) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1558,13 +850,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH4', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH4',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 5){
+    } else if (channel == 5) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1583,13 +875,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH5', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH5',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 6){
+    } else if (channel == 6) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1608,13 +900,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH6', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH6',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 7){
+    } else if (channel == 7) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1633,13 +925,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH7', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH7',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else if(channel == 8){
+    } else if (channel == 8) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1658,44 +950,40 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             },
           ),
           //SizedBox(height: 12.0,),
-          Text('Value : $selectedCH8', style: TextStyle(
-              color: Colors.black,
-              fontSize: 20.0
-          ),)
+          Text(
+            'Value : $selectedCH8',
+            style: const TextStyle(color: Colors.black, fontSize: 20.0),
+          )
         ],
       );
-    }else{
+    } else {
       return Container();
     }
-
   }
 
-  Widget selectChannelOption(){
+  Widget selectChannelOption() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-          children: <Widget>[
-            Text("Channel:   ",
-                style: new TextStyle(fontSize: 12.0, color: Colors.white)),
-            DropdownButton(
-              value: _selectedChannel,
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedChannel = newValue!;
-                });
-              },
-              items: _selectChannel.map((location) {
-                return DropdownMenuItem(
-                  child: new Text(location,
-                      style: new TextStyle(fontSize: 14.0, color: Colors.white)),
-                  value: location,
-                );
-              }).toList(),
-            ),
-          ]
-      ),
+      child: Row(children: <Widget>[
+        const Text("Channel:   ",
+            style: TextStyle(fontSize: 12.0, color: Colors.white)),
+        DropdownButton(
+          value: _selectedChannel,
+          onChanged: (newValue) {
+            setState(() {
+              _selectedChannel = newValue!;
+            });
+          },
+          items: _selectChannel.map((location) {
+            return DropdownMenuItem(
+              value: location,
+              child: Text(location,
+                  style: const TextStyle(fontSize: 14.0, color: Colors.white)),
+            );
+          }).toList(),
+        ),
+      ]),
     );
-
   }
 
   Widget build(BuildContext context) {
@@ -1720,13 +1008,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               child: MaterialButton(
                 minWidth: 80.0,
                 color: startDataLogging ? Colors.grey : Colors.white,
-                child: Row(
-                  children: <Widget>[
-                    Text('Start Logging',
-                        style: new TextStyle(
-                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
-                  ],
-                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
@@ -1735,6 +1016,13 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                     startDataLogging = true;
                   });
                 },
+                child: const Row(
+                  children: <Widget>[
+                    Text('Start Logging',
+                        style: TextStyle(
+                            fontSize: 16.0, color: hPi4Global.hpi4Color)),
+                  ],
+                ),
               ),
             ),
             displayDeviceName(),
