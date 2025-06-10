@@ -30,9 +30,13 @@ int computed_val2 = 0;
 var CES_Pkt_Data_Counter = new List.filled(1000, 0, growable: false);
 var CES_Pkt_ECG_RESP_Data_Counter = new List.filled(1000, 0, growable: false);
 var CES_Pkt_PPG_Data_Counter = new List.filled(1000, 0, growable: false);
+
 var ces_pkt_ch1_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch2_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_ch3_buffer = new List.filled(4, 0, growable: false);
+
+var ces_pkt_ch4_buffer = new List.filled(4, 0, growable: false);
+var ces_pkt_ch5_buffer = new List.filled(4, 0, growable: false);
 
 var ces_pkt_eeg1_buffer = new List.filled(4, 0, growable: false);
 var ces_pkt_eeg2_buffer = new List.filled(4, 0, growable: false);
@@ -46,6 +50,7 @@ var ces_pkt_eeg8_buffer = new List.filled(4, 0, growable: false);
 
 var listOFUSBBoards = {
   'Healthypi (USB)',
+  'Healthypi 6 (USB)',
   'Sensything Ox (USB)',
   //'Healthypi EEG',
   'ADS1292R Breakout/Shield (USB)',

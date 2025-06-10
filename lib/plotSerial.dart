@@ -43,6 +43,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   final ppgLineData = <FlSpot>[];
   final respLineData = <FlSpot>[];
 
+  final ecg1LineData = <FlSpot>[];
+  final ecg2LineData = <FlSpot>[];
+
   List<double> ecgDataLog = [];
   List<double> ppgDataLog = [];
   List<double> respDataLog = [];
@@ -50,6 +53,9 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   double ecgDataCounter = 0;
   double ppgDataCounter = 0;
   double respDataCounter = 0;
+
+  double ecg1DataCounter = 0;
+  double ecg2DataCounter = 0;
 
   bool startDataLogging = false;
   bool startEEGStreaming = false;
@@ -413,7 +419,86 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               }
 
               pc_rx_state = CESState_Init;
-            }else if(widget.selectedPortBoard == "Healthypi EEG"){
+            }else if(widget.selectedPortBoard == "Healthypi 6 (USB)"){
+              ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];  // ecg 1
+              ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
+              ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
+              ces_pkt_ch1_buffer[3] = CES_Pkt_Data_Counter[3];
+
+              ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[4]; // ecg 2
+              ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[5];
+              ces_pkt_ch2_buffer[2] = CES_Pkt_Data_Counter[6];
+              ces_pkt_ch2_buffer[3] = CES_Pkt_Data_Counter[7];
+
+              ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[8]; // ecg 3
+              ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[9];
+              ces_pkt_ch3_buffer[2] = CES_Pkt_Data_Counter[10];
+              ces_pkt_ch3_buffer[3] = CES_Pkt_Data_Counter[11];
+
+              ces_pkt_ch4_buffer[0] = CES_Pkt_Data_Counter[12]; // resp
+              ces_pkt_ch4_buffer[1] = CES_Pkt_Data_Counter[13];
+              ces_pkt_ch4_buffer[2] = CES_Pkt_Data_Counter[14];
+              ces_pkt_ch4_buffer[3] = CES_Pkt_Data_Counter[15];
+
+              ces_pkt_ch5_buffer[0] = CES_Pkt_Data_Counter[16]; // ir
+              ces_pkt_ch5_buffer[1] = CES_Pkt_Data_Counter[17];
+
+              int data1 = ces_pkt_ch1_buffer[0] |
+              ces_pkt_ch1_buffer[1] << 8 |
+              ces_pkt_ch1_buffer[2] << 16 |
+              ces_pkt_ch1_buffer[3] << 24;
+
+              int data2 = ces_pkt_ch2_buffer[0] |
+              ces_pkt_ch2_buffer[1] << 8 |
+              ces_pkt_ch2_buffer[2] << 16 |
+              ces_pkt_ch2_buffer[3] << 24;
+
+              int data3 = ces_pkt_ch3_buffer[0] |
+              ces_pkt_ch3_buffer[1] << 8 |
+              ces_pkt_ch3_buffer[2] << 16 |
+              ces_pkt_ch3_buffer[3] << 24;
+
+              int data4 = ces_pkt_ch4_buffer[0] |
+              ces_pkt_ch4_buffer[1] << 8 |
+              ces_pkt_ch4_buffer[2] << 16 |
+              ces_pkt_ch4_buffer[3] << 24;
+
+              int data5 = ces_pkt_ch5_buffer[0] |
+              ces_pkt_ch5_buffer[1] << 8 ;
+
+
+              setStateIfMounted(() {
+                ecgLineData.add(FlSpot(
+                    ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                ecg1LineData.add(FlSpot(
+                    ecg1DataCounter++, ((data2.toSigned(32)).toDouble())));
+                ecg2LineData.add(FlSpot(
+                    ecg2DataCounter++, ((data3.toSigned(32)).toDouble())));
+                respLineData.add(FlSpot(
+                    respDataCounter++, (data4.toSigned(32).toDouble())));
+                ppgLineData.add(FlSpot(
+                    ppgDataCounter++, (data5.toSigned(16).toDouble())));
+
+                if (startDataLogging == true) {
+                  ecgDataLog.add((data1.toSigned(32)).toDouble());
+                  ppgDataLog.add(data5.toDouble());
+                  respDataLog.add(data4.toDouble());
+                }
+
+                if (ecgDataCounter >= 128 * 6) {
+                  ecgLineData.removeAt(0);
+                  ecg1LineData.removeAt(0);
+                  ecg2LineData.removeAt(0);
+                  ppgLineData.removeAt(0);
+                }
+                if (respDataCounter >= 256 * 6) {
+                  respLineData.removeAt(0);
+                }
+              });
+
+            pc_rx_state = CESState_Init;
+
+            } else if(widget.selectedPortBoard == "Healthypi EEG"){
               ces_pkt_eeg1_buffer[0] = CES_Pkt_Data_Counter[3];
               ces_pkt_eeg1_buffer[1] = CES_Pkt_Data_Counter[4];
               ces_pkt_eeg1_buffer[2] = CES_Pkt_Data_Counter[5];
@@ -499,7 +584,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 eeg7LineData.removeAt(0);
                 eeg8LineData.removeAt(0);
               }
-    }
+              pc_rx_state = CESState_Init;
+         }
             else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
               ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0];
               ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
@@ -982,7 +1068,23 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           displayTemperatureValue(),
         ],
       );
-    }else if (widget.selectedPortBoard == "Healthypi EEG") {
+    }else if (widget.selectedPortBoard == "Healthypi 6 (USB)") {
+      return Column(
+        children: [
+          buildPlots().buildChart(13, 95, ecgLineData, Colors.green),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(13, 95, ecg1LineData, Colors.yellow),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(13, 95, ecg2LineData, Colors.orange),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(13, 95, ppgLineData, Colors.red),
+          sizedBoxForCharts(),
+          buildPlots().buildChart(13, 95, respLineData, Colors.blue),
+          sizedBoxForCharts(),
+        ],
+      );
+    }
+     else if (widget.selectedPortBoard == "Healthypi EEG") {
       if(startEEGStreaming == true){
         return Column(
           children: [
