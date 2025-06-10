@@ -276,7 +276,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                       ppgDataLog.add((data3.toSigned(16)).toDouble());
                     }
                   });
-                  if (ppgDataCounter >= boardSamplingRate * _plotWindowSeconds) {
+                  if (ppgDataCounter >=
+                      boardSamplingRate * _plotWindowSeconds) {
                     ppgLineData.removeAt(0);
                   }
                 }
@@ -319,7 +320,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                       ecgDataLog.add((data1.toSigned(32)).toDouble());
                     }
                   });
-                  if (ecgDataCounter >= boardSamplingRate * _plotWindowSeconds) {
+                  if (ecgDataCounter >=
+                      boardSamplingRate * _plotWindowSeconds) {
                     ecgLineData.removeAt(0);
                   }
                 }
@@ -346,7 +348,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                       respDataLog.add((data2.toSigned(32)).toDouble());
                     }
                   });
-                  if (respDataCounter >= boardSamplingRate * _plotWindowSeconds) {
+                  if (respDataCounter >=
+                      boardSamplingRate * _plotWindowSeconds) {
                     respLineData.removeAt(0);
                   }
                 }
@@ -1077,8 +1080,8 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     );
   }
 
-  Widget displayCharts() {
-    if (widget.selectedPortBoard == "Healthypi (USB)") {
+  Widget displayCharts(String selectedPortBoard) {
+    if (selectedPortBoard == "Healthypi (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1093,7 +1096,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           displayTemperatureValue(),
         ],
       );
-    } else if (widget.selectedPortBoard == "Healthypi 6 (USB)") {
+    } else if (selectedPortBoard == "Healthypi 6 (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(13, 95, ecgLineData, Colors.green),
@@ -1108,7 +1111,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "Healthypi EEG") {
+    } else if (selectedPortBoard == "Healthypi EEG") {
       if (startEEGStreaming == true) {
         return Column(
           children: [
@@ -1150,7 +1153,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           ],
         );
       }
-    } else if (widget.selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
+    } else if (selectedPortBoard == "ADS1292R Breakout/Shield (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1160,7 +1163,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           buildPlots().buildChart(28, 95, respLineData, Colors.blue),
         ],
       );
-    } else if (widget.selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
+    } else if (selectedPortBoard == "ADS1293 Breakout/Shield (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -1171,7 +1174,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "AFE4490 Breakout/Shield (USB)") {
+    } else if (selectedPortBoard == "AFE4490 Breakout/Shield (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1181,7 +1184,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
         ],
       );
-    } else if (widget.selectedPortBoard == "Sensything Ox (USB)") {
+    } else if (selectedPortBoard == "Sensything Ox (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1191,7 +1194,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           buildPlots().buildChart(30, 95, ppgLineData, Colors.yellow),
         ],
       );
-    } else if (widget.selectedPortBoard == "MAX86150 Breakout (USB)") {
+    } else if (selectedPortBoard == "MAX86150 Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(23, 95, ecgLineData, Colors.green),
@@ -1202,7 +1205,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "Pulse Express (USB)") {
+    } else if (selectedPortBoard == "Pulse Express (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
@@ -1211,14 +1214,14 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "tinyGSR Breakout (USB)") {
+    } else if (selectedPortBoard == "tinyGSR Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(65, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
         ],
       );
-    } else if (widget.selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
+    } else if (selectedPortBoard == "MAX30003 ECG Breakout (USB)") {
       return Column(
         children: [
           displayHeartRateValue(),
@@ -1227,8 +1230,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
           displayRespirationRateValue(),
         ],
       );
-    } else if (widget.selectedPortBoard ==
-        "MAX30001 ECG & BioZ Breakout (USB)") {
+    } else if (selectedPortBoard == "MAX30001 ECG & BioZ Breakout (USB)") {
       return Column(
         children: [
           buildPlots().buildChart(32, 95, ecgLineData, Colors.green),
@@ -1271,7 +1273,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   SizedBox(
                     height: SizeConfig.blockSizeVertical * 1,
                   ),
-                  displayCharts(),
+                  displayCharts(widget.selectedPortBoard),
                 ],
               ),
             )));
@@ -1872,15 +1874,18 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
         ),
       ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              buildToolbar(), // <-- Toolbar added here
-              _buildCharts(),
-            ],
+        child: Container(
+          color: Colors.black,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                buildToolbar(), // <-- Toolbar added here
+                _buildCharts(),
+              ],
+            ),
           ),
         ),
       ),
