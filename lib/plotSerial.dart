@@ -117,6 +117,12 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   static const List<int> _windowSizeOptions = [3, 6, 9, 12];
   int _plotWindowSeconds = 6; // Default value
 
+  // Add these counters to your _PlotSerialPageState class:
+  int ecgUpdateCounter = 0;
+  int ppgUpdateCounter = 0;
+  int respUpdateCounter = 0;
+
+
   @override
   void initState() {
     super.initState();
@@ -144,6 +150,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   }
 
   void _showAlertDialog() {
+    if (!mounted) return;
     showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -204,13 +211,76 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
   void _startSerialListening() async {
     print("AKW: Started listening to stream");
 
-    final serialStream = SerialPortReader(widget.selectedPort);
-    serialStream.stream.listen((event) {
-      //print('R: $event');
-      for (int i = 0; i < event.length; i++) {
-        pcProcessData(event[i]);
+    try {
+      // Check if port is open, if not, try to open it
+      if (!widget.selectedPort.isOpen) {
+        if (!widget.selectedPort.openReadWrite()) {
+          throw SerialPortError('Device not configured');
+        }
       }
-    });
+
+      final serialStream = SerialPortReader(widget.selectedPort);
+      serialStream.stream.listen(
+        (event) {
+          for (int i = 0; i < event.length; i++) {
+            pcProcessData(event[i]);
+          }
+        },
+        onError: (error) {
+          print('Serial stream error: $error');
+          _showSerialPortErrorDialog(error.toString());
+        },
+        cancelOnError: true,
+      );
+    } catch (e) {
+      print('SerialPort exception: $e');
+      _showSerialPortErrorDialog(e.toString());
+    }
+  }
+
+  // Add this helper to show a dialog for serial port errors
+  void _showSerialPortErrorDialog(String errorMsg) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Serial Port Error'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Icon(
+                  Icons.error,
+                  color: Colors.red,
+                  size: 72,
+                ),
+                Center(
+                  child: Column(children: <Widget>[
+                    Text(
+                      errorMsg,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Ok'),
+              onPressed: () async {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => HomePage(title: 'OpenView')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void pcProcessData(int rxch) async {
@@ -272,6 +342,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   setStateIfMounted(() {
                     ppgLineData
                         .add(FlSpot(ppgDataCounter++, ((data3).toDouble())));
+                    ppgUpdateCounter++;
+                    if (ppgUpdateCounter % 20 == 0) {
+                      setStateIfMounted(() {});
+                    }
                     if (startDataLogging == true) {
                       ppgDataLog.add((data3.toSigned(16)).toDouble());
                     }
@@ -316,6 +390,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   setStateIfMounted(() {
                     ecgLineData.add(FlSpot(
                         ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+                    ecgUpdateCounter++;
+                    if (ecgUpdateCounter % 20 == 0) {
+                      setStateIfMounted(() {});
+                    }
                     if (startDataLogging == true) {
                       ecgDataLog.add((data1.toSigned(32)).toDouble());
                     }
@@ -344,6 +422,10 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   setStateIfMounted(() {
                     respLineData.add(FlSpot(
                         respDataCounter++, ((data2.toSigned(32)).toDouble())));
+                    respUpdateCounter++;
+                    if (respUpdateCounter % 20 == 0) {
+                      setStateIfMounted(() {});
+                    }
                     if (startDataLogging == true) {
                       respDataLog.add((data2.toSigned(32)).toDouble());
                     }
