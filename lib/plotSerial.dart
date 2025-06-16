@@ -1206,41 +1206,45 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
     } else if (selectedPortBoard == "Healthypi 6 (USB)") {
       return Column(
         children: [
+          displayHeartRateValue(),
           ValueListenableBuilder<List<FlSpot>>(
             valueListenable: ecgLineData1,
             builder: (context, points, child) {
-              return buildPlots().buildChart(13, 95, points, Colors.green);
+              return buildPlots().buildChart(10, 95, points, Colors.green);
             },
           ),
-          sizedBoxForCharts(),
+          //sizedBoxForCharts(),
           ValueListenableBuilder<List<FlSpot>>(
             valueListenable: ecg1LineData1,
             builder: (context, points, child) {
-              return buildPlots().buildChart(13, 95, points, Colors.yellow);
+              return buildPlots().buildChart(10, 95, points, Colors.yellow);
             },
           ),
-          sizedBoxForCharts(),
+         // sizedBoxForCharts(),
           ValueListenableBuilder<List<FlSpot>>(
             valueListenable: ecg2LineData1,
             builder: (context, points, child) {
-              return buildPlots().buildChart(13, 95, points, Colors.orange);
+              return buildPlots().buildChart(10, 95, points, Colors.orange);
             },
           ),
           sizedBoxForCharts(),
+          displaySpo2Value(),
           ValueListenableBuilder<List<FlSpot>>(
             valueListenable: ppgLineData1,
             builder: (context, points, child) {
-              return buildPlots().buildChart(13, 95, points, Colors.red);
+              return buildPlots().buildChart(9, 95, points, Colors.red);
             },
           ),
           sizedBoxForCharts(),
+          displayRespirationRateValue(),
           ValueListenableBuilder<List<FlSpot>>(
             valueListenable: respLineData1,
             builder: (context, points, child) {
-              return buildPlots().buildChart(13, 95, points, Colors.blue);
+              return buildPlots().buildChart(9, 95, points, Colors.blue);
             },
           ),
           sizedBoxForCharts(),
+          displayTemperatureValue(),
           /*buildPlots().buildChart(13, 95, ecgLineData, Colors.green),
           sizedBoxForCharts(),
           buildPlots().buildChart(13, 95, ecg1LineData, Colors.yellow),
