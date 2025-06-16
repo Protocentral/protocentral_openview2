@@ -527,7 +527,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
 
               pc_rx_state = CESState_Init;
             } else if (widget.selectedPortBoard == "Healthypi 6 (USB)") {
-              if (CES_Pkt_PktType == 2) {
                 ces_pkt_ch1_buffer[0] = CES_Pkt_Data_Counter[0]; // ecg 1
                 ces_pkt_ch1_buffer[1] = CES_Pkt_Data_Counter[1];
                 ces_pkt_ch1_buffer[2] = CES_Pkt_Data_Counter[2];
@@ -547,6 +546,11 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ces_pkt_ch4_buffer[1] = CES_Pkt_Data_Counter[13];
                 ces_pkt_ch4_buffer[2] = CES_Pkt_Data_Counter[14];
                 ces_pkt_ch4_buffer[3] = CES_Pkt_Data_Counter[15];
+
+                ces_pkt_ch5_buffer[0] = CES_Pkt_Data_Counter[16]; // ir
+                ces_pkt_ch5_buffer[1] = CES_Pkt_Data_Counter[17];
+                ces_pkt_ch5_buffer[2] = CES_Pkt_Data_Counter[18];
+                ces_pkt_ch5_buffer[3] = CES_Pkt_Data_Counter[19];
 
                 int data1 = ces_pkt_ch1_buffer[0] |
                 ces_pkt_ch1_buffer[1] << 8 |
@@ -568,82 +572,51 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                 ces_pkt_ch4_buffer[2] << 16 |
                 ces_pkt_ch4_buffer[3] << 24;
 
-                ecgLineData1.value.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                //ecgLineData1.notifyListeners();
-                ecg1LineData1.value.add(FlSpot(ecg1DataCounter++, ((data2.toSigned(32)).toDouble())));
-                //ecg1LineData1.notifyListeners();
-                ecg2LineData1.value.add(FlSpot(ecg2DataCounter++, ((data3.toSigned(32)).toDouble())));
-                //ecg2LineData1.notifyListeners();
-                respLineData1.value.add(FlSpot(respDataCounter++, (data4.toSigned(32).toDouble())));
-                //respLineData1.notifyListeners();
+                int data5 = ces_pkt_ch5_buffer[0] |
+                ces_pkt_ch5_buffer[1] << 8 |
+                ces_pkt_ch5_buffer[2] << 16 |
+                ces_pkt_ch5_buffer[3] << 24;
 
+                ecgLineData1.value.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
+
+                ecg1LineData1.value.add(FlSpot(ecg1DataCounter++, ((data2.toSigned(32)).toDouble())));
+
+                ecg2LineData1.value.add(FlSpot(ecg2DataCounter++, ((data3.toSigned(32)).toDouble())));
+
+                respLineData1.value.add(FlSpot(respDataCounter++, (data4.toSigned(32).toDouble())));
+
+                if(CES_Pkt_Data_Counter[24] == 0){
+                  // Invalid data
+                }else{
+                  ppgLineData1.value.add(FlSpot(ppgDataCounter++, (data5.toUnsigned(32).toDouble())));
+                }
 
                 if (ecgDataCounter % updateInterval == 0) {
                   ecgLineData1.notifyListeners();
                   ecg1LineData1.notifyListeners();
                   ecg2LineData1.notifyListeners();
                   respLineData1.notifyListeners();
+                  ppgLineData1.notifyListeners();
                 }
+
+                globalHeartRate = (CES_Pkt_ECG_RESP_Data_Counter[25]|CES_Pkt_Data_Counter[26] << 8).toInt();
+                globalRespRate = (CES_Pkt_ECG_RESP_Data_Counter[28]).toInt();
+                globalSpO2 = (CES_Pkt_Data_Counter[27]).toInt();
+                globalTemp = (((CES_Pkt_Data_Counter[29] |
+                CES_Pkt_Data_Counter[30] << 8)
+                    .toInt()) /
+                    100.00)
+                    .toDouble();
+
                 if (ecgDataCounter >= boardSamplingRate * _plotWindowSeconds) {
                   ecgLineData1.value.removeAt(0);
                   ecg1LineData1.value.removeAt(0);
                   ecg2LineData1.value.removeAt(0);
+                  ppgLineData1.value.removeAt(0);
                 }
                 if (respDataCounter >= boardSamplingRate * _plotWindowSeconds) {
                   respLineData1.value.removeAt(0);
                 }
-              }
-              if (CES_Pkt_PktType == 4) {
-                ces_pkt_ch5_buffer[0] = CES_Pkt_PPG_Data_Counter[0]; // ir
-                ces_pkt_ch5_buffer[1] = CES_Pkt_PPG_Data_Counter[1];
-                ces_pkt_ch5_buffer[2] = CES_Pkt_PPG_Data_Counter[2];
-                ces_pkt_ch5_buffer[3] = CES_Pkt_PPG_Data_Counter[3];
-
-                int data5 = ces_pkt_ch5_buffer[0] |
-                ces_pkt_ch5_buffer[1] << 8 |
-                ces_pkt_ch5_buffer[2] << 16 |
-                ces_pkt_ch5_buffer[3] << 24;
-
-                ppgLineData1.value.add(FlSpot(ppgDataCounter++, (data5.toUnsigned(32).toDouble())));
-                //ppgLineData1.notifyListeners();
-
-                if (ppgDataCounter % updateInterval == 0) {
-                  ppgLineData1.notifyListeners();
-                }
-
-                if (ppgDataCounter >= boardSamplingRate * _plotWindowSeconds) {
-                  ppgLineData1.value.removeAt(0);
-                }
-              }
-
-
-
-              /*setStateIfMounted(() {
-                /*ecgLineData.add(FlSpot(ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
-                ecg1LineData.add(FlSpot(
-                    ecg1DataCounter++, ((data2.toSigned(32)).toDouble())));
-                ecg2LineData.add(FlSpot(
-                    ecg2DataCounter++, ((data3.toSigned(32)).toDouble())));
-                respLineData.add(FlSpot(respDataCounter++, (data4.toSigned(32).toDouble())));
-                ppgLineData.add(
-                    FlSpot(ppgDataCounter++, (data5.toSigned(16).toDouble())));*/
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add((data1.toSigned(32)).toDouble());
-                  ppgDataLog.add(data5.toDouble());
-                  respDataLog.add(data4.toDouble());
-                }
-
-                if (ecgDataCounter >= boardSamplingRate * _plotWindowSeconds) {
-                  ecgLineData.removeAt(0);
-                  ecg1LineData.removeAt(0);
-                  ecg2LineData.removeAt(0);
-                  ppgLineData.removeAt(0);
-                }
-                if (respDataCounter >= boardSamplingRate * _plotWindowSeconds) {
-                  respLineData.removeAt(0);
-                }
-              });*/
 
               pc_rx_state = CESState_Init;
             } else if (widget.selectedPortBoard == "Healthypi EEG") {
