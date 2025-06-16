@@ -41,6 +41,7 @@ dependencies:
   to_csv: ^5.0.4
   #mcumgr_flutter: 0.1.1+1
   flutter_switch: ^0.3.2
+  syncfusion_flutter_charts: ^28.2.6
 
 dependency_overrides:
   csv: ^5.0.2
