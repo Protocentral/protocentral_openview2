@@ -61,17 +61,17 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  file_saver: 6cdbcddd690cb02b0c1a0c225b37cd805c2bf8b6
+  file_saver: 503e386464dbe118f630e17b4c2e1190fa0cf808
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
-  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
-  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
+  package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   Protobuf: 164aea2ae380c3951abdc3e195220c01d17400e0
-  reactive_ble_mobile: ea97709e18fa6f0b0592909725d7ae7e1c595b64
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  reactive_ble_mobile: 856183aeda09f2a676bbaecbea8915c3cb1d33df
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   SwiftProtobuf: 3697407f0d5b23bedeba9c2eaaf3ec6fdff69349
-  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
 
 PODFILE CHECKSUM: 26fd562d5c28ae6e736cd3e282e3cab582e4b629
 
