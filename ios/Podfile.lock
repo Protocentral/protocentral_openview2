@@ -1,14 +1,10 @@
 PODS:
-  - bluetooth_enable_fork (0.1.4):
-    - Flutter
-  - connectivity (0.0.1):
-    - Flutter
-    - Reachability
   - file_saver (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - geolocator_apple (1.2.0):
     - Flutter
+    - FlutterMacOS
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -16,48 +12,41 @@ PODS:
     - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
-  - Protobuf (3.28.3)
-  - Reachability (3.7.6)
+  - Protobuf (3.29.5)
   - reactive_ble_mobile (0.0.1):
     - Flutter
+    - FlutterMacOS
     - Protobuf (~> 3.5)
     - SwiftProtobuf (~> 1.0)
   - share_plus (0.0.1):
     - Flutter
-  - SwiftProtobuf (1.28.2)
+  - SwiftProtobuf (1.30.0)
   - url_launcher_ios (0.0.1):
     - Flutter
 
 DEPENDENCIES:
-  - bluetooth_enable_fork (from `.symlinks/plugins/bluetooth_enable_fork/ios`)
-  - connectivity (from `.symlinks/plugins/connectivity/ios`)
   - file_saver (from `.symlinks/plugins/file_saver/ios`)
   - Flutter (from `Flutter`)
-  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
+  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
-  - reactive_ble_mobile (from `.symlinks/plugins/reactive_ble_mobile/ios`)
+  - reactive_ble_mobile (from `.symlinks/plugins/reactive_ble_mobile/darwin`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
   trunk:
     - Protobuf
-    - Reachability
     - SwiftProtobuf
 
 EXTERNAL SOURCES:
-  bluetooth_enable_fork:
-    :path: ".symlinks/plugins/bluetooth_enable_fork/ios"
-  connectivity:
-    :path: ".symlinks/plugins/connectivity/ios"
   file_saver:
     :path: ".symlinks/plugins/file_saver/ios"
   Flutter:
     :path: Flutter
   geolocator_apple:
-    :path: ".symlinks/plugins/geolocator_apple/ios"
+    :path: ".symlinks/plugins/geolocator_apple/darwin"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
@@ -65,28 +54,25 @@ EXTERNAL SOURCES:
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   reactive_ble_mobile:
-    :path: ".symlinks/plugins/reactive_ble_mobile/ios"
+    :path: ".symlinks/plugins/reactive_ble_mobile/darwin"
   share_plus:
     :path: ".symlinks/plugins/share_plus/ios"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  bluetooth_enable_fork: 73b8ca6e67230a9baa04010cd5c1e824e00d2797
-  connectivity: c4130b2985d4ef6fd26f9702e886bd5260681467
-  file_saver: 503e386464dbe118f630e17b4c2e1190fa0cf808
+  file_saver: 6cdbcddd690cb02b0c1a0c225b37cd805c2bf8b6
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  geolocator_apple: 9bcea1918ff7f0062d98345d238ae12718acfbc1
-  package_info_plus: 115f4ad11e0698c8c1c5d8a689390df880f47e85
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
-  Protobuf: 5a8a7781d8e1004302f108977ac2d5b99323146f
-  Reachability: fd0ecd23705e2599e4cceeb943222ae02296cbc6
-  reactive_ble_mobile: 9ce6723d37ccf701dbffd202d487f23f5de03b4c
-  share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
-  SwiftProtobuf: 4dbaffec76a39a8dc5da23b40af1a5dc01a4c02d
-  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
+  geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
+  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  Protobuf: 164aea2ae380c3951abdc3e195220c01d17400e0
+  reactive_ble_mobile: ea97709e18fa6f0b0592909725d7ae7e1c595b64
+  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  SwiftProtobuf: 3697407f0d5b23bedeba9c2eaaf3ec6fdff69349
+  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
 PODFILE CHECKSUM: 26fd562d5c28ae6e736cd3e282e3cab582e4b629
 
-COCOAPODS: 1.15.1
+COCOAPODS: 1.16.2

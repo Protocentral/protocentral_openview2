@@ -251,13 +251,13 @@ class _HomePageState extends State<HomePage> {
       child: DropdownButton(
         underline: SizedBox(),
         dropdownColor: hPi4Global.hpi4Color,
-        hint: selectedBLEBoard == null
+        hint: selectedBLEBoard.isEmpty
             ? Text('Select Board')
             : Text(
                 selectedBLEBoard,
                 style: TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
               ),
-        isExpanded: true,
+        isExpanded: false,
         iconSize: 30.0,
         style: TextStyle(color: Colors.white, fontSize: 16.0),
         items: listOFBLEBoards.map(
@@ -404,158 +404,196 @@ class _HomePageState extends State<HomePage> {
 
   Widget showSerialPortResult() {
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      return Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
+      return Column(
         children: [
-          Text("Select Board:",
-              style: TextStyle(color: Colors.black, fontSize: 16.0)),
-          SizedBox(
-            width: 20.0,
-          ),
-          DropdownButton(
-            underline: SizedBox(),
-            dropdownColor: hPi4Global.hpi4Color,
-            hint: selectedUSBPortBoard == null
-                ? Text('Select Board')
-                : Text(
-                    selectedUSBPortBoard,
-                    style:
-                        TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
-                  ),
-            //isExpanded: true,
-            iconSize: 50.0,
-            style: TextStyle(color: Colors.white, fontSize: 16.0),
-            items: listOFUSBBoards.map(
-              (val) {
-                return DropdownMenuItem<String>(
-                  value: val,
-                  child: Text(val),
-                );
-              },
-            ).toList(),
-            onChanged: (value) {
-              setState(
-                () {
-                  selectedUSBPortBoard = value as String;
+          // First row: Board and Port selection
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10.0,
+            runSpacing: 8.0,
+            children: [
+              Text("Select Board:",
+                  style: TextStyle(color: Colors.black, fontSize: 14.0)),
+              DropdownButton(
+                underline: SizedBox(),
+                dropdownColor: hPi4Global.hpi4Color,
+                hint: selectedUSBPortBoard.isEmpty
+                    ? Text('Select Board')
+                    : Text(
+                        selectedUSBPortBoard,
+                        style:
+                            TextStyle(color: hPi4Global.hpi4Color, fontSize: 14.0),
+                      ),
+                isExpanded: false,
+                iconSize: 30.0,
+                style: TextStyle(color: Colors.white, fontSize: 14.0),
+                items: listOFUSBBoards.map(
+                  (val) {
+                    return DropdownMenuItem<String>(
+                      value: val,
+                      child: Text(val),
+                    );
+                  },
+                ).toList(),
+                onChanged: (value) {
+                  setState(
+                    () {
+                      selectedUSBPortBoard = value as String;
+                    },
+                  );
                 },
-              );
-            },
-          ),
-          SizedBox(
-            width: 50.0,
-          ),
-          Text("Select Port:",
-              style: TextStyle(color: Colors.black, fontSize: 16.0)),
-          SizedBox(
-            width: 20.0,
-          ),
-          DropdownButton(
-            underline: SizedBox(),
-            dropdownColor: hPi4Global.hpi4Color,
-            hint: selectedUSBPort == null
-                ? Text('Select Serial Port')
-                : Text(
-                  selectedUSBPort,
-                    style:
-                        TextStyle(color: hPi4Global.hpi4Color, fontSize: 16.0),
-                  ),
-            //isExpanded: true,
-            iconSize: 50.0,
-            style: TextStyle(color: Colors.white, fontSize: 16.0),
-            items: SerialPort.availablePorts.map(
-              (val) {
-                return DropdownMenuItem<String>(
-                  value: val,
-                  child: Text(val),
-                );
-              },
-            ).toList(),
-            onChanged: (value) {
-              setState(
-                () {
-                 selectedUSBPort = value as String;
+              ),
+              Text("Select Port:",
+                  style: TextStyle(color: Colors.black, fontSize: 14.0)),
+              DropdownButton(
+                underline: SizedBox(),
+                dropdownColor: hPi4Global.hpi4Color,
+                hint: selectedUSBPort.isEmpty
+                    ? Text('Select Serial Port')
+                    : Text(
+                      selectedUSBPort,
+                        style:
+                            TextStyle(color: hPi4Global.hpi4Color, fontSize: 14.0),
+                      ),
+                isExpanded: false,
+                iconSize: 30.0,
+                style: TextStyle(color: Colors.white, fontSize: 14.0),
+                items: SerialPort.availablePorts.map(
+                  (val) {
+                    return DropdownMenuItem<String>(
+                      value: val,
+                      child: Text(val),
+                    );
+                  },
+                ).toList(),
+                onChanged: (value) {
+                  setState(
+                    () {
+                     selectedUSBPort = value as String;
+                    },
+                  );
                 },
-              );
-            },
-          ),
-          SizedBox(
-            width: 50.0,
-          ),
-          MaterialButton(
-            minWidth: 100.0,
-            color: Colors.green,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                  ),
-                  Text('Start',
-                      style:
-                          new TextStyle(fontSize: 18.0, color: Colors.white)),
-                ],
               ),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            onPressed: () async {
-              print("Opening $selectedUSBPort");
-              serialPort = SerialPort(selectedUSBPort);
-              if (!serialPort.openReadWrite()) {
-                print(SerialPort.lastError);
-              }else{
-                if(selectedUSBPortBoard == "Healthypi (USB)"){
-                  serialPort.config.baudRate = 115200;
-                }else if(selectedUSBPortBoard == "MAX86150 Breakout"){
-                  serialPort.config.baudRate = 57600;
-                }else{
-                  setState((){
-                    serialPort.config.baudRate = 57600;
-                  });
-
-                }
-
-              }
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (_) => PlotSerialPage(
-                        selectedPort: serialPort,
-                        selectedSerialPort: selectedUSBPort,
-                        selectedPortBoard: selectedUSBPortBoard,
-                      )));
-            },
+            ],
           ),
-          SizedBox(
-            width: 30.0,
-          ),
-          MaterialButton(
-            minWidth: 100.0,
-            color: Colors.red,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.stop,
-                    color: Colors.white,
+          SizedBox(height: 10.0),
+          // Second row: Action buttons
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 15.0,
+            runSpacing: 8.0,
+            children: [
+              MaterialButton(
+                minWidth: 80.0,
+                color: Colors.green,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 18.0,
+                      ),
+                      SizedBox(width: 4.0),
+                      Text('Start',
+                          style:
+                              new TextStyle(fontSize: 16.0, color: Colors.white)),
+                    ],
                   ),
-                  Text('Stop',
-                      style:
-                          new TextStyle(fontSize: 18.0, color: Colors.white)),
-                ],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                onPressed: () async {
+                  print("Opening $selectedUSBPort");
+                  
+                  if (selectedUSBPort.isEmpty || selectedUSBPort == 'Port') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please select a serial port first'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  try {
+                    serialPort = SerialPort(selectedUSBPort);
+                    if (!serialPort.openReadWrite()) {
+                      print(SerialPort.lastError);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to open serial port: ${SerialPort.lastError}'),
+                          backgroundColor: Colors.red,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    // Configure baud rate based on selected board
+                    if(selectedUSBPortBoard == "Healthypi (USB)"){
+                      serialPort.config.baudRate = 115200;
+                    }else if(selectedUSBPortBoard == "MAX86150 Breakout"){
+                      serialPort.config.baudRate = 57600;
+                    } else if(selectedUSBPortBoard == "Healthypi 6 (USB)") {
+                      serialPort.config.baudRate = 921600;
+                    } else {
+                      serialPort.config.baudRate = 57600;
+                    }
+                    
+                    // Navigate to plot page
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        builder: (_) => PlotSerialPage(
+                              selectedPort: serialPort,
+                              selectedSerialPort: selectedUSBPort,
+                              selectedPortBoard: selectedUSBPortBoard,
+                            )));
+                  } catch (e) {
+                    print('Error opening serial port: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error opening serial port: $e'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
               ),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            onPressed: () async {
-              if (serialPort.isOpen && serialPort != null) {
-                serialPort.close();
-              }
-            },
+              MaterialButton(
+                minWidth: 80.0,
+                color: Colors.red,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.stop,
+                        color: Colors.white,
+                        size: 18.0,
+                      ),
+                      SizedBox(width: 4.0),
+                      Text('Stop',
+                          style:
+                              new TextStyle(fontSize: 16.0, color: Colors.white)),
+                    ],
+                  ),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                onPressed: () async {
+                  if (serialPort.isOpen) {
+                    serialPort.close();
+                  }
+                },
+              ),
+            ],
           ),
         ],
       );
