@@ -51,6 +51,37 @@ class buildPlots {
     );
   }
 
+
+  Widget buildChartWithRange(int height, int width, List<FlSpot> data, Color color, double minX, double maxX) {
+    return Container(
+      height: SizeConfig.blockSizeVertical * height,
+      width: SizeConfig.blockSizeHorizontal * width,
+      child: LineChart(
+        LineChartData(
+          minX: minX,
+          maxX: maxX,
+          minY: null, // Let it auto-scale Y
+          maxY: null, // Let it auto-scale Y
+          clipData: FlClipData.all(),
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: data,
+              isCurved: false,
+              color: color,
+              barWidth: 3,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+            ),
+          ],
+        ),
+        duration: Duration.zero,
+      ),
+    );
+  }
+
 }
 
 class ChartPoint {

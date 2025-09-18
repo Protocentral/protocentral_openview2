@@ -45,7 +45,7 @@ dependencies:
 dependency_overrides:
   csv: ^5.0.2
   intl: ^0.18.1
-    # because of https://github.com/jpnurmi/flutter_libserialport/issues/128
+  # because of https://github.com/jpnurmi/flutter_libserialport/issues/128
   #flutter_libserialport:
   #  git:
   #    url: https://github.com/NeariX67/flutter_libserialport
@@ -83,4 +83,4 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-  - assets/
+    - assets/
