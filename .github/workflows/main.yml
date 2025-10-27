@@ -92,20 +92,53 @@ jobs:
         run: sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
       
       - name: Import Apple Certificate
-        uses: apple-actions/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.AC_CERTIFICATE }}
-          p12-password: ${{ secrets.AC_CERTIFICATE_PASSWORD }}
-          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create a temporary certificate file from base64
+          echo "${{ secrets.AC_CERTIFICATE }}" | base64 --decode > certificate.p12
+          
+          # Create temporary keychain
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          
+          # Import certificate into keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.AC_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          
+          # Set key partition list (required for CI/CD)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          
+          # Verify import
+          echo "=== Certificate imported successfully ==="
+          security find-identity -v build.keychain
+          
+          # Cleanup
+          rm certificate.p12
       
       - name: List Available Certificates
         run: |
+          echo "=== Listing all available certificates ==="
           security find-identity -v -p codesigning
+          echo ""
+          echo "=== Checking keychain status ==="
+          security list-keychains
       
       - name: Sign Application
         run: |
-          # Find the certificate common name and use it for signing
-          CERT_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | awk -F '"' '{print $2}' | head -1)
+          # Find the certificate - try multiple patterns
+          CERT_NAME=$(security find-identity -v -p codesigning | grep -i "developer id" | awk -F '"' '{print $2}' | head -1)
+          
+          if [ -z "$CERT_NAME" ]; then
+            echo "Developer ID certificate not found, trying all certificates..."
+            CERT_NAME=$(security find-identity -v -p codesigning | awk -F '"' '{print $2}' | grep -v "^$" | head -1)
+          fi
+          
+          if [ -z "$CERT_NAME" ]; then
+            echo "ERROR: No codesigning certificates found!"
+            echo "Available identities:"
+            security find-identity -v
+            exit 1
+          fi
+          
           echo "Using certificate: $CERT_NAME"
           codesign --deep --force --verify --verbose --sign "$CERT_NAME" ./OpenView2.app
       
