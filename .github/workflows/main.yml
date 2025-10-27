@@ -98,9 +98,16 @@ jobs:
           p12-password: ${{ secrets.AC_CERTIFICATE_PASSWORD }}
           keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
       
+      - name: List Available Certificates
+        run: |
+          security find-identity -v -p codesigning
+      
       - name: Sign Application
         run: |
-          codesign --deep --force --verify --verbose --sign "Developer ID Application" ./OpenView2.app
+          # Find the certificate common name and use it for signing
+          CERT_NAME=$(security find-identity -v -p codesigning | grep "Developer ID Application" | awk -F '"' '{print $2}' | head -1)
+          echo "Using certificate: $CERT_NAME"
+          codesign --deep --force --verify --verbose --sign "$CERT_NAME" ./OpenView2.app
       
       - name: Create DMG
         run: |
