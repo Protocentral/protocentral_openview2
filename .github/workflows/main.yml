@@ -5,7 +5,6 @@ on:
   push:
     tags:
       - '*'
-
 jobs:
   build-and-release-linux:
     runs-on: ubuntu-latest
@@ -40,11 +39,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: build/linux/x64/release/bundle/OpenView2-linux.zip
-
-
   build-and-release-windows:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v1
@@ -72,7 +68,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: build/windows/x64/runner/Release/OpenView2-windows.zip
-
   build-and-release-macos:
     runs-on: macos-latest
     steps:
@@ -86,16 +81,51 @@ jobs:
       - run: flutter config --enable-macos-desktop
       - run: brew install automake libtool
       - name: Build artifacts
-        run:  flutter build macos --release
+        run: flutter build macos --release
       - name: Rename app
         working-directory: .  
         run: |
-            mv build/macos/Build/Products/Release/protocentral_openview_mobile.app ./OpenView2.app
-            zip -r OpenView2-macos.zip ./OpenView2.app
-      - name: Windows Release
+          mv build/macos/Build/Products/Release/protocentral_openview_mobile.app ./OpenView2.app
+      
+      # Notarization steps
+      - name: Setup Xcode
+        run: sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+      
+      - name: Import Apple Certificate
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.AC_CERTIFICATE }}
+          p12-password: ${{ secrets.AC_CERTIFICATE_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+      
+      - name: Sign Application
+        run: |
+          codesign --deep --force --verify --verbose --sign "Developer ID Application" ./OpenView2.app
+      
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "OpenView2" -srcfolder ./OpenView2.app -ov -format UDZO OpenView2.dmg
+      
+      - name: Notarize Application
+        run: |
+          xcrun notarytool submit OpenView2.dmg \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_PASSWORD }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --wait
+      
+      - name: Staple Notarization
+        run: |
+          xcrun stapler staple OpenView2.dmg
+      
+      - name: Create Final Archive
+        run: |
+          zip -r OpenView2-macos.zip OpenView2.dmg
+      
+      - name: macOS Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ./OpenView2-macos.zip
+          files: OpenView2-macos.zip
