@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_window
-  file_saver
   flutter_libserialport
   url_launcher_linux
 )
