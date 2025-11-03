@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - '*'
+
 jobs:
   build-and-release-linux:
     runs-on: ubuntu-latest
@@ -39,8 +40,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: build/linux/x64/release/bundle/OpenView2-linux.zip
+
+
   build-and-release-windows:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v1
@@ -68,6 +72,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: build/windows/x64/runner/Release/OpenView2-windows.zip
+
   build-and-release-macos:
     runs-on: macos-latest
     steps:
@@ -81,91 +86,16 @@ jobs:
       - run: flutter config --enable-macos-desktop
       - run: brew install automake libtool
       - name: Build artifacts
-        run: flutter build macos --release
+        run:  flutter build macos --release
       - name: Rename app
         working-directory: .  
         run: |
-          mv build/macos/Build/Products/Release/protocentral_openview_mobile.app ./OpenView2.app
-      
-      # Notarization steps
-      - name: Setup Xcode
-        run: sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-      
-      - name: Import Apple Certificate
-        run: |
-          # Create a temporary certificate file from base64
-          echo "${{ secrets.AC_CERTIFICATE }}" | base64 --decode > certificate.p12
-          
-          # Create temporary keychain
-          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-          
-          # Import certificate into keychain
-          security import certificate.p12 -k build.keychain -P "${{ secrets.AC_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-          
-          # Set key partition list (required for CI/CD)
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-          
-          # Verify import
-          echo "=== Certificate imported successfully ==="
-          security find-identity -v build.keychain
-          
-          # Cleanup
-          rm certificate.p12
-      
-      - name: List Available Certificates
-        run: |
-          echo "=== Listing all available certificates ==="
-          security find-identity -v -p codesigning
-          echo ""
-          echo "=== Checking keychain status ==="
-          security list-keychains
-      
-      - name: Sign Application
-        run: |
-          # Find the certificate - try multiple patterns
-          CERT_NAME=$(security find-identity -v -p codesigning | grep -i "developer id" | awk -F '"' '{print $2}' | head -1)
-          
-          if [ -z "$CERT_NAME" ]; then
-            echo "Developer ID certificate not found, trying all certificates..."
-            CERT_NAME=$(security find-identity -v -p codesigning | awk -F '"' '{print $2}' | grep -v "^$" | head -1)
-          fi
-          
-          if [ -z "$CERT_NAME" ]; then
-            echo "ERROR: No codesigning certificates found!"
-            echo "Available identities:"
-            security find-identity -v
-            exit 1
-          fi
-          
-          echo "Using certificate: $CERT_NAME"
-          codesign --deep --force --verify --verbose --sign "$CERT_NAME" ./OpenView2.app
-      
-      - name: Create DMG
-        run: |
-          hdiutil create -volname "OpenView2" -srcfolder ./OpenView2.app -ov -format UDZO OpenView2.dmg
-      
-      - name: Notarize Application
-        run: |
-          xcrun notarytool submit OpenView2.dmg \
-            --apple-id "${{ secrets.APPLE_ID }}" \
-            --password "${{ secrets.APPLE_PASSWORD }}" \
-            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
-            --wait
-      
-      - name: Staple Notarization
-        run: |
-          xcrun stapler staple OpenView2.dmg
-      
-      - name: Create Final Archive
-        run: |
-          zip -r OpenView2-macos.zip OpenView2.dmg
-      
-      - name: macOS Release
+            mv build/macos/Build/Products/Release/protocentral_openview_mobile.app ./OpenView2.app
+            zip -r OpenView2-macos.zip ./OpenView2.app
+      - name: Windows Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: OpenView2-macos.zip
+          files: ./OpenView2-macos.zip
