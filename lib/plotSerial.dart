@@ -622,6 +622,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[1] << 8 |
               ces_pkt_ch3_buffer[2] << 16 |
               ces_pkt_ch3_buffer[3] << 24;
+
               setStateIfMounted(() {
                 ecgLineData.add(FlSpot(
                     ecgDataCounter++, ((data1.toSigned(32)).toDouble())));
@@ -702,27 +703,31 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch3_buffer[0] = CES_Pkt_Data_Counter[4];
               ces_pkt_ch3_buffer[1] = CES_Pkt_Data_Counter[5];
 
-              int data1 = ces_pkt_ch1_buffer[0] |
+              int value1 = ces_pkt_ch1_buffer[0] |
               ces_pkt_ch1_buffer[1] <<
                   8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data1 <<= 16;
-              data1 >>= 16;
+              value1 <<= 16;
+              value1 >>= 16;
+              int data1 = value1;
 
-              int data2 = ces_pkt_ch2_buffer[0] |
+              int value2 = ces_pkt_ch2_buffer[0] |
               ces_pkt_ch2_buffer[1] <<
                   8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data2 <<= 16;
-              data2 >>= 16;
+              value2 <<= 16;
+              value2 >>= 16;
 
-              int data3 = ces_pkt_ch3_buffer[0] |
+              int data2 = value2;
+
+              int value3 = ces_pkt_ch3_buffer[0] |
               ces_pkt_ch3_buffer[1] <<
                   8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-              data3 <<= 16;
-              data3 >>= 16;
+              value3 <<= 16;
+              value3 >>= 16;
+
+              int data3 = value3;
 
               setStateIfMounted(() {
-                ecgLineData.add(
-                    FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
+                ecgLineData.add(FlSpot(ecgDataCounter++, (data1.toSigned(16).toDouble())));
                 respLineData.add(FlSpot(respDataCounter++, (data2.toDouble())));
                 ppgLineData.add(FlSpot(ppgDataCounter++, (data3.toDouble())));
 
@@ -815,6 +820,7 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
               ces_pkt_ch2_buffer[1] << 8 |
               ces_pkt_ch2_buffer[2] << 16 |
               ces_pkt_ch2_buffer[3] << 24;
+
               int computedVal2 = ces_pkt_ch3_buffer[0] |
               ces_pkt_ch3_buffer[1] << 8 |
               ces_pkt_ch3_buffer[2] << 16 |
@@ -873,18 +879,6 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
                   ppgDataLog.add(data2.toDouble());
                 }
               });
-
-              /*setStateIfMounted(() {
-                ecgLineData.add(
-                    FlSpot(ecgDataCounter++, (data1.toSigned(32).toDouble())));
-                ppgLineData.add(
-                    FlSpot(ppgDataCounter++, (data2.toSigned(32).toDouble())));
-
-                if (startDataLogging == true) {
-                  ecgDataLog.add(data1.toDouble());
-                  ppgDataLog.add(data2.toDouble());
-                }
-              });*/
 
               // Apply window size management
               _manageDataWindow(ecgLineData, boardSamplingRate * _plotWindowSeconds.toDouble());
@@ -998,17 +992,21 @@ class _PlotSerialPageState extends State<PlotSerialPage> {
             ces_pkt_ch2_buffer[0] = CES_Pkt_Data_Counter[2];
             ces_pkt_ch2_buffer[1] = CES_Pkt_Data_Counter[3];
 
-            int data1 = ces_pkt_ch1_buffer[0] |
+            int value1 = ces_pkt_ch1_buffer[0] |
             ces_pkt_ch1_buffer[1] <<
                 8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-            data1 <<= 16;
-            data1 >>= 16;
+            value1 <<= 16;
+            value1 >>= 16;
 
-            int data2 = ces_pkt_ch2_buffer[0] |
+            int data1 = value1;
+
+            int value2 = ces_pkt_ch2_buffer[0] |
             ces_pkt_ch2_buffer[1] <<
                 8; //reversePacket(CES_Pkt_ECG_Counter, CES_Pkt_ECG_Counter.length-1);
-            data2 <<= 16;
-            data2 >>= 16;
+            value2 <<= 16;
+            value2 >>= 16;
+
+            int data2 = value2;
 
             computed_val1 = CES_Pkt_Data_Counter[4] |
             CES_Pkt_Data_Counter[5] <<
