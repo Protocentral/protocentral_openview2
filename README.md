@@ -58,6 +58,7 @@ Three transports, gated per board — the app only offers what the board actuall
 | ADS1292R · ADS1293 · AFE4490 | ✅ | — | — |
 | MAX30001 · MAX30003 · MAX86150 | ✅ | — | — |
 | Pulse Express · TinyGSR | ✅ | — | — |
+| [ST1VAFE3BX](https://protocentral.com/product/protocentral-st1vafe3bx-breakout-kit/) | ✅ | — | — |
 | TMF8829 dToF (depth map) | ✅ | — | — |
 
 Don't see your board? It takes three files and no changes to the app — see

@@ -12,6 +12,7 @@ import 'descriptors/max86150.dart';
 import 'descriptors/pulse_express.dart';
 import 'descriptors/sensything_cap.dart';
 import 'descriptors/sensything_ox.dart';
+import 'descriptors/st1vafe3bx.dart';
 import 'descriptors/tinygsr.dart';
 import 'descriptors/tmf8829.dart';
 
@@ -34,6 +35,7 @@ class BoardRegistry {
     max86150Descriptor,
     pulseExpressDescriptor,
     tinyGsrDescriptor,
+    st1vafe3bxDescriptor,
     tmf8829Descriptor,
   ];
 

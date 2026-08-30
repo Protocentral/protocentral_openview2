@@ -8,7 +8,16 @@ import 'package:OpenView/boards/board_registry.dart';
 void main() {
   test('Board registry exposes the expected phase-1 boards', () {
     final ids = BoardRegistry.all.map((b) => b.id).toSet();
-    expect(ids, containsAll({'sensything_ox', 'sensything_cap', 'ads1292r', 'max30003'}));
+    expect(
+      ids,
+      containsAll({
+        'sensything_ox',
+        'sensything_cap',
+        'ads1292r',
+        'max30003',
+        'st1vafe3bx',
+      }),
+    );
   });
 
   test('Every descriptor declares at least one packet decoder', () {
