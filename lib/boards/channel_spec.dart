@@ -24,7 +24,19 @@ class ChannelSpec {
   });
 }
 
-enum SignalUnit { mv, uv, adc, celsius, ohm, nanoSiemens, percent, bpm, rpm, none }
+enum SignalUnit {
+  mv,
+  uv,
+  adc,
+  celsius,
+  ohm,
+  microSiemens,
+  nanoSiemens,
+  percent,
+  bpm,
+  rpm,
+  none,
+}
 
 enum ChannelKind {
   ecg,

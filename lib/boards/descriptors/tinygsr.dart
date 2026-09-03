@@ -25,19 +25,27 @@ final BoardDescriptor tinyGsrDescriptor = BoardDescriptor(
       id: 'gsr',
       label: 'GSR/EDA',
       sampleRateHz: 10,
-      unit: SignalUnit.adc,
+      unit: SignalUnit.microSiemens,
       kind: ChannelKind.gsr,
+      // Typical tonic skin conductance level sits around 2-20 uS; the front
+      // end saturates near 104 uS.
+      displayMin: 0,
+      displayMax: 25,
     ),
   ],
   packets: [
     PacketSpec(
-      pktType: 2,
-      label: 'GSR/Resistance',
+      pktType: 3,
+      label: 'Skin conductance',
       expectedPayloadLength: 8,
-      decode: decodeTinyGsrPkt2,
+      decode: decodeTinyGsrPkt3,
     ),
   ],
   notes: 'ProtoCentral tinyGSR Galvanic Skin Response (GSR) / '
       'Electrodermal Activity (EDA) breakout. Qwiic / STEMMA QT compatible. '
-      'Raw 24-bit ADC count and derived skin resistance are streamed at ~10 Hz.',
+      'A 0.5 V constant-voltage transimpedance front end and a 12-bit ADC give '
+      'absolute skin conductance, streamed at ~10 Hz as integer nanosiemens '
+      'and plotted here in microsiemens. Firmware older than the pktType 3 '
+      'format streamed raw ADC counts on pktType 2; those show up as an '
+      'unknown packet type in the Console rather than a mis-scaled trace.',
 );

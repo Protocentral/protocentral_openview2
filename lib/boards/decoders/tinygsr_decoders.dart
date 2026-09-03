@@ -6,33 +6,40 @@ import 'dart:typed_data';
 import '../../protocol/decoded_packet.dart';
 import 'shared_codecs.dart';
 
-/// tinyGSR Breakout (USB) — pktType 2 — ~10 Hz, 24-bit GSR samples.
+/// tinyGSR Breakout (USB) — pktType 3 — ~10 Hz absolute skin conductance.
 ///
-/// tinyGSR is a Galvanic Skin Response (GSR) / Electrodermal Activity (EDA)
-/// sensor that measures changes in skin electrical conductance, an indicator
-/// of emotional arousal and stress.  The onboard analog front-end drives a
-/// constant voltage across the skin and digitises the resulting current with
-/// a 24-bit ADC.  Values are sign-extended to 32 bits for alignment.
+/// tinyGSR measures electrodermal activity (EDA), the change in skin
+/// conductance that tracks sympathetic arousal.  The v2 front end holds a
+/// constant 0.5 V across the electrodes and reads the resulting current
+/// through a 39.2 kΩ transimpedance stage with a 12-bit differential ADC, so
+/// the firmware can report conductance in absolute units rather than an
+/// uncalibrated count.
 ///
-/// A second slot is reserved for a raw resistance estimate in integer ohms;
-/// it is zero if the firmware does not populate it.
+/// The firmware sends **integer nanosiemens** (µS × 1000).  One ADC count is
+/// ≈ 50.9 nS, so the integer wire format is about 20× finer than the ADC
+/// itself resolves — nothing is lost, and the same slot still carries the
+/// 16-bit "Standard" front end.  Any one-point Rcal calibration stored on the
+/// board is already folded in by the time it reaches us.
+///
+/// The resistance slot is reserved and always 0: EDA skin resistance spans
+/// tens of kilohms to several megohms, which overflows an int16 in ohms, and
+/// it is exactly 1e6 / G anyway.
 ///
 /// Payload layout (8 bytes):
-///   [0-3]   gsr      int32 LE  (raw 24-bit ADC count, sign-extended)
-///   [4-5]   resOhms  int16 LE  (skin resistance in Ω, 0 if unused)
+///   [0-3]   gsr      int32 LE  (skin conductance, nanosiemens)
+///   [4-5]   —        int16 LE  (reserved, 0)
 ///   [6-7]   0x0000   reserved
 
-DecodedPacket decodeTinyGsrPkt2(Uint8List p) {
-  final gsr     = Codec.readInt32LE(p, 0).toDouble();
-  final resOhms = Codec.readInt16LE(p, 4);
+/// Nanosiemens on the wire → microsiemens for display and recording.
+const double _nsPerUs = 1000.0;
+
+DecodedPacket decodeTinyGsrPkt3(Uint8List p) {
+  final microSiemens = Codec.readInt32LE(p, 0) / _nsPerUs;
 
   return DecodedPacket(
-    pktType: 2,
+    pktType: 3,
     channelSamples: {
-      'gsr': [gsr],
-    },
-    events: {
-      'resistance': resOhms,
+      'gsr': [microSiemens],
     },
   );
 }
