@@ -91,29 +91,4 @@ class BoardRegistry {
     }
     return null;
   }
-
-  /// Find the first descriptor whose USB profile plausibly matches the given
-  /// port name / VID / PID. Returns null if no match.
-  static BoardDescriptor? matchUsb({
-    int? vendorId,
-    int? productId,
-    String? productName,
-  }) {
-    for (final b in all) {
-      final profile = b.usbProfile;
-      if (profile == null) continue;
-      for (final m in profile.idMatches) {
-        if (vendorId != null && m.vendorId != vendorId) continue;
-        if (m.productId != null &&
-            productId != null &&
-            m.productId != productId) continue;
-        if (m.productNameContains != null &&
-            productName != null &&
-            !productName.toLowerCase().contains(
-                m.productNameContains!.toLowerCase())) continue;
-        return b;
-      }
-    }
-    return null;
-  }
 }

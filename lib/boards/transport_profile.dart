@@ -12,28 +12,23 @@ class TransportSupport {
   bool get hasAny => ble || usb || wifi;
 }
 
-/// USB-serial profile for a board: vendor/product hints and link parameters.
+/// USB-serial link parameters for a board.
+///
+/// There is deliberately no VID/PID matching here: ProtoCentral boards sit
+/// behind generic USB-serial bridges (FTDI, CP210x, CH340) that carry no
+/// board identity, so the user picks the board explicitly on the scan screen.
 class UsbProfile {
-  final List<UsbIdMatch> idMatches;
   final int baudRate;
   final int dataBits;
   final int stopBits;
   final UsbParity parity;
 
   const UsbProfile({
-    this.idMatches = const [],
     this.baudRate = 115200,
     this.dataBits = 8,
     this.stopBits = 1,
     this.parity = UsbParity.none,
   });
-}
-
-class UsbIdMatch {
-  final int vendorId;
-  final int? productId;
-  final String? productNameContains;
-  const UsbIdMatch({required this.vendorId, this.productId, this.productNameContains});
 }
 
 enum UsbParity { none, odd, even }

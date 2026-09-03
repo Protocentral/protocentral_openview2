@@ -19,10 +19,6 @@ final BoardDescriptor tmf8829Descriptor = BoardDescriptor(
   transports: const TransportSupport(usb: true),
   usbProfile: const UsbProfile(
     baudRate: 921600,
-    idMatches: [
-      UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-      UsbIdMatch(vendorId: 0x1A86, productNameContains: 'CH340'),
-    ],
   ),
   matrices: const [
     MatrixSpec(

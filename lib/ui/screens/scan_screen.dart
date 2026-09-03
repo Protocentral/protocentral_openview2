@@ -569,21 +569,13 @@ class _Hints extends StatelessWidget {
           (x) => x.target.id == selectedDeviceId,
           orElse: () => results.first,
         );
-        final suggested = r.suggestedDescriptor;
-        if (suggested != null && suggested.id == selectedBoard.id) {
-          hints.add(_HintLine(
-            icon: Icons.auto_awesome,
-            color: theme.colorScheme.secondary,
-            text: 'Auto-detected: ${suggested.displayName}',
-          ));
-        } else if (suggested != null) {
-          hints.add(_HintLine(
-            icon: Icons.info_outline,
-            color: theme.colorScheme.onSurfaceVariant,
-            text: 'Detected ${suggested.displayName}, but you picked '
-                '${selectedBoard.displayName}.',
-          ));
-        }
+        // USB-serial ports don't identify the board behind them, so there is
+        // nothing to auto-detect — the board dropdown is the source of truth.
+        hints.add(_HintLine(
+          icon: Icons.info_outline,
+          color: theme.colorScheme.onSurfaceVariant,
+          text: 'Select the board you have connected to this port.',
+        ));
         if (r.target.subtitle != null && r.target.subtitle!.isNotEmpty) {
           hints.add(_HintLine(
             icon: Icons.memory,

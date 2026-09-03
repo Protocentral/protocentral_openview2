@@ -14,10 +14,6 @@ final BoardDescriptor sensythingOxDescriptor = BoardDescriptor(
   transports: const TransportSupport(usb: true, ble: true, wifi: true),
   usbProfile: const UsbProfile(
     baudRate: 115200,
-    idMatches: [
-      UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-      UsbIdMatch(vendorId: 0x1A86, productNameContains: 'CH340'),
-    ],
   ),
   // OpenView-compatible Sensything BLE service (SensythingBLE.cpp:59-67, :103).
   // BLE streams RAW, unframed 8-byte payloads (ECG int32 + PPG int32) — no

@@ -68,18 +68,11 @@ class UsbSerialService extends TransportService {
         } catch (_) {
           // Some platforms throw on metadata access for in-use ports.
         }
-        final vid = _safeInt(() => p.vendorId);
-        final pid = _safeInt(() => p.productId);
         targets.add(TransportTarget(
           kind: TransportKind.usb,
           id: name,
           displayName: display,
           subtitle: subtitle,
-          extra: {
-            'vendorId': vid,
-            'productId': pid,
-            'description': p.description,
-          },
         ));
         p.dispose();
       }
@@ -90,14 +83,6 @@ class UsbSerialService extends TransportService {
       _setStatus(TransportStatus.idle);
     }
     return targets;
-  }
-
-  int? _safeInt(int? Function() f) {
-    try {
-      return f();
-    } catch (_) {
-      return null;
-    }
   }
 
   @override

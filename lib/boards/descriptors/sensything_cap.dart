@@ -18,10 +18,6 @@ final BoardDescriptor sensythingCapDescriptor = BoardDescriptor(
   transports: const TransportSupport(usb: true, ble: true, wifi: true),
   usbProfile: const UsbProfile(
     baudRate: 115200,
-    idMatches: [
-      UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-      UsbIdMatch(vendorId: 0x1A86, productNameContains: 'CH340'),
-    ],
   ),
   // Shared OpenView-compatible Sensything BLE service. Service/characteristic
   // assumed identical to Sensything OX; advertised name inferred as

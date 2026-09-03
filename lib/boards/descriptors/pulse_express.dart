@@ -14,10 +14,6 @@ final BoardDescriptor pulseExpressDescriptor = BoardDescriptor(
   transports: const TransportSupport(usb: true),
   usbProfile: const UsbProfile(
     baudRate: 57600,
-    idMatches: [
-      UsbIdMatch(vendorId: 0x0403, productNameContains: 'FT232'),
-      UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-    ],
   ),
   channels: const [
     ChannelSpec(

@@ -10,13 +10,6 @@ import '../transport_profile.dart';
 const _usbProfile = UsbProfile(
   //baudRate: 230400,
   baudRate: 115200,
-  idMatches: [
-    // nRF5340 USB CDC (HealthyPi 5 onboard MCU)
-    UsbIdMatch(vendorId: 0x1915, productNameContains: 'nRF'),
-    // Fallback: FTDI / CP210x on adapter boards
-    UsbIdMatch(vendorId: 0x0403, productNameContains: 'FT232'),
-    UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-  ],
 );
 
 // ── Shared: channel specs (reused across firmware variants) ─────────────

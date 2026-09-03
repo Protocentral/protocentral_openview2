@@ -74,8 +74,10 @@ Transport → Framer → Router → (Channel/Matrix/Event buffers) → UI
   `ChannelSpec`s (1-D time series), `MatrixSpec`s (2-D frames, e.g. ToF depth
   maps), `PacketSpec`s (a `pktType` → pure decoder function), `CommandSpec`s
   (host→board byte sequences), and BLE/USB transport profiles. `BoardRegistry`
-  (`board_registry.dart`) lists every descriptor and matches discovered USB
-  ports by VID/PID/product-name.
+  (`board_registry.dart`) lists every descriptor and matches discovered BLE
+  peripherals by advertised name / service UUID. USB ports are **not**
+  auto-matched — generic FTDI/CP210x/CH340 bridges carry no board identity, so
+  the user picks the board on the scan screen.
 
 - **`boards/descriptors/`** — one file per board (declarations).
   **`boards/decoders/`** — pure `Uint8List payload → DecodedPacket` functions.

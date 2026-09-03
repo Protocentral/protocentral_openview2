@@ -14,14 +14,6 @@ final BoardDescriptor st1vafe3bxDescriptor = BoardDescriptor(
   transports: const TransportSupport(usb: true),
   usbProfile: const UsbProfile(
     baudRate: 57600,
-    idMatches: [
-      UsbIdMatch(vendorId: 0x0403, productNameContains: 'FT232'),
-      UsbIdMatch(vendorId: 0x10C4, productNameContains: 'CP210'),
-      UsbIdMatch(vendorId: 0x1A86, productNameContains: 'CH340'),
-      // Arduino Nano 33 BLE / UNO R4 — documented hosts for the library.
-      UsbIdMatch(vendorId: 0x2341, productNameContains: 'Nano 33'),
-      UsbIdMatch(vendorId: 0x2341, productNameContains: 'UNO R4'),
-    ],
   ),
   channels: const [
     ChannelSpec(

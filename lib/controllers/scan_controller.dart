@@ -9,8 +9,12 @@ import '../transport/ble_service.dart';
 import '../transport/transport_service.dart';
 import '../transport/usb_serial_service.dart';
 
-/// One row in the scan results list: a transport target with the registry's
-/// best guess at which descriptor it represents (if any).
+/// One row in the scan results list.
+///
+/// [suggestedDescriptor] is only ever populated for BLE targets, which
+/// advertise a name / service UUID that identifies the board. USB-serial ports
+/// carry no board identity (generic FTDI / CP210x / CH340 bridges), so the user
+/// picks the board explicitly there.
 class ScanResult {
   final TransportTarget target;
   final BoardDescriptor? suggestedDescriptor;
@@ -64,16 +68,7 @@ class ScanController extends ChangeNotifier {
 
   ScanResult _annotate(TransportTarget target) {
     BoardDescriptor? suggested;
-    if (target.kind == TransportKind.usb) {
-      final vid = target.extra['vendorId'] as int?;
-      final pid = target.extra['productId'] as int?;
-      final desc = target.extra['description'] as String?;
-      suggested = BoardRegistry.matchUsb(
-        vendorId: vid,
-        productId: pid,
-        productName: desc,
-      );
-    } else if (target.kind == TransportKind.ble) {
+    if (target.kind == TransportKind.ble) {
       // BleService tags the matched descriptor id during the scan; fall back
       // to re-matching by the advertised service UUIDs if absent.
       final descriptorId = target.extra['descriptorId'] as String?;
