@@ -25,6 +25,9 @@ class SettingsController extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.dark;
   int _repaintHz = PlatformV3.isDesktop ? 60 : 30;
   String? _recordingDir; // null → default under Documents/
+  bool _autoCheckUpdates = true;
+  DateTime? _lastUpdateCheck;
+  String? _skippedUpdateVersion;
 
   ThemeMode get themeMode => _themeMode;
   int get repaintHz => _repaintHz;
@@ -32,6 +35,18 @@ class SettingsController extends ChangeNotifier {
   /// Custom recordings directory, or null when using the default location.
   String? get recordingDirOverride => _recordingDir;
   bool get isDefaultRecordingDir => _recordingDir == null;
+
+  /// Whether OpenView may check GitHub Releases for a newer desktop build on
+  /// startup. Only self-distributed builds ever check (see UpdateChannel),
+  /// but the preference is stored for every platform so toggling it on a
+  /// store build is harmless.
+  bool get autoCheckUpdates => _autoCheckUpdates;
+
+  /// When the last update check completed, used to keep it to once a day.
+  DateTime? get lastUpdateCheck => _lastUpdateCheck;
+
+  /// A release the user asked not to be reminded about, e.g. `3.3.0`.
+  String? get skippedUpdateVersion => _skippedUpdateVersion;
 
   File? _file;
 
@@ -48,6 +63,13 @@ class SettingsController extends ChangeNotifier {
       final dirOverride = json['recordingDir'] as String?;
       if (dirOverride != null && dirOverride.trim().isNotEmpty) {
         _recordingDir = dirOverride;
+      }
+      _autoCheckUpdates = json['autoCheckUpdates'] as bool? ?? _autoCheckUpdates;
+      final lastCheck = json['lastUpdateCheck'] as String?;
+      if (lastCheck != null) _lastUpdateCheck = DateTime.tryParse(lastCheck);
+      final skipped = json['skippedUpdateVersion'] as String?;
+      if (skipped != null && skipped.trim().isNotEmpty) {
+        _skippedUpdateVersion = skipped;
       }
     } catch (_) {
       // Corrupt / unreadable settings — fall back to defaults silently.
@@ -85,6 +107,29 @@ class SettingsController extends ChangeNotifier {
     await _save();
   }
 
+  Future<void> setAutoCheckUpdates(bool enabled) async {
+    if (enabled == _autoCheckUpdates) return;
+    _autoCheckUpdates = enabled;
+    notifyListeners();
+    await _save();
+  }
+
+  /// Stamp the update check clock. Called after every completed check —
+  /// including one that found nothing — so a quiet repo doesn't cause a
+  /// request on every launch.
+  Future<void> markUpdateChecked() async {
+    _lastUpdateCheck = DateTime.now();
+    await _save();
+  }
+
+  /// Suppress reminders for [version] (pass null to clear).
+  Future<void> setSkippedUpdateVersion(String? version) async {
+    if (version == _skippedUpdateVersion) return;
+    _skippedUpdateVersion = version;
+    notifyListeners();
+    await _save();
+  }
+
   /// Resolve the effective recordings directory (default or override).
   Future<Directory> recordingsDirectory() async {
     final override = _recordingDir;
@@ -103,6 +148,9 @@ class SettingsController extends ChangeNotifier {
         'themeMode': _themeMode.name,
         'repaintHz': _repaintHz,
         'recordingDir': _recordingDir,
+        'autoCheckUpdates': _autoCheckUpdates,
+        'lastUpdateCheck': _lastUpdateCheck?.toIso8601String(),
+        'skippedUpdateVersion': _skippedUpdateVersion,
       }));
     } catch (_) {
       // Best-effort persistence; ignore write failures.

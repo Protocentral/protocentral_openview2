@@ -10,6 +10,7 @@ import '../controllers/app_info_controller.dart';
 import '../theme/app_spacing.dart';
 import 'app_routes.dart';
 import 'widgets/app_footer.dart';
+import 'widgets/update_banner.dart';
 
 /// Top-level scaffold that adapts navigation to screen size.
 ///
@@ -53,12 +54,15 @@ class AdaptiveScaffold extends StatelessWidget {
     ctx.go(_destinations[idx].path);
   }
 
-  /// Page body + global footer. Footer sits above the mobile bottom nav so it
-  /// never competes with NavigationBar.
+  /// Update strip + page body + global footer. The banner sits above the page
+  /// on every layout (it collapses to nothing when there is no update), and
+  /// the footer sits above the mobile bottom nav so it never competes with
+  /// NavigationBar.
   Widget _bodyWithFooter(Widget page) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const UpdateBanner(),
         Expanded(child: page),
         const AppFooter(),
       ],

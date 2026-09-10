@@ -16,6 +16,7 @@ import 'controllers/recording_controller.dart';
 import 'controllers/recordings_browser_controller.dart';
 import 'controllers/scan_controller.dart';
 import 'controllers/settings_controller.dart';
+import 'controllers/update_controller.dart';
 import 'recording/recording_models.dart';
 import 'transport/ble_service.dart';
 import 'transport/usb_serial_service.dart';
@@ -47,6 +48,8 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('[OV] main: appInfo.load skipped/failed: $e');
   }
+
+  final update = UpdateController(settings: settings);
 
   final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
@@ -106,7 +109,17 @@ Future<void> main() async {
     recordingsBrowser: recordingsBrowser,
     developerBle: developerBle,
     smp: smp,
+    update: update,
   ));
+
+  // Update check: strictly after first frame, and off the startup critical
+  // path. It is a no-op on store builds (see UpdateChannel), never throws, and
+  // stays silent when offline — so nothing here is awaited or handled.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.delayed(const Duration(seconds: 2), () {
+      update.checkAtStartup(appInfo.version);
+    });
+  });
 }
 
 class _CloseHandler with WindowListener {

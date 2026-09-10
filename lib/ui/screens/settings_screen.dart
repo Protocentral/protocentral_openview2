@@ -10,7 +10,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/app_info_controller.dart';
 import '../../controllers/recordings_browser_controller.dart';
 import '../../controllers/settings_controller.dart';
+import '../../controllers/update_controller.dart';
 import '../../theme/app_spacing.dart';
+import '../widgets/update_banner.dart';
 
 /// Phase 5 — user-configurable settings: theme, live repaint cap, and the
 /// recordings directory. Backed by [SettingsController] (persisted to JSON).
@@ -82,11 +84,110 @@ class SettingsScreen extends StatelessWidget {
         const _RecordingDirCard(),
         const SizedBox(height: AppSpacing.md),
 
+        // --- Updates ----------------------------------------------------
+        // Absent on store builds, where the store owns updating.
+        if (context.watch<UpdateController>().isSupported) ...[
+          const _UpdatesCard(),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
         // --- About ------------------------------------------------------
         const _AboutCard(),
       ],
     );
   }
+}
+
+/// Update preferences. The manual check itself lives in [_AboutCard], next to
+/// the version it is about — the familiar desktop "About → Check for
+/// Updates…" idiom.
+///
+/// Only self-distributed desktop builds show this; on App Store / Play builds
+/// [UpdateController.isSupported] is false and the card collapses away, so a
+/// store user is never pointed at a GitHub zip.
+class _UpdatesCard extends StatelessWidget {
+  const _UpdatesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final update = context.watch<UpdateController>();
+    if (!update.isSupported) return const SizedBox.shrink();
+
+    final settings = context.watch<SettingsController>();
+    final found = update.info;
+    final skipped = settings.skippedUpdateVersion;
+
+    return _SectionCard(
+      icon: Icons.system_update_alt,
+      title: 'Updates',
+      subtitle: 'OpenView checks GitHub Releases for a newer desktop build. '
+          'It never installs anything on its own — downloads open in your '
+          'browser.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            value: settings.autoCheckUpdates,
+            title: const Text('Check for updates automatically'),
+            subtitle: const Text('At most once a day, on startup.'),
+            onChanged: (v) =>
+                context.read<SettingsController>().setAutoCheckUpdates(v),
+          ),
+          if (found != null || skipped != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (found != null)
+                  OutlinedButton.icon(
+                    onPressed: () => showUpdateDetailsDialog(context),
+                    icon: const Icon(Icons.description_outlined),
+                    label: Text("What's new in ${found.version}"),
+                  ),
+                if (skipped != null)
+                  TextButton.icon(
+                    onPressed: () => context
+                        .read<SettingsController>()
+                        .setSkippedUpdateVersion(null),
+                    icon: const Icon(Icons.undo),
+                    label: Text('Un-skip $skipped'),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One-line summary of where the update check stands, for the About card.
+String _updateStatusLine(UpdateController update, SettingsController settings) {
+  switch (update.status) {
+    case UpdateStatus.checking:
+      return 'Contacting GitHub…';
+    case UpdateStatus.available:
+      return 'OpenView ${update.info!.version} is available.';
+    case UpdateStatus.failed:
+      return update.error ?? 'The last check did not complete.';
+    case UpdateStatus.upToDate:
+      return 'You are running the latest release.';
+    case UpdateStatus.idle:
+      final last = settings.lastUpdateCheck;
+      if (last == null) return 'Not checked for updates yet.';
+      return 'Last checked ${_ago(DateTime.now().difference(last))}.';
+  }
+}
+
+String _ago(Duration d) {
+  if (d.inMinutes < 1) return 'just now';
+  if (d.inHours < 1) return '${d.inMinutes} min ago';
+  if (d.inDays < 1) return '${d.inHours} h ago';
+  return '${d.inDays} d ago';
 }
 
 class _AboutCard extends StatelessWidget {
@@ -97,6 +198,7 @@ class _AboutCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final info = context.watch<AppInfoController>();
+    final update = context.watch<UpdateController>();
 
     return _SectionCard(
       icon: Icons.info_outline,
@@ -148,6 +250,10 @@ class _AboutCard extends StatelessWidget {
               );
             },
           ),
+          if (update.isSupported) ...[
+            const Divider(height: AppSpacing.lg),
+            const _UpdateCheckRow(),
+          ],
           const Divider(height: AppSpacing.lg),
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -176,6 +282,50 @@ class _AboutCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Check for updates" next to the version in About — where a desktop user
+/// looks to answer "am I current?".
+///
+/// Reports through [runManualUpdateCheck]: the release-notes dialog when there
+/// is an update, a snackbar when there isn't. The line above the button carries
+/// the standing state (last checked / up to date / the error).
+class _UpdateCheckRow extends StatelessWidget {
+  const _UpdateCheckRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final update = context.watch<UpdateController>();
+    final settings = context.watch<SettingsController>();
+    final version = context.watch<AppInfoController>().version;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            _updateStatusLine(update, settings),
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        OutlinedButton.icon(
+          onPressed: update.isChecking
+              ? null
+              : () => runManualUpdateCheck(context, version),
+          icon: update.isChecking
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh, size: 18),
+          label: Text(update.isChecking ? 'Checking…' : 'Check for updates'),
+        ),
+      ],
     );
   }
 }

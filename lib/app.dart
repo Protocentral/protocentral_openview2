@@ -12,6 +12,7 @@ import 'controllers/smp_controller.dart';
 import 'controllers/recordings_browser_controller.dart';
 import 'controllers/scan_controller.dart';
 import 'controllers/settings_controller.dart';
+import 'controllers/update_controller.dart';
 import 'theme/app_theme.dart';
 import 'transport/ble_service.dart';
 import 'transport/usb_serial_service.dart';
@@ -30,6 +31,7 @@ class OpenViewApp extends StatelessWidget {
   final RecordingsBrowserController recordingsBrowser;
   final DeveloperBleController developerBle;
   final SmpController smp;
+  final UpdateController update;
 
   const OpenViewApp({
     super.key,
@@ -44,6 +46,7 @@ class OpenViewApp extends StatelessWidget {
     required this.recordingsBrowser,
     required this.developerBle,
     required this.smp,
+    required this.update,
   });
 
   @override
@@ -63,6 +66,7 @@ class OpenViewApp extends StatelessWidget {
         ChangeNotifierProvider<DeveloperBleController>.value(
             value: developerBle),
         ChangeNotifierProvider<SmpController>.value(value: smp),
+        ChangeNotifierProvider<UpdateController>.value(value: update),
       ],
       child: Consumer<SettingsController>(
         builder: (_, settings, __) => MaterialApp.router(
